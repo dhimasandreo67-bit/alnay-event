@@ -16,6 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth/admin/login',
             'auth/admin/logout',
         ]);
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureAdminLoggedIn::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+    'auth/admin/login',
+    'auth/admin/logout',
+    'event',
+    'event/*',
+]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
