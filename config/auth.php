@@ -42,6 +42,15 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'pelanggan' => [
+            'driver' => 'session',
+            'provider' => 'pengguna_event',
+        ],
+
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'akun_staf',
+        ],
     ],
 
     /*
@@ -66,6 +75,15 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
         ],
+        'pengguna_event' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\PenggunaEvent::class,
+    ],
+
+    'akun_staf' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\AkunStaf::class,
+    ],
 
         // 'users' => [
         //     'driver' => 'database',

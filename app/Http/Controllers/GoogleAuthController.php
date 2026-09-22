@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
+use App\Models\PenggunaEvent;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
@@ -20,23 +19,16 @@ class GoogleAuthController extends Controller
     {
         $googleUser = Socialite::driver('google')->user();
 
-        $pengguna = DB::table('pengguna_event')
-            ->where('google_id', $googleUser->getId())
-            ->first();
+        $pengguna = PenggunaEvent::where('google_id', $googleUser->getId())->first();
 
         if ($pengguna) {
-            // Sudah pernah login, update data terbaru
-            DB::table('pengguna_event')
-                ->where('id', $pengguna->id)
-                ->update([
-                    'nama' => $googleUser->getName(),
-                    'foto_url' => $googleUser->getAvatar(),
-                    'login_terakhir' => now(),
-                ]);
-            $penggunaId = $pengguna->id;
+            $pengguna->update([
+                'nama' => $googleUser->getName(),
+                'foto_url' => $googleUser->getAvatar(),
+                'login_terakhir' => now(),
+            ]);
         } else {
-            // Login pertama kali, buat baris baru
-            $penggunaId = DB::table('pengguna_event')->insertGetId([
+            $pengguna = PenggunaEvent::create([
                 'google_id' => $googleUser->getId(),
                 'nama' => $googleUser->getName(),
                 'email' => $googleUser->getEmail(),
@@ -46,9 +38,7 @@ class GoogleAuthController extends Controller
             ]);
         }
 
-        Session::put('pengguna_id', $penggunaId);
-
-        $pengguna = DB::table('pengguna_event')->find($penggunaId);
+        Auth::guard('pelanggan')->login($pengguna);
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -59,7 +49,7 @@ class GoogleAuthController extends Controller
     // POST /auth/logout
     public function logout()
     {
-        Session::forget('pengguna_id');
+        Auth::guard('pelanggan')->logout();
 
         return response()->json(['message' => 'Logout berhasil']);
     }
@@ -67,11 +57,11 @@ class GoogleAuthController extends Controller
     // GET /auth/me
     public function me()
     {
-        if (! Session::has('pengguna_id')) {
+        $pengguna = Auth::guard('pelanggan')->user();
+
+        if (! $pengguna) {
             return response()->json(['message' => 'Belum login'], 401);
         }
-
-        $pengguna = DB::table('pengguna_event')->find(Session::get('pengguna_id'));
 
         return response()->json($pengguna);
     }

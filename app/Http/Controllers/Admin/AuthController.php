@@ -3,36 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AkunStaf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // 1. Validasi input wajib ada
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // 2. Cari akun staf berdasarkan email
-        $akun = DB::table('akun_staf')
-            ->where('email', $request->email)
-            ->first();
-
-        // 3. Cek akun ada dan password cocok
-        if (! $akun || ! Hash::check($request->password, $akun->password_hash)) {
+        if (! Auth::guard('admin')->attempt([
+            'email' => $request->email,
+            'password' => $request->password,
+        ])) {
             return response()->json([
                 'message' => 'Email atau password salah',
             ], 401);
         }
 
-        // 4. Simpan sesi login
-        Session::put('admin_id', $akun->id);
-        Session::put('admin_nama', $akun->nama);
+        $akun = Auth::guard('admin')->user();
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -46,8 +39,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Session::forget('admin_id');
-        Session::forget('admin_nama');
+        Auth::guard('admin')->logout();
 
         return response()->json([
             'message' => 'Logout berhasil',
