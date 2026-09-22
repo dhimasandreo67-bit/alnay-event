@@ -1,12 +1,19 @@
 <?php
+use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
+
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 use App\Http\Controllers\Admin\AuthController;
+
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+Route::post('/auth/logout', [GoogleAuthController::class, 'logout']);
+Route::get('/auth/me', [GoogleAuthController::class, 'me']);
 
 Route::post('/auth/admin/login', [AuthController::class, 'login']);
 Route::post('/auth/admin/logout', [AuthController::class, 'logout']);
