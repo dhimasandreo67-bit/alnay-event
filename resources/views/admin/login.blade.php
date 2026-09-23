@@ -25,7 +25,7 @@
             margin: 0;
             background: var(--cream);
             color: var(--ink);
-            font-family: Arial, sans-serif;
+            font-family: "Inter", Arial, sans-serif;
             min-height: 100vh
         }
 
@@ -44,7 +44,7 @@
             position: absolute;
             top: 30px;
             left: 54px;
-            font-family: Georgia, serif;
+            font-family: "Inter", Arial, sans-serif;
             font-size: 25px;
             font-weight: 700;
             letter-spacing: -1.5px
@@ -111,7 +111,7 @@
         }
 
         .visual h1 {
-            font: 700 34px/1.04 Georgia, serif;
+            font: 700 34px/1.04 "Inter", Arial, sans-serif;
             margin: 22px 0 12px;
             max-width: 320px
         }
@@ -131,7 +131,7 @@
         }
 
         .form-panel h2 {
-            font: 700 34px Georgia, serif;
+            font: 700 34px "Inter", Arial, sans-serif;
             margin: 0 0 8px
         }
 
