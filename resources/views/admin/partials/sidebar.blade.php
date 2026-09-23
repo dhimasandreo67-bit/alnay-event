@@ -4,9 +4,9 @@
 
     <nav class="admin-sidebar__nav" aria-label="Event dan peserta">
         <p class="admin-sidebar__section">Event & Peserta</p>
-        <a class="{{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}" href="{{ route('admin.dashboard') }}"><span class="admin-sidebar__step">1</span><span>Buat Event Baru</span></a>
+        <a class="{{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}" href="{{ route('admin.dashboard') }}"><span class="admin-sidebar__step">1</span><span>Verifikasi Pendaftaran Peserta</span><b class="admin-sidebar__badge">{{ $menungguReview ?? 0 }}</b></a>
         <a class="{{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}" href="{{ route('admin.form-builder', $event?->id) }}"><span class="admin-sidebar__step">2</span><span>Buat Form Pendaftaran Event Baru</span></a>
-        <a class="{{ ($active ?? '') === 'registrations' ? 'is-active' : '' }}" href="{{ route('admin.registrations', $event?->id) }}"><span class="admin-sidebar__step">3</span><span>Verifikasi Pendaftaran Peserta</span><b class="admin-sidebar__badge">{{ $menungguReview ?? 0 }}</b></a>
+        <a class="{{ ($active ?? '') === 'registrations' ? 'is-active' : '' }}" href="{{ route('admin.registrations', $event?->id) }}"><span class="admin-sidebar__step">3</span><span>Buat Event Baru</span></a>
         <a class="{{ ($active ?? '') === 'activation' ? 'is-active' : '' }}" href="{{ route('admin.activation', $event?->id) }}"><span class="admin-sidebar__step">4</span><span>Aktivasi Akun Peserta</span></a>
     </nav>
 
