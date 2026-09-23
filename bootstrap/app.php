@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Auth\AuthenticationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,22 +13,25 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureAdminLoggedIn::class,
+            'pelanggan' => \App\Http\Middleware\EnsurePelangganLoggedIn::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'auth/admin/login',
             'auth/admin/logout',
+            'event',
+            'event/*',
+            'peserta/*',
+            'pendaftaran/*',
         ]);
-        $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdminLoggedIn::class,
-        ]);
-        $middleware->validateCsrfTokens(except: [
-    'auth/admin/login',
-    'auth/admin/logout',
-    'event',
-    'event/*',
-]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
-        );
+        // Force agar semua error Unauthenticated selalu direspon JSON 401 (tanpa redirect GET)
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            return response()->json([
+                'message' => 'Anda harus login terlebih dahulu.'
+            ], 401);
+        });
     })->create();

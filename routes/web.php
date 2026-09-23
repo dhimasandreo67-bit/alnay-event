@@ -1,8 +1,11 @@
 <?php
+
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\PertanyaanEventController;
+use App\Http\Controllers\PendaftaranController;
+use App\Http\Controllers\PembayaranController;
 use Illuminate\Support\Facades\Route;
-
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,6 +24,7 @@ Route::post('/auth/admin/logout', [AuthController::class, 'logout']);
 // Event - baca boleh publik
 Route::get('/event', [EventController::class, 'index']);
 Route::get('/event/{id}', [EventController::class, 'show']);
+Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
 
 // Event - hanya admin yang login
 Route::middleware('admin')->group(function () {
@@ -29,4 +33,18 @@ Route::middleware('admin')->group(function () {
     Route::delete('/event/{id}', [EventController::class, 'destroy']);
     Route::patch('/event/{id}/voting', [EventController::class, 'toggleVoting']);
     Route::patch('/event/{id}/tampilkan-hasil', [EventController::class, 'toggleTampilkanHasil']);
+
+    Route::post('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'store']);
+    Route::put('/pertanyaan/{id}', [PertanyaanEventController::class, 'update']);
+    Route::delete('/pertanyaan/{id}', [PertanyaanEventController::class, 'destroy']);
 });
+
+// Pelanggan - hanya yang login Google
+Route::middleware('pelanggan')->group(function () {
+    Route::post('/event/{id}/daftar', [PendaftaranController::class, 'store']);
+    Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
+    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
+});
+
+// Webhook - publik
+Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook']);
