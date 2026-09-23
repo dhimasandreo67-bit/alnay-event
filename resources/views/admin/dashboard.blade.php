@@ -30,7 +30,7 @@
             margin: 0;
             background: var(--bg);
             color: var(--ink);
-            font: 12px Arial, sans-serif
+            font: 12px "Inter", Arial, sans-serif
         }
 
         .layout {
@@ -49,7 +49,7 @@
         }
 
         .brand {
-            font: bold 20px Georgia, serif;
+            font: 700 20px "Inter", Arial, sans-serif;
             color: #fff;
             padding: 6px 14px 30px;
             letter-spacing: -1px
@@ -224,7 +224,7 @@
         }
 
         .event-title {
-            font: bold 19px Georgia, serif;
+            font: 700 19px "Inter", Arial, sans-serif;
             margin: 0 0 6px
         }
 
@@ -473,7 +473,7 @@
 
             .brand:before {
                 content: 'A';
-                font: bold 23px Georgia;
+                font: 700 23px "Inter", Arial, sans-serif;
                 color: #c58d29
             }
 
