@@ -5,6 +5,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\PertanyaanEventController;
 use App\Http\Controllers\PendaftaranController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\VotingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,6 +38,8 @@ Route::middleware('admin')->group(function () {
     Route::post('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'store']);
     Route::put('/pertanyaan/{id}', [PertanyaanEventController::class, 'update']);
     Route::delete('/pertanyaan/{id}', [PertanyaanEventController::class, 'destroy']);
+
+    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'voters']);
 });
 
 // Pelanggan - hanya yang login Google
@@ -44,7 +47,12 @@ Route::middleware('pelanggan')->group(function () {
     Route::post('/event/{id}/daftar', [PendaftaranController::class, 'store']);
     Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
     Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
+    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
 });
 
 // Webhook - publik
 Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook']);
+
+// Voting - publik
+Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
+Route::post('/voting/midtrans/webhook', [VotingController::class, 'webhook']);
