@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('mode_penilaian'); // voting / juri (usulan nilai)
             $table->boolean('voting_aktif')->default(false);
             $table->boolean('tampilkan_hasil_voting')->default(false);
+            $table->json('form_schema')->nullable(); // Menyimpan struktur field dari Form Builder
+            $table->boolean('is_form_active')->default(true); // Untuk kontrol hapus sementara/nonaktifkan form
         });
     }
 
