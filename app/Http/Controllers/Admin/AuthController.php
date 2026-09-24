@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AkunStaf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
@@ -19,9 +19,7 @@ class AuthController extends Controller
         ]);
 
         // 2. Cari akun staf berdasarkan email
-        $akun = DB::table('akun_staf')
-            ->where('email', $request->email)
-            ->first();
+        $akun = AkunStaf::where('email', $request->email)->first();
 
         // 3. Cek akun ada dan password cocok
         if (! $akun || ! Hash::check($request->password, $akun->password_hash)) {
@@ -30,9 +28,9 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // 4. Simpan sesi login
-        Session::put('admin_id', $akun->id);
-        Session::put('admin_nama', $akun->nama);
+        // 4. Login resmi lewat guard 'admin' (supaya Auth::guard('admin')->check() bisa mendeteksi)
+        Auth::guard('admin')->login($akun);
+        $request->session()->regenerate();
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -46,8 +44,9 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Session::forget('admin_id');
-        Session::forget('admin_nama');
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
             'message' => 'Logout berhasil',

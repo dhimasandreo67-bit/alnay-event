@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'event/*',
             'peserta/*',
             'pendaftaran/*',
+            'voting/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
