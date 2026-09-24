@@ -24,6 +24,7 @@
 
         * {
             box-sizing: border-box
+            font-family: 'Inter', sans-serif
         }
 
         body {
@@ -230,7 +231,7 @@
 
         .event-meta {
             color: #969ba0;
-            font-size: 10px
+            font-size: 12px
         }
 
         .open {
@@ -238,7 +239,7 @@
             background: #e8fbf4;
             border-radius: 12px;
             padding: 4px 8px;
-            font-size: 9px;
+            font-size: 11px;
             margin-left: 8px
         }
 
@@ -287,7 +288,7 @@
 
         .card-label {
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 11px;
             color: #8d9295
         }
 
@@ -311,7 +312,7 @@
 
         .card-note {
             color: #a6a9aa;
-            font-size: 9px
+            font-size: 11px
         }
 
         .toolbar {
@@ -327,7 +328,7 @@
             border-radius: 5px;
             padding: 9px 12px;
             background: white;
-            font-size: 11px;
+            font-size: 13px;
             outline: none
         }
 
@@ -336,7 +337,7 @@
             gap: 7px;
             align-items: center;
             color: #8d9093;
-            font-size: 10px
+            font-size: 12px
         }
 
         .filter {
@@ -364,7 +365,7 @@
         }
 
         .panel-head strong {
-            font-size: 12px
+            font-size: 15px
         }
 
         .table-wrap {
@@ -382,7 +383,7 @@
             text-align: left;
             color: #8d9092;
             text-transform: uppercase;
-            font-size: 8px;
+            font-size: 11px;
             letter-spacing: .5px;
             padding: 12px 15px
         }
@@ -390,7 +391,7 @@
         td {
             border-top: 1px solid #f0f0ee;
             padding: 12px 15px;
-            font-size: 10px;
+            font-size: 13px;
             color: #4f555d
         }
 
@@ -406,26 +407,27 @@
             display: block;
             color: #9da1a4;
             font-weight: normal;
-            margin-top: 3px
+            margin-top: 4px;
+            font-size: 11px
         }
 
         .mini-avatar {
-            width: 25px;
-            height: 25px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: #f4f4f2;
             border: 1px solid #e7e7e4;
             display: grid;
             place-items: center;
             color: #8b8e90;
-            font-size: 8px
+            font-size: 10px
         }
 
         .status {
             border: 1px solid;
             padding: 4px 8px;
             border-radius: 12px;
-            font-size: 9px;
+            font-size: 11px;
             white-space: nowrap
         }
 
@@ -451,13 +453,13 @@
             background: #fff;
             border: 1px solid #ddd;
             border-radius: 4px;
-            padding: 5px 8px;
-            font-size: 9px
+            padding: 7px 10px;
+            font-size: 11px
         }
 
         .footer-note {
             color: #96999c;
-            font-size: 10px;
+            font-size: 12px;
             padding: 14px 15px
         }
 
@@ -546,35 +548,24 @@
         }
 
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-        body {
-            font-family: Inter, Arial, sans-serif
-        }
     </style>
 </head>
 
 <body>
-    <div class="layout">
+    <div class="layout pt-[76px]">
         @include('admin.partials.sidebar', [
             'active' => 'dashboard',
             'event' => $event,
             'menungguReview' => $menungguReview,
         ])
         @include('admin.partials.header', ['variant' => 'dashboard', 'event' => $event])
-        <div class="admin-page-spacer"></div>
+        {{-- <div class="hidden"></div> --}}
         <main class="main">
-            <header class="topbar">
-                <div class="crumb">Dashboard Admin<strong>{{ $event?->nama ?? 'Event Alnay' }}</strong></div>
-                <div class="top-actions"><a class="btn primary" href="#new-event">＋ &nbsp;Tambah Event Baru</a>
-                    <form method="POST" action="{{ route('admin.logout.web') }}">@csrf<button class="btn"
-                            type="submit">Keluar</button></form>
-                </div>
-            </header>
             <section class="content">
                 <div class="event-header">
-                    <div><span class="open">● Pendaftaran Dibuka</span><span class="event-meta"> &nbsp;01 Sep 2026,
+                    <div><span class="open" class="pt-4">Pendaftaran Dibuka</span><span class="event-meta"> &nbsp;01 Sep 2026,
                             00:00 – 20 Sep 2026, 23:59 WIB</span>
-                        <h1 class="event-title">{{ $event?->nama ?? 'OPEN CALL: WAJAH KAMPANYE CAHAYA BATIK 2026' }}
+                        <h1 class="event-title">{{ $event?->nama ?? 'PEMBUKAAN PENDAFTARAN ALNAY OF THE YEAR 2026' }}
                         </h1><span class="event-meta">Pendaftaran: 01 – 20 Sep 2026 &nbsp; · &nbsp; Kuota Maks: 12
                             orang</span>
                     </div><button class="btn primary" id="new-event">＋ Tambah Peserta Manual</button>
@@ -649,7 +640,7 @@
         document.getElementById('search').addEventListener('input', function() {
             const q = this.value.toLowerCase();
             document.querySelectorAll('#participantRows tr').forEach(r => r.style.display = r.innerText
-            .toLowerCase().includes(q) ? '' : 'none')
+                .toLowerCase().includes(q) ? '' : 'none')
         });
         const adminLinks = {
             '#form': '{{ route('admin.form-builder', $event?->id) }}',
@@ -658,7 +649,7 @@
             '#settings': '{{ route('admin.voting.settings', $event?->id) }}',
             '#voters': '{{ route('admin.voters', $event?->id) }}',
             '#leaderboard': '{{ route('admin.leaderboard', $event?->id) }}',
-            '#new-event': '{{ route('admin.events.create') }}'
+            '#new-event': '{{ route('admin.registrations', $event?->id) }}'
         };
         document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', function(e) {
             if (adminLinks[this.getAttribute('href')]) {
