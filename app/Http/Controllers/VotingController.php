@@ -39,6 +39,7 @@ class VotingController extends Controller
             'jumlah_vote' => ['required', 'integer', 'min:1'],
             'tipe_nama' => ['required', 'in:asli,samaran,anonim'],
             'nama_samaran' => ['required_if:tipe_nama,samaran', 'nullable', 'string', 'max:255'],
+            'pesan_dukungan' => ['nullable', 'string', 'max:1000'],
         ]);
 
         // Tentukan nama_tampilan sesuai pilihan user
@@ -80,6 +81,7 @@ class VotingController extends Controller
             'total_bayar' => $totalBayar,
             'midtrans_order_id' => $orderId,
             'status_midtrans' => 'pending',
+            'pesan_dukungan' => $data['pesan_dukungan'] ?? null,
         ]);
 
         return response()->json([

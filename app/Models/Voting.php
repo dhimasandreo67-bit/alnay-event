@@ -24,6 +24,7 @@ class Voting extends Model
         'total_bayar',
         'midtrans_order_id',
         'status_midtrans',
+        'pesan_dukungan',
     ];
 
     protected $casts = [

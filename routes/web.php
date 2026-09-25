@@ -12,6 +12,22 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/login', function () {
+    return view('auth.login');
+});
+
+Route::get('/beranda', function () {
+    return view('beranda');
+});
+
+Route::get('/peserta/{id}/vote', function ($id) {
+    return view('voting.index', [
+        'pesertaId' => $id,
+        'midtransClientKey' => config('services.midtrans.client_key'),
+        'midtransIsProduction' => config('services.midtrans.is_production'),
+    ]);
+});
+
 use App\Http\Controllers\Admin\AuthController;
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);
@@ -26,6 +42,8 @@ Route::post('/auth/admin/logout', [AuthController::class, 'logout']);
 Route::get('/event', [EventController::class, 'index']);
 Route::get('/event/{id}', [EventController::class, 'show']);
 Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
+Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta']);
+Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
 
 // Event - hanya admin yang login
 Route::middleware('admin')->group(function () {

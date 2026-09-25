@@ -63,4 +63,26 @@ class PendaftaranController extends Controller
 
         return response()->json($pesertas);
     }
+
+        // GET /event/{id}/peserta
+    public function daftarPeserta($id)
+    {
+        $pesertas = Peserta::with('user:id,nama,foto_url')
+            ->where('event_id', $id)
+            ->where('status', 'diterima')
+            ->get(['id', 'event_id', 'user_id']);
+
+        return response()->json($pesertas);
+    }
+
+        // GET /peserta/{id}
+    public function show($id)
+    {
+        // include additional event fields needed by the voting view
+        $peserta = Peserta::with(['user:id,nama,foto_url', 'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif'])
+            ->select('id', 'event_id', 'user_id')
+            ->findOrFail($id);
+
+        return response()->json($peserta);
+    }
 }
