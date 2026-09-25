@@ -243,7 +243,10 @@
 
                 blokDukungan = `
                     <div class="mt-8 bg-white border border-[#CDC5BC]/30 rounded-lg p-4">
-                        <h3 class="font-display font-bold text-lg text-black mb-1">Daftar Pendukung Terkini</h3>
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="font-display font-bold text-lg text-black">Daftar Pendukung Terkini</h3>
+                            <span class="text-xs font-semibold text-[#7F5700] uppercase tracking-wide">${dukungan.length} Pendukung</span>
+                        </div>
                         ${daftarHtml}
                     </div>
                 `;
@@ -258,7 +261,7 @@
                     ${blokGaleri}
                 </div>
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wide text-[#7F5700] mb-2">${p.event?.nama ?? ''}</p>
+                    <p class="inline-block bg-[#FAF3E7] text-xs font-bold uppercase tracking-wide text-[#7F5700] px-3 py-1 rounded-full mb-3">${p.event?.nama ?? ''}</p>
                     <h1 class="font-display font-bold text-4xl text-black mb-2">${p.user?.nama ?? 'Peserta'}</h1>
                     ${blokLokasi}
                     ${blokProfil}
