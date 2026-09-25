@@ -72,5 +72,7 @@ Route::middleware('pelanggan')->group(function () {
 Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook']);
 
 // Voting - publik
+// Voting - publik
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
+Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
 Route::post('/voting/midtrans/webhook', [VotingController::class, 'webhook']);

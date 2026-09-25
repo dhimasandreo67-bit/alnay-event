@@ -143,4 +143,28 @@ class VotingController extends Controller
 
         return response()->json(['voters' => $voters]);
     }
+
+        // GET /event/{event}/peserta/{peserta}/dukungan-terkini
+    public function dukunganTerkini(Request $request, Event $event, Peserta $peserta)
+    {
+        // Pastikan peserta yang diminta memang milik event ini
+        if ($peserta->event_id !== $event->id) {
+            abort(404, 'Peserta ini bukan bagian dari event tersebut.');
+        }
+
+        $adminLogin = Auth::guard('admin')->check();
+
+        if (! $event->tampilkan_hasil_voting && ! $adminLogin) {
+            abort(403, 'Dukungan terkini untuk event ini belum ditampilkan ke publik.');
+        }
+
+        $dukungan = Voting::where('peserta_id', $peserta->id)
+            ->where('status_midtrans', 'settlement')
+            ->select('nama_tampilan', 'pesan_dukungan', 'jumlah_vote', 'tanggal_vote')
+            ->orderByDesc('tanggal_vote')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['dukungan_terkini' => $dukungan]);
+    }
 }
