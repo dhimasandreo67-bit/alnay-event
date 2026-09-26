@@ -16,17 +16,20 @@ class Peserta extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'event_id',
-        'user_id',
-        'status',       // menunggu_pembayaran | diterima | ditolak
-        'hasil_akhir',
-        'skor_akhir',
-        'catatan_admin',
+    'event_id',
+    'user_id',
+    'status',
+    'hasil_akhir',
+    'skor_akhir',
+    'catatan_admin',
+    'galeri_foto',
+    'total_vote',
     ];
 
     protected $casts = [
-        'skor_akhir' => 'decimal:2',
-        'tanggal_daftar' => 'datetime',
+    'skor_akhir' => 'decimal:2',
+    'tanggal_daftar' => 'datetime',
+    'galeri_foto' => 'array',
     ];
 
     public function event(): BelongsTo

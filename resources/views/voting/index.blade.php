@@ -12,10 +12,6 @@
         rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <script type="text/javascript"
-        src="{{ $midtransIsProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
-        data-client-key="{{ $midtransClientKey }}"></script>
-
     <style>
         body {
             font-family: 'Manrope', sans-serif;
@@ -47,45 +43,6 @@
 
     </div>
 
-    <!-- Modal Form Vote -->
-    <div id="modal-vote" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-display font-bold text-xl text-black">Beri Suara</h2>
-                <button onclick="tutupModalVote()" class="text-[#4B463F] text-2xl leading-none">&times;</button>
-            </div>
-
-            <label class="block text-sm font-medium text-black mb-1">Jumlah Vote</label>
-            <input type="number" id="input-jumlah-vote" value="1" min="1"
-                class="w-full border border-[#CDC5BC] rounded-md px-3 py-2 mb-4">
-
-            <label class="block text-sm font-medium text-black mb-1">Tampilkan nama sebagai</label>
-            <select id="input-tipe-nama" class="w-full border border-[#CDC5BC] rounded-md px-3 py-2 mb-4">
-                <option value="asli">Nama asli saya</option>
-                <option value="samaran">Nama samaran</option>
-                <option value="anonim">Anonim</option>
-            </select>
-
-            <div id="wrap-nama-samaran" class="hidden mb-4">
-                <label class="block text-sm font-medium text-black mb-1">Nama Samaran</label>
-                <input type="text" id="input-nama-samaran"
-                    class="w-full border border-[#CDC5BC] rounded-md px-3 py-2">
-            </div>
-
-            <label class="block text-sm font-medium text-black mb-1">Pesan Dukungan (opsional)</label>
-            <textarea id="input-pesan-dukungan" rows="3" maxlength="1000"
-                class="w-full border border-[#CDC5BC] rounded-md px-3 py-2 mb-4"
-                placeholder="Tulis pesan dukungan..."></textarea>
-
-            <p id="pesan-error" class="text-sm text-red-600 mb-3 hidden"></p>
-
-            <button onclick="kirimVote()"
-                class="w-full bg-[#C28E27] text-[#FFF8F1] rounded-md py-3 text-sm font-semibold tracking-wide hover:bg-[#a97b1f] transition">
-                Bayar &amp; Vote
-            </button>
-        </div>
-    </div>
-
     <script>
         const pesertaId = {{ $pesertaId }};
         let hargaPerVote = 0;
@@ -105,25 +62,19 @@
             return new Intl.NumberFormat('id-ID').format(n);
         }
 
-        function bukaModalVote() {
-            document.getElementById('modal-vote').classList.remove('hidden');
-        }
-
-        function tutupModalVote() {
-            document.getElementById('modal-vote').classList.add('hidden');
-        }
-
+        // Bentuk data hasilVoting() sekarang: { event, peserta, hasil_voting }
+        // dan tiap item di hasil_voting adalah objek Peserta (field id, total_vote, dst)
         async function muatStatistik(eventId) {
             const res = await fetch(`/event/${eventId}/hasil-voting`, {
                 credentials: 'include'
             });
-            if (!res.ok) return null; // flag mati / tidak berizin -> statistik disembunyikan
+            if (!res.ok) return null;
 
             const data = await res.json();
-            const hasil = data.hasil_voting ?? [];
-            const totalSemua = hasil.reduce((sum, h) => sum + parseInt(h.total_vote), 0);
-            const indexKu = hasil.findIndex(h => h.peserta_id === pesertaId);
-            const totalVoteKu = indexKu !== -1 ? parseInt(hasil[indexKu].total_vote) : 0;
+            const daftar = data.hasil_voting ?? data.peserta ?? [];
+            const totalSemua = daftar.reduce((sum, h) => sum + parseInt(h.total_vote ?? 0), 0);
+            const indexKu = daftar.findIndex(h => h.id === pesertaId);
+            const totalVoteKu = indexKu !== -1 ? parseInt(daftar[indexKu].total_vote ?? 0) : 0;
             const persentase = totalSemua > 0 ? (totalVoteKu / totalSemua * 100) : 0;
             const ranking = indexKu !== -1 ? indexKu + 1 : null;
 
@@ -132,18 +83,19 @@
                 totalSemua,
                 persentase,
                 ranking,
-                totalPeserta: hasil.length,
+                totalPeserta: daftar.length,
             };
         }
 
+        // dukunganTerkini() sekarang mengembalikan array langsung, bukan {dukungan_terkini: [...]}
         async function muatDukunganTerkini(eventId) {
             const res = await fetch(`/event/${eventId}/peserta/${pesertaId}/dukungan-terkini`, {
                 credentials: 'include'
             });
-            if (!res.ok) return null; // flag mati / tidak berizin -> bagian ini disembunyikan
+            if (!res.ok) return null;
 
             const data = await res.json();
-            return data.dukungan_terkini ?? [];
+            return Array.isArray(data) ? data : (data.dukungan_terkini ?? []);
         }
 
         function cariJawaban(jawabans, tag) {
@@ -156,7 +108,11 @@
         }
 
         async function muatPeserta() {
-            const res = await fetch(`/peserta/${pesertaId}`);
+            const res = await fetch(`/peserta/${pesertaId}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             if (!res.ok) {
                 document.getElementById('konten').innerHTML =
                     '<p class="text-red-600 col-span-2">Peserta tidak ditemukan.</p>';
@@ -226,8 +182,8 @@
 
             let blokDukungan = '';
             if (dukungan !== null) {
-                const daftarHtml = dukungan.length > 0
-                    ? dukungan.map(d => `
+                const daftarHtml = dukungan.length > 0 ?
+                    dukungan.map(d => `
                         <div class="flex items-center gap-3 border-b border-[#CDC5BC]/30 py-3 last:border-b-0">
                             <div class="w-9 h-9 rounded-full bg-[#0A1526] text-[#FFF8F1] flex items-center justify-center text-xs font-bold flex-shrink-0">
                                 ${inisial(d.nama_tampilan)}
@@ -238,8 +194,8 @@
                             </div>
                             ${d.pesan_dukungan ? `<p class="text-xs text-[#7F5700] font-semibold whitespace-nowrap">${formatAngka(d.jumlah_vote)} vote</p>` : ''}
                         </div>
-                    `).join('')
-                    : '<p class="text-sm text-[#4B463F] py-3">Belum ada dukungan.</p>';
+                    `).join('') :
+                    '<p class="text-sm text-[#4B463F] py-3">Belum ada dukungan.</p>';
 
                 blokDukungan = `
                     <div class="mt-8 bg-white border border-[#CDC5BC]/30 rounded-lg p-4">
@@ -266,66 +222,15 @@
                     ${blokLokasi}
                     ${blokProfil}
                     ${blokStatistik}
-                    <button onclick="bukaModalVote()"
-                        class="w-full bg-[#C28E27] text-[#FFF8F1] rounded-md py-3 text-sm font-semibold tracking-wide hover:bg-[#a97b1f] transition">
-                        Rp ${formatAngka(hargaPerVote)} / Vote
-                    </button>
+
+                    <a href="/peserta/${pesertaId}/checkout"
+                        class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] rounded-md py-3 text-sm font-semibold tracking-wide hover:bg-[#a97b1f] transition">
+                        Dukung Sekarang (Rp ${formatAngka(hargaPerVote)} / Vote)
+                    </a>
+
                     ${blokDukungan}
                 </div>
             `;
-        }
-
-        document.getElementById('input-tipe-nama').addEventListener('change', function() {
-            document.getElementById('wrap-nama-samaran').classList.toggle('hidden', this.value !== 'samaran');
-        });
-
-        async function kirimVote() {
-            const jumlahVote = document.getElementById('input-jumlah-vote').value;
-            const tipeNama = document.getElementById('input-tipe-nama').value;
-            const namaSamaran = document.getElementById('input-nama-samaran').value;
-            const pesanDukungan = document.getElementById('input-pesan-dukungan').value;
-            const pesanError = document.getElementById('pesan-error');
-
-            const res = await fetch(`/peserta/${pesertaId}/vote`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    jumlah_vote: parseInt(jumlahVote),
-                    tipe_nama: tipeNama,
-                    nama_samaran: namaSamaran,
-                    pesan_dukungan: pesanDukungan || null,
-                }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                pesanError.textContent = data.message ?? 'Terjadi kesalahan.';
-                pesanError.classList.remove('hidden');
-                return;
-            }
-
-            pesanError.classList.add('hidden');
-            tutupModalVote();
-
-            snap.pay(data.snap_token, {
-                onSuccess: function() {
-                    alert('Pembayaran berhasil! Terima kasih sudah vote.');
-                },
-                onPending: function() {
-                    alert('Pembayaran sedang diproses.');
-                },
-                onError: function() {
-                    alert('Pembayaran gagal.');
-                },
-                onClose: function() {
-                    alert('Kamu menutup popup sebelum menyelesaikan pembayaran.');
-                }
-            });
         }
 
         (async () => {

@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('peserta_event', function (Blueprint $table) {
-            //
+            $table->json('galeri_foto')->nullable()->after('tanggal_daftar');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('peserta_event', function (Blueprint $table) {
-            //
+            $table->dropColumn('galeri_foto');
         });
     }
 };

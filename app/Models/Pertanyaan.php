@@ -16,12 +16,13 @@ class Pertanyaan extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'event_id',
-        'label',
-        'tipe_input',
-        'pilihan_jawaban',
-        'wajib',
-        'urutan',
+    'event_id',
+    'label',
+    'tipe_input',
+    'pilihan_jawaban',
+    'wajib',
+    'urutan',
+    'tag_tampilan',
     ];
 
     protected $casts = [
