@@ -35,6 +35,7 @@ class NavigationController extends Controller
             },
             'pageTitle' => $pages[$page][0],
             'pageDescription' => $pages[$page][1],
+            'questions' => $event?->pertanyaans()->get() ?? collect(),
         ]);
     }
 }
