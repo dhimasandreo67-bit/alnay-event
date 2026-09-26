@@ -53,25 +53,3 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/peserta/{peserta}/hasil', [PesertaController::class, 'updateHasil']);   // admin/owner
     Route::get('/peserta/{peserta}/voter', [PesertaController::class, 'voterList']);     // admin/owner
 });
-
-/*
-|--------------------------------------------------------------------------
-| Contoh registrasi middleware 'role' (Laravel 11/12/13, di bootstrap/app.php)
-|--------------------------------------------------------------------------
-|
-| ->withMiddleware(function (Middleware $middleware) {
-|     $middleware->alias([
-|         'role' => \App\Http\Middleware\EnsureUserHasRole::class,
-|     ]);
-| })
-|
-| Contoh isi middleware-nya:
-|
-| public function handle($request, Closure $next, string $role)
-| {
-|     if (!$request->user() || $request->user()->role !== $role) {
-|         abort(403, 'Tidak punya akses.');
-|     }
-|     return $next($request);
-| }
-*/
