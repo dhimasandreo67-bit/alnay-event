@@ -10,9 +10,15 @@ return new class extends Migration
     {
         Schema::create('jawaban_peserta', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('peserta_id')->constrained('peserta_event')->restrictOnDelete();
-            $table->foreignId('pertanyaan_id')->constrained('pertanyaan_event')->restrictOnDelete();
+            
+            // Tambahkan onDelete('cascade') pada foreign key pertanyaan_id
+            $table->foreignId('pertanyaan_id')
+                ->constrained('pertanyaan_event')
+                ->onDelete('cascade'); 
+
+            $table->foreignId('peserta_id')->constrained('peserta')->onDelete('cascade');
             $table->text('jawaban')->nullable();
+            $table->timestamps();
         });
     }
 
