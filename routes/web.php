@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\WebAuthController;
 use App\Http\Controllers\PendaftaranController as PublicPendaftaranController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AktivasiController;
+use App\Http\Controllers\Admin\PesertaController;
 
 // Route Halaman Depan
 Route::get('/', function () {
@@ -44,6 +45,10 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.events.toggle-hasil');
     Route::delete('/admin/events/{event}/questions/clear', [PendaftaranController::class, 'clearQuestions'])
     ->name('admin.events.questions.clear');
+
+    // Export peserta ke CSV
+    Route::get('/admin/events/{event}/peserta/export', [PesertaController::class, 'export'])
+    ->name('admin.peserta.export');
 
     // Form Builder
     Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])->name('admin.form-builder');

@@ -555,21 +555,46 @@
     <div class="layout pt-[76px]">
         @include('admin.partials.sidebar', [
             'active' => 'dashboard',
-            'event' => $event,
+            'event' => $event ?? null,
             'menungguReview' => $menungguReview,
         ])
         @include('admin.partials.header', ['variant' => 'dashboard', 'event' => $event])
         {{-- <div class="hidden"></div> --}}
         <main class="main">
             <section class="content">
-                <div class="event-header">
-                    <div><span class="open" class="pt-4">Pendaftaran Dibuka</span><span class="event-meta"> &nbsp;01 Sep 2026,
-                            00:00 – 20 Sep 2026, 23:59 WIB</span>
-                        <h1 class="event-title">{{ $event?->nama ?? 'PEMBUKAAN PENDAFTARAN ALNAY OF THE YEAR 2026' }}
-                        </h1><span class="event-meta">Pendaftaran: 01 – 20 Sep 2026 &nbsp; · &nbsp; Kuota Maks: 12
-                            orang</span>
-                    </div><button class="btn primary" id="new-event">＋ Tambah Peserta Manual</button>
+                <!-- KODE BARU -->
+<div class="event-header">
+    <div>
+        <span class="open" class="pt-4">Pendaftaran Dibuka</span>
+        <span class="event-meta"> &nbsp;01 Sep 2026, 00:00 – 20 Sep 2026, 23:59 WIB</span>
+        <h1 class="event-title">{{ $event?->nama ?? 'PEMBUKAAN PENDAFTARAN ALNAY OF THE YEAR 2026' }}</h1>
+        <span class="event-meta">Pendaftaran: 01 – 20 Sep 2026 &nbsp; · &nbsp; Kuota Maks: 12 orang</span>
+    </div>
+
+                <!-- Container tombol berjajar kesamping -->
+                <div class="flex items-center gap-2">
+                    <!-- Tombol Download Data Peserta -->
+                    <a href="{{ route('admin.peserta.export', $event->id) }}"
+                        class="inline-flex items-center gap-1.5 px-4 py-4
+                                bg-emerald-600 hover:bg-emerald-700 
+                                text-white font-bold text-[12px] 
+                                rounded-md transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download Data Peserta
+                    </a>
+
+                    <!-- Tombol Tambah Peserta Manual -->
+                    <a href="{{ route('public.registration', $event->id) }}"
+                        class="inline-flex items-center px-4 py-4
+                                bg-[#ba8320] hover:bg-[#a06f1a] 
+                                text-white font-bold text-[12px] 
+                                rounded-md transition-colors shadow-sm">
+                        + Tambah Peserta Manual
+                    </a>
                 </div>
+            </div>
                 <div class="stats">
                     <div class="card"><span class="card-label">Total Pendaftar</span>
                         <div class="number">{{ $totalPendaftar }}</div><span class="card-note">Peserta tercatat</span>
@@ -577,70 +602,148 @@
                     <div class="card"><span class="card-label">Menunggu Review</span>
                         <div class="number">{{ $menungguReview }}</div><span class="card-note">Prioritas Kurasi</span>
                     </div>
-                    <div class="card"><span class="card-label">Perlu Revisi Data</span>
+                    {{-- <div class="card"><span class="card-label">Perlu Revisi Data</span>
                         <div class="number">{{ $perluRevisi }}</div><span class="card-note">Dokumen kurang</span>
-                    </div>
+                    </div> --}}
                     <div class="card"><span class="card-label">Diterima</span>
                         <div class="number">{{ $diterima }}</div><span class="card-note">Lolos Final Lineup</span>
                     </div>
                 </div>
                 <div class="toolbar"><input class="search" id="search"
                         placeholder="⌕  Cari nama atau nomor HP peserta...">
-                    <div class="filters"><button class="filter active">Semua {{ $totalPendaftar }}</button><button
-                            class="filter">Menunggu {{ $menungguReview }}</button><button class="filter">Diterima
-                            {{ $diterima }}</button><button class="filter">Ditolak {{ $perluRevisi }}</button>
+                    <div class="filters">
+                        <button class="filter active" data-filter="semua">Semua {{ $totalPendaftar }}</button>
+                        <button class="filter" data-filter="menunggu">Menunggu {{ $menungguReview }}</button>
+                        <button class="filter" data-filter="diterima">Diterima {{ $diterima }}</button>
+                        <button class="filter" data-filter="ditolak">Ditolak {{ $ditolak }}</button>
                     </div>
                 </div>
                 <div class="panel" id="verification">
                     <div class="panel-head"><strong>Daftar Peserta</strong><span class="event-meta">Update terakhir:
                             baru saja</span></div>
                     <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Peserta</th>
-                                    <th>Umur</th>
-                                    <th>Tinggi / Berat</th>
-                                    <th>Kontak</th>
-                                    <th>Status</th>
-                                    <th>Aksi Cepat</th>
+                        <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="p-3">No</th>
+                                <th class="p-3">Jawaban Form / Detail Peserta</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantRows">
+                            @forelse($pesertas ?? [] as $index => $peserta)
+                            @php $status = strtolower($peserta->status ?? 'menunggu_review'); @endphp
+                                <tr class="border-b" data-status="{{ $status }}">
+                                    <td class="p-3">{{ $index + 1 }}</td>
+                                    <td class="p-3">
+                                        <ul class="text-xs space-y-1">
+                                            <li><strong>Nama:</strong> {{ $peserta->user?->nama ?? '-' }}</li>
+                                            <li><strong>Email:</strong> {{ $peserta->user?->email ?? '-' }}</li>
+                                            @foreach($peserta->jawabans as $jawaban)
+                                                <li>
+                                                    <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
+                                                    @if($jawaban->pertanyaan?->tipe_input === 'file')
+                                                        <a href="{{ route('admin.jawaban.file', $jawaban) }}" target="_blank">Lihat file</a>
+                                                    @else
+                                                        {{ is_array($jawaban->jawaban) ? implode(', ', $jawaban->jawaban) : $jawaban->jawaban }}
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </td>
+                                    <!-- Status Peserta -->
+                                    <td class="p-3">
+
+                                        @if($status === 'diterima')
+                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
+                                        @elseif($status === 'ditolak')
+                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
+                                        {{-- @elseif($status === 'revisi')
+                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">Perlu Revisi</span> --}}
+                                        @else
+                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu Review</span>
+                                        @endif
+                                    </td>
+                                    <!-- Tombol Aksi Cepat -->
+                                    <td class="p-3">
+                                        <div class="flex items-center gap-2">
+                                            <!-- Tombol Lihat -->
+                                            <a href="{{ route('admin.peserta.show', $peserta->id) }}" 
+                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
+                                                Lihat
+                                            </a>
+
+                                            <!-- Tombol Hapus -->
+                                            <form action="{{ route('admin.peserta.destroy', $peserta->id) }}" 
+                                                method="POST" 
+                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data peserta ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
+                                                    🗑️ Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody id="participantRows">
-                                @forelse($peserta as $item)
-                                    <tr>
-                                        <td>
-                                            <div class="person"><span
-                                                    class="mini-avatar">{{ strtoupper(substr($item->user?->nama ?? 'NA', 0, 2)) }}</span>
-                                                <div>{{ $item->user?->nama ?? 'Peserta Baru' }}<small>#{{ str_pad($item->id, 3, '0', STR_PAD_LEFT) }}
-                                                        · {{ $item->event?->nama ?? 'Event' }}</small></div>
-                                            </div>
-                                        </td>
-                                        <td>—</td>
-                                        <td>—</td>
-                                        <td>—</td>
-                                        <td><span
-                                                class="status {{ $item->status === 'diterima' ? 'ok' : ($item->status === 'ditolak' ? 'no' : 'wait') }}">{{ str_replace('_', ' ', ucfirst($item->status)) }}</span>
-                                        </td>
-                                        <td><button class="detail">Detail</button></td>
-                                </tr>@empty<tr>
-                                        <td colspan="6" style="text-align:center;padding:34px;color:#999">Belum ada
-                                            peserta tercatat.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-gray-500">
+                                        Belum ada peserta tercatat.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                     </div>
-                    <div class="footer-note">Menampilkan {{ $peserta->count() }} peserta terdaftar</div>
+                    <div class="footer-note">Menampilkan {{ $pesertas->count() }} peserta terdaftar</div>
                 </div>
             </section>
         </main>
     </div>
     <script>
-        document.getElementById('search').addEventListener('input', function() {
-            const q = this.value.toLowerCase();
-            document.querySelectorAll('#participantRows tr').forEach(r => r.style.display = r.innerText
-                .toLowerCase().includes(q) ? '' : 'none')
+        const searchInput = document.getElementById('search');
+        const filterButtons = document.querySelectorAll('.filter');
+        const rows = document.querySelectorAll('#participantRows tr[data-status]');
+        const footerNote = document.querySelector('.footer-note');
+
+        const statusMap = {
+            menunggu: 'menunggu_review',
+            diterima: 'diterima',
+            ditolak: 'ditolak',
+        };
+
+        let activeFilter = 'semua';
+
+        function applyFilters() {
+            const q = searchInput.value.toLowerCase();
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const matchSearch = row.innerText.toLowerCase().includes(q);
+                const matchFilter = activeFilter === 'semua' || row.dataset.status === statusMap[activeFilter];
+                const show = matchSearch && matchFilter;
+
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+
+            if (footerNote) {
+                footerNote.textContent = `Menampilkan ${visibleCount} peserta terdaftar`;
+            }
+        }
+
+        searchInput.addEventListener('input', applyFilters);
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                activeFilter = this.dataset.filter;
+                applyFilters();
+            });
         });
         const adminLinks = {
             '#form': '{{ route('admin.form-builder', $event?->id) }}',

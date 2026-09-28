@@ -136,7 +136,7 @@ class PendaftaranController extends Controller
                     continue;
                 }
 
-                $answer = $request->file("answers.{$question->id}")?->store('peserta');
+                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
                 $answer ??= $data['answers'][$question->id] ?? null;
 
                 if ($answer === null || $answer === '') {
@@ -243,7 +243,7 @@ class PendaftaranController extends Controller
         // 3. Hitung jumlah statistik peserta berdasarkan status (otomatis menyesuaikan data yang sudah difilter)
         $totalPendaftar = $pesertas->count();
         $menungguReview = $pesertas->where('status', 'menunggu_review')->count();
-        $perluRevisi    = $pesertas->where('status', 'revisi')->count();
+        // $perluRevisi    = $pesertas->where('status', 'revisi')->count();
         $diterima       = $pesertas->where('status', 'diterima')->count();
         $ditolak        = $pesertas->where('status', 'ditolak')->count();
 
@@ -253,7 +253,7 @@ class PendaftaranController extends Controller
             'pesertas', 
             'totalPendaftar', 
             'menungguReview', 
-            'perluRevisi', 
+            // 'perluRevisi', 
             'diterima', 
             'ditolak'
         ));

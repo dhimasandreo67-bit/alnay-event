@@ -63,10 +63,6 @@
             margin: 0 12px 12px
         }
 
-        .nav {
-            margin-bottom: 26px
-        }
-
         .nav a {
             display: flex;
             gap: 11px;
@@ -217,16 +213,12 @@
 
         .builder {
             display: grid;
-            grid-template-columns: 220px minmax(420px, 1fr) 300px;
+            grid-template-columns: 220px minmax(420px, 1fr);
             min-height: calc(100vh - 115px)
         }
 
-        .library,
-        .inspector {
-            background: #faf9f7
-        }
-
         .library {
+            background: #faf9f7;
             border-right: 1px solid var(--line);
             padding: 18px 12px
         }
@@ -286,9 +278,11 @@
         }
 
         .canvas {
-            padding: 26px 30px 70px;
-            overflow: auto;
-            background: #f5f4f1
+            padding: 60px 30px 70px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: #f5f4f1;
+            min-width: 0;
         }
 
         .canvas-bar {
@@ -300,44 +294,11 @@
             margin-bottom: 18px
         }
 
-        .zoom {
-            border: 1px solid var(--line);
-            background: white;
-            border-radius: 5px;
-            padding: 6px 10px
-        }
-
-        .form-canvas {
-            max-width: 760px;
-            margin: auto
-        }
-
-        .form-header,
         .question {
             background: white;
             border: 1px solid #e3ded6;
             border-radius: 12px;
-            box-shadow: 0 3px 10px #3a302211
-        }
-
-        .form-header {
-            padding: 24px 20px;
-            margin-bottom: 14px;
-            border-top: 4px solid var(--gold)
-        }
-
-        .form-header h2 {
-            font: 700 24px "Inter", Arial, sans-serif;
-            margin: 0 0 8px
-        }
-
-        .form-header p {
-            margin: 0;
-            color: #73716c;
-            font-size: 12px
-        }
-
-        .question {
+            box-shadow: 0 3px 10px #3a302211;
             padding: 18px;
             margin-bottom: 13px;
             position: relative
@@ -351,7 +312,8 @@
         .question-head {
             display: flex;
             align-items: flex-start;
-            justify-content: space-between
+            justify-content: space-between;
+            gap: 16px;
         }
 
         .question-label {
@@ -359,6 +321,11 @@
             font-weight: bold;
             outline: none;
             cursor: text
+        }
+
+        .question-head > div:first-child {
+            min-width: 0;
+            flex: 1;
         }
 
         .question-label:focus {
@@ -384,9 +351,10 @@
             outline: none;
             cursor: text
         }
-        .question-meta:focus {
-            background: #fffdf6;
-            border-radius: 4px
+
+        .question-meta:empty:before {
+            content: 'Tambahkan keterangan (opsional)';
+            color: #c7c3ba
         }
 
         .grip {
@@ -405,16 +373,6 @@
             background: #fcfcfb
         }
 
-        .preview.area {
-            height: 56px
-        }
-
-        .preview.select:after {
-            content: '⌄';
-            float: right;
-            color: #999
-        }
-
         .dropzone {
             height: 56px;
             border: 1px dashed #d5cbbd;
@@ -431,78 +389,6 @@
             border-color: var(--gold)
         }
 
-        .inspector {
-            border-left: 1px solid var(--line);
-            padding: 18px
-        }
-
-        .inspector h3 {
-            font-size: 13px;
-            margin: 0 0 6px
-        }
-
-        .inspector>p {
-            font-size: 11px;
-            color: #999;
-            margin: 0 0 19px;
-            line-height: 1.5
-        }
-
-        .control {
-            margin-bottom: 17px
-        }
-
-        .control label {
-            display: block;
-            font-size: 11px;
-            font-weight: bold;
-            margin-bottom: 7px;
-            color: #59564f
-        }
-
-        .control input,
-        .control textarea,
-        .control select {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            background: white;
-            padding: 10px;
-            font-size: 12px;
-            font-family: inherit
-        }
-
-        .control textarea {
-            height: 68px;
-            resize: vertical
-        }
-
-        .toggle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid var(--line);
-            padding-top: 16px
-        }
-
-        .toggle input {
-            accent-color: var(--gold);
-            width: 18px;
-            height: 18px
-        }
-
-        .hint {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 13px 22px;
-            background: #fff;
-            border-top: 1px solid var(--line);
-            font-size: 11px;
-            color: #8d8981
-        }
-
         .empty {
             border: 1px dashed #d8d0c4;
             border-radius: 12px;
@@ -512,24 +398,54 @@
             background: #fff
         }
 
-        .toast {
+        .draft-modal-backdrop {
             position: fixed;
-            right: 24px;
-            bottom: 24px;
-            background: #182b26;
-            color: #e7fff7;
-            padding: 13px 18px;
-            border-radius: 8px;
-            box-shadow: 0 5px 18px #0003;
+            inset: 0;
+            z-index: 1000;
             display: none;
-            font-size: 13px
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #17151299
         }
 
-        .toast.show {
-            display: block
+        .draft-modal-backdrop.show {
+            display: flex
         }
 
-        /* ===== Elemen pertanyaan per-tipe ===== */
+        .draft-modal {
+            width: min(420px, 100%);
+            border: 1px solid #e5e1db;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 18px 50px #0004;
+            padding: 24px
+        }
+
+        .draft-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 22px
+        }
+
+        .draft-modal-actions button {
+            border: 1px solid #dedbd4;
+            border-radius: 5px;
+            background: #fff;
+            color: #56524c;
+            cursor: pointer;
+            padding: 9px 13px;
+            font-size: 11px
+        }
+
+        .draft-modal-actions .draft-restore {
+            border-color: #ba8320;
+            background: #ba8320;
+            color: #fff;
+            font-weight: 700
+        }
+
         .question.heading .question-label {
             font: 700 30px/1.15 "Inter", Arial, sans-serif;
             color: #211e1a
@@ -570,29 +486,6 @@
             color: #fff
         }
 
-        .question.text-field .question-label {
-            font-size: 12px
-        }
-
-        .question.email-field .preview {
-            font-size: 0
-        }
-
-        .question.email-field .preview::after {
-            content: 'Masukkan alamat email (contoh: nama@email.com)';
-            font-size: 11px;
-            color: #aaa
-        }
-
-        .choice-field .preview {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: transparent;
-            border: 0;
-            padding: 0
-        }
-
         .choice-option {
             display: flex;
             align-items: center;
@@ -601,12 +494,8 @@
             font-size: 11px
         }
 
-        .choice-option input {
-            accent-color: var(--gold)
-        }
-
         .file-preview {
-            height: 91px;
+            height: 76px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -623,32 +512,6 @@
             margin-bottom: 5px
         }
 
-        .trash-icon {
-            font-size: 18px
-        }
-
-        .fake-select {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #aaa
-        }
-
-        .question.dragging-question {
-            opacity: .45
-        }
-
-        #questionList.drag-target {
-            outline: 2px dashed var(--gold);
-            outline-offset: 6px
-        }
-
-        #saveForm:disabled {
-            opacity: .65;
-            cursor: wait
-        }
-
-        /* ===== Inline edit di canvas ===== */
         .preview-input {
             outline: none;
             cursor: text;
@@ -669,11 +532,6 @@
             outline: none;
             cursor: text;
             flex: 1
-        }
-
-        .option-text:focus {
-            background: #fffdf6;
-            border-radius: 4px
         }
 
         .option-remove {
@@ -704,1388 +562,354 @@
             text-decoration: underline
         }
 
-        /* ===== Responsive ===== */
-        @media(max-width:980px) {
-            .builder {
-                grid-template-columns: 200px minmax(380px, 1fr)
-            }
-
-            .inspector {
-                display: none
-            }
+        .file-drop {
+            display: block;
+            cursor: pointer;
         }
 
-        @media(max-width:650px) {
-            .side {
-                width: 70px
-            }
+        .file-clear {
+            border: 0;
+            background: none;
+            color: #bbb;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 6px
+        }
 
-            .brand {
-                font-size: 0;
-                padding-left: 12px
-            }
+        .required-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 9px;
+            color: #98958f;
+            white-space: nowrap;
+        }
 
-            .brand:before {
-                content: 'A';
-                font: 700 26px "Inter", Arial, sans-serif;
-                color: #ca922b
-            }
+        .required-switch-track {
+            width: 30px;
+            height: 17px;
+            border-radius: 999px;
+            background: #e5e1db;
+            position: relative;
+            transition: background .15s ease;
+            flex: none;
+        }
 
-            .section,
-            .nav a span:not(.step),
-            .badge,
-            .user div {
-                display: none
-            }
+        .required-switch-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+            transition: left .15s ease;
+        }
 
-            .nav a {
-                justify-content: center
-            }
+        .required-switch.active .required-switch-track {
+            background: #e26855;
+        }
 
-            .user {
-                width: 50px;
-                justify-content: center
-            }
+        .required-switch.active .required-switch-thumb {
+            left: 15px;
+        }
 
-            .builder {
-                display: block
-            }
-
-            .library {
-                display: flex;
-                gap: 9px;
-                overflow: auto;
-                padding: 11px
-            }
-
-            .library .pane-title {
-                display: none
-            }
-
-            .field-item {
-                min-width: 150px;
-                margin: 0;
-                padding: 10px
-            }
-
-            .field-item small {
-                display: none
-            }
-
-            .canvas {
-                padding: 18px 12px
-            }
-
-            .top {
-                height: auto
-            }
-
-            .top-actions {
-                overflow: auto
-            }
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-            body {
-                font-family: Inter, Arial, sans-serif
-            }
-
-
-            .question.heading,
-            .question.subheading {
-                padding: 20px 16px
-            }
-
-            .question.heading .question-label {
-                font: 700 25px/1.15 "Inter", Arial, sans-serif;
-                color: #211e1a
-            }
-
-            .question.subheading .question-label {
-                font: 500 13px/1.5 Inter, Arial, sans-serif;
-                color: #6f6b64
-            }
-
-            .question.heading .question-meta,
-            .question.subheading .question-meta,
-            .question.heading .preview,
-            .question.subheading .preview {
-                display: none
-            }
-
-            .question-actions {
-                display: flex;
-                align-items: center;
-                gap: 10px
-            }
-
-            .remove {
-                width: 27px;
-                height: 27px;
-                border: 1px solid #eadbd0;
-                border-radius: 5px;
-                background: #fff8f5;
-                color: #c15b45;
-                cursor: pointer;
-                font-size: 16px;
-                line-height: 1
-            }
-
-            .remove:hover {
-                background: #c15b45;
-                color: #fff
-            }
-
-            .grip {
-                cursor: grab
-            }
-
-            .question.text-field .question-label {
-                font-size: 10px
-            }
-
-            .question.email-field .preview {
-                font-size: 0
-            }
-
-            .question.email-field .preview::after {
-                content: 'Masukkan alamat email (contoh: nama@email.com)';
-                font-size: 9px;
-                color: #aaa
-            }
-
-            .question.choice-field .preview {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                background: transparent;
-                border: 0;
-                padding: 0;
-                color: #5b5852
-            }
-
-            .choice-option {
-                display: flex;
-                align-items: center;
-                gap: 8px
-            }
-
-            .choice-option input {
-                accent-color: var(--gold)
-            }
-
-            .question.file-field .preview {
-                height: 76px;
-                display: grid;
-                place-items: center;
-                border: 1px dashed #d5cbbd;
-                background: #fcfbf9;
-                color: #8d8981
-            }
-
-            .question.file-field .preview::before {
-                content: '▣';
-                display: block;
-                color: var(--gold);
-                font-size: 16px;
-                margin-bottom: 3px
-            }
-
-            .trash-icon {
-                font-size: 15px
-            }
-
-            .fake-select {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                color: #aaa;
-            }
-
-            .choice-field .preview {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                background: transparent;
-                border: 0;
-                padding: 0;
-            }
-
-            .choice-option {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                color: #5b5852;
-                font-size: 9px;
-            }
-
-            .choice-option input {
-                accent-color: var(--gold);
-            }
-
-            .file-preview {
-                height: 76px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                border: 1px dashed #d5cbbd;
-                border-radius: 6px;
-                background: #fcfbf9;
-                color: #8d8981;
-            }
-
-            .file-icon {
-                color: var(--gold);
-                font-size: 16px;
-                margin-bottom: 4px;
-            }
-
-            .question.dragging-question {
-                opacity: .45;
-            }
-
-            #questionList.drag-target {
-                outline: 2px dashed var(--gold);
-                outline-offset: 5px;
-            }
-
-            #saveForm:disabled {
-                opacity: .65;
-                cursor: wait;
-            }
-
-            /* Label jadi bisa diklik & diketik langsung, kayak Google Form */
-            .question-label {
-                outline: none;
-                cursor: text;
-            }
-
-            .question-label:focus {
-                background: #fffdf6;
-                border-radius: 4px;
-                box-shadow: 0 0 0 2px #ecd9a6;
-            }
-
-            .question-label:empty:before {
-                content: 'Tulis pertanyaan...';
-                color: #b7b3ac;
-            }
-
-            /* Badge "Wajib" sekarang otomatis dari CSS, bukan elemen <em> lagi */
-            .question[data-required="true"] .question-label::after {
-                content: ' *';
-                color: #e26855;
-            }
-
-            /* Placeholder text-field / textarea / number / email, ikut bisa diklik */
-            .preview-input {
-                outline: none;
-                cursor: text;
-                min-height: 16px;
-            }
-
-            .preview-input:focus {
-                background: #fffdf6;
-                border-radius: 4px;
-            }
-
-            .preview-input:empty:before {
-                content: 'Ketik placeholder...';
-                color: #aaa;
-            }
-
-            /* Opsi radio/checkbox/dropdown, tiap opsi bisa diklik + ada tombol hapus/tambah */
-            .option-text {
-                outline: none;
-                cursor: text;
-                flex: 1;
-            }
-
-            .option-text:focus {
-                background: #fffdf6;
-                border-radius: 3px;
-            }
-
-            .option-remove {
-                border: 0;
-                background: none;
-                color: #bbb;
-                cursor: pointer;
-                font-size: 13px;
-                line-height: 1;
-            }
-
-            .option-remove:hover {
-                color: #c15b45;
-            }
-
-            .add-option {
-                border: 0;
-                background: none;
-                color: var(--gold);
-                cursor: pointer;
-                font-size: 9px;
-                padding: 4px 0;
-                text-align: left;
-                display: block;
-            }
-
-            .add-option:hover {
-                text-decoration: underline;
-            }
+        .required-switch.active .required-switch-label {
+            color: #c1442f;
+            font-weight: bold;
+        }
     </style>
 </head>
-:root{--ink:#22201d;--dark:#171512;--gold:#c38b22;--cream:#f7f6f3;--line:#e5e1db;--muted:#8a8984;--green:#089b73}*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:12px
-Arial,sans-serif}
-@include('admin.partials.header', ['variant' => 'builder', 'event' => $event])
-<div class="shell">
-    <aside class="side">
-        <div class="brand">ALNAY<span>.ID</span></div>
-        <div class="nav">
-            <p class="section">Event & Peserta</p><a href="{{ route('admin.dashboard') }}"><span
-                    class="step">1</span><span>Buat Event Baru</span></a><a class="active"
-                href="{{ route('admin.form-builder', $event?->id) }}"><span class="step">2</span><span>Buat Form
-                    Pendaftaran Event</span></a><a href="#"><span class="step">3</span><span>Verifikasi
-                    Pendaftaran Peserta</span><b class="badge">6</b></a><a href="#"><span
-                    class="step">4</span><span>Aktivasi Akun Peserta</span></a>
-        </div>
-        <div class="nav">
-            <p class="section">Voting</p><a href="#"><span class="step">4</span><span>Pengaturan Event &
-                    Voting</span></a><a href="#"><span class="step">5</span><span>Daftar Voter</span></a><a
-                href="#"><span class="step">6</span><span>Leaderboard Suara Voting</span></a>
-        </div>
-        <div class="user"><span class="avatar">SA</span>
-            <div><strong>{{ session('admin_name', 'Siti Aminah') }}</strong><small>Admin Event</small></div>
-        </div>
-    </aside>
-    <main class="workspace">
-        <header class="top">
-            <div class="crumb">Atelier Event &nbsp;›&nbsp; {{ $event?->nama ?? 'Pilih Event' }} &nbsp;›&nbsp; <b>Atur
-                    Formulir Pendaftaran</b></div>
-            <div class="title-row"><span class="title-icon">A</span>
-                <div>
-                    <h1>Formulir Pendaftaran — {{ $event?->nama ?? 'Event Baru' }}</h1>
-                    <p>Atur data & persyaratan yang wajib diisi peserta fashion show busana adat</p>
-                </div>
+
+<body>
+    @include('admin.partials.header', ['variant' => 'builder', 'event' => $event])
+    <div class="shell">
+        <aside class="side">
+            <div class="brand">ALNAY<span>.ID</span></div>
+            <div class="nav">
+                <p class="section">Event & Peserta</p>
+                <a href="{{ route('admin.dashboard') }}"><span class="step">1</span><span>Buat Event Baru</span></a>
+                <a class="active" href="{{ route('admin.form-builder', $event?->id) }}"><span class="step">2</span><span>Buat Form Pendaftaran Event</span></a>
+                <a href="#"><span class="step">3</span><span>Verifikasi Pendaftaran Peserta</span><b class="badge">6</b></a>
+                <a href="#"><span class="step">4</span><span>Aktivasi Akun Peserta</span></a>
             </div>
-            <div class="top-actions"><span
-                    style="padding:7px 10px;border:1px solid #45423e;border-radius:4px;color:#aaa;font-size:9px">●
-                    alnay.id/daftar/{{ $event?->id ?? 'event' }}</span><a href="#">◉ &nbsp; Lihat
-                    Publik</a><button class="save" id="saveForm">▣ &nbsp; Simpan Formulir</button><select
-                    id="eventPicker"
-                    style="background:#2d2b28;color:#fff;border:1px solid #57534e;border-radius:4px;padding:6px;font-size:9px">
-                    <option value="">Atur Pendaftaran</option>
-                    @foreach ($events as $item)
-                        <option value="{{ $item->id }}" @selected($event?->id === $item->id)>{{ $item->nama }}</option>
-                    @endforeach
-                </select>
+            <div class="user">
+                <span class="avatar">SA</span>
+                <div><strong>{{ session('admin_name', 'Siti Aminah') }}</strong><small>Admin Event</small></div>
             </div>
-        </header>
-        <div class="builder">
-            <aside class="library">
-                <p class="pane-title">Fields <span class="count">10 Komponen</span></p>
-                @foreach ([['text', 'Judul', 'Header / Nama Section'], ['textarea', 'Sub Judul', 'Deskripsi teks panduan'], ['text', 'Text', 'Input teks satu baris'], ['text', 'Email', 'Validasi alamat email'], ['number', 'Angka', 'WhatsApp, Usia, Ukuran'], ['textarea', 'Teks Panjang', 'Textarea / Catatan Khusus'], ['select', 'Dropdown', 'Pilihan Kategori Lomba'], ['radio', 'Radio Option', 'Pilihan tunggal opsional'], ['file', 'Upload Gambar / Banner', 'Foto Peserta / Kostum'], ['file', 'Upload Dokumen', 'KTP / KK / Portofolio (PDF)']] as $item)
-                    <div class="field-item" draggable="true" data-type="{{ $item[0] }}"
-                        data-label="{{ $item[1] }}" data-hint="{{ $item[2] }}"><span
-                            class="drag">⠿</span><strong>{{ $item[1] }}</strong><small>{{ $item[2] }}</small>
-                    </div>
-                @endforeach
-            </aside>
-            <section class="canvas">
-                <div class="canvas-bar"><span>CANVAS &nbsp;|&nbsp; Mode Desain Interaktif</span><span
-                        class="zoom">100% &nbsp; ◧ ◫</span></div>
-                <div id="questionList">
-                    @forelse($questions as $question)
-                        <article class="question" draggable="true" data-id="{{ $question->id }}"
-                            data-type="{{ $question->tipe_input }}" data-label="{{ $question->label }}"
-                            data-required="{{ $question->wajib ? 'true' : 'false' }}"
-                            data-options='@json($question->pilihan_jawaban ?? [])' data-config='@json($question->konfigurasi ?? [])'>
-                            <div class="question-head">
-                                <div class="question-label" contenteditable="true" data-role="label" spellcheck="false"></div>
-                                <div class="question-meta" contenteditable="true" data-role="help" spellcheck="false"></div>
-                                <div class="question-actions">
-                                    <button class="remove" type="button" title="Hapus elemen"
-                                        aria-label="Hapus elemen">
-                                        <span class="trash-icon">🗑</span>
-                                    </button>
-                                    <span class="grip">⠿</span>
-                                </div>
-                            </div>
-                            <div class="preview"></div>
-                        </article>
-                    @empty
-                        <div class="empty" id="emptyState">Tarik komponen dari panel kiri ke sini<br><small>atau klik
-                                komponen untuk menambahkannya</small></div>
-                    @endforelse
-                </div>
-                <div class="dropzone" id="dropzone">+ Tarik field ke sini untuk menambah</div>
-        </div>
-        </section>
-        <aside class="inspector">
-            <h3>Pengaturan Field</h3>
-            <p>Pilih elemen di canvas untuk mengatur detail dan validasinya.</p>
-            <div id="inspectorEmpty" class="empty" style="padding:22px 10px;font-size:10px">Belum ada field
-                dipilih.</div>
-            <div id="inspectorForm" style="display:none">
-                <div class="control"><label>Label pertanyaan</label><input id="editLabel"></div>
-                <div class="control"><label>Deskripsi / petunjuk</label>
-                    <textarea id="editHelp"></textarea>
-                </div>
-                <div class="control"><label>Placeholder</label><input id="editPlaceholder"></div>
-                <div class="control"><label>Opsi pilihan (satu per baris)</label>
-                    <textarea id="editOptions"></textarea>
-                </div>
-                <div class="toggle"><label>Wajib diisi</label><input id="editRequired" type="checkbox"></div>
-            </div>
+
+            <a href="{{ $event ? route('public.registration', $event->id) : '#' }}" target="_blank"
+                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                Lihat Form Publik
+            </a>
         </aside>
-</div>
-</main>
-</div>
-<div class="toast" id="toast">Formulir berhasil disimpan.</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
+        <main class="workspace">
+            <div class="builder">
+                <aside class="library" style="padding-top: 50px">
+                    <p class="pane-title">Fields <span class="count">10 Komponen</span></p>
 
-        const list = document.getElementById('questionList');
-        const dropzone = document.getElementById('dropzone');
-        const empty = document.getElementById('emptyState');
+                    @foreach ([['text', 'Judul', 'Header / Nama Section'], ['textarea', 'Sub Judul', 'Deskripsi teks panduan'], ['text', 'Text', 'Input teks satu baris'], ['text', 'Email', 'Validasi alamat email'], ['number', 'Angka', 'WhatsApp, Usia, Ukuran'], ['textarea', 'Teks Panjang', 'Textarea / Catatan Khusus'], ['select', 'Dropdown', 'Pilihan Kategori Lomba'], ['radio', 'Radio Option', 'Pilihan tunggal opsional'], ['file', 'Upload Gambar', 'Foto Peserta / Kostum'], ['file', 'Upload Dokumen', 'KTP / KK / Portofolio (PDF)']] as $item)
+                        <div class="field-item" draggable="true" data-type="{{ $item[0] }}" data-label="{{ $item[1] }}" data-hint="{{ $item[2] }}">
+                            <span class="drag">⠿</span><strong>{{ $item[1] }}</strong><small>{{ $item[2] }}</small>
+                        </div>
+                    @endforeach
+                </aside>
 
-        const inspectorEmpty = document.getElementById('inspectorEmpty');
-        const inspectorForm = document.getElementById('inspectorForm');
+                <section class="canvas">
+                    <div class="canvas-bar"><span>CANVAS &nbsp;</span></div>
+                    <div id="questionList">
+                        @forelse($questions as $question)
+                            <article class="question" draggable="true" data-id="{{ $question->id }}"
+                                data-type="{{ $question->tipe_input }}" data-label="{{ $question->label }}"
+                                data-required="{{ $question->wajib ? 'true' : 'false' }}"
+                                data-options='@json($question->pilihan_jawaban ?? [])'
+                                data-config='@json($question->konfigurasi ?? [])'>
+                                <div class="question-head">
+                                    <div>
+                                        <div class="question-label" contenteditable="true" data-role="label" spellcheck="false"></div>
+                                        <div class="question-meta" contenteditable="true" data-role="help" spellcheck="false"></div>
+                                    </div>
+                                    <div class="question-actions">
+                                        <label class="required-switch" data-role="toggle-required" title="Wajib diisi">
+                                            <span class="required-switch-track"><span class="required-switch-thumb"></span></span>
+                                            <span class="required-switch-label">Wajib</span>
+                                        </label>
+                                        <button class="remove" type="button" title="Hapus elemen" aria-label="Hapus elemen">
+                                            <span class="trash-icon">🗑</span>
+                                        </button>
+                                        <span class="grip">⠿</span>
+                                    </div>
+                                </div>
+                                <div class="preview"></div>
+                            </article>
+                        @empty
+                            <div class="empty" id="emptyState">Tarik komponen dari panel kiri ke sini<br><small>atau klik komponen untuk menambahkannya</small></div>
+                        @endforelse
+                    </div>
+                    <div class="dropzone" id="dropzone">+ Tarik field ke sini untuk menambah</div>
+                </section>
+            </div>
+        </main>
+    </div>
 
-        const editLabel = document.getElementById('editLabel');
-        const editHelp = document.getElementById('editHelp');
-        const editPlaceholder = document.getElementById('editPlaceholder');
-        const editOptions = document.getElementById('editOptions');
-        const editRequired = document.getElementById('editRequired');
+    <div class="draft-modal-backdrop" id="draftModal" role="dialog" aria-modal="true">
+        <div class="draft-modal">
+            <h2>Perubahan formulir ditemukan</h2>
+            <p id="draftModalMessage"></p>
+            <div class="draft-modal-actions">
+                <button type="button" id="discardDraft">Hapus draft</button>
+                <button type="button" class="draft-restore" id="restoreDraft">Muat perubahan</button>
+            </div>
+        </div>
+    </div>
 
-        const saveButton = document.getElementById('saveForm');
-        const eventPicker = document.getElementById('eventPicker');
-        const toast = document.getElementById('toast');
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const list = document.getElementById('questionList');
+            const dropzone = document.getElementById('dropzone');
+            const saveButton = document.getElementById('saveForm');
 
-        let selected = null;
-        let draggedQuestion = null;
-        let draggedLibraryItem = null;
+            let selected = null;
+            let draggedQuestion = null;
+            let draggedLibraryItem = null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ambil eventId — JANGAN cuma andalkan Blade `{{ $event?->id }}`,
-        | karena kalau variabel di controller berbeda nama / null, draft
-        | jadi diam-diam gak pernah kesimpan tanpa ada error apapun.
-        |
-        | Urutan prioritas:
-        | 1. Dari URL halaman (/admin/form-builder/3 -> "3")
-        | 2. Dari Blade (fallback)
-        | 3. Dari option yang lagi keselect di dropdown eventPicker
-        |--------------------------------------------------------------------------
-        */
-        function resolveEventId() {
-            const fromUrl = window.location.pathname.match(/form-builder\/(\d+)/);
-            if (fromUrl) return fromUrl[1];
+            function resolveEventId() {
+                const fromUrl = window.location.pathname.match(/form-builder\/(\d+)/);
+                if (fromUrl) return fromUrl[1];
+                const fromBlade = '{{ $event?->id }}';
+                if (fromBlade) return fromBlade;
+                return '';
+            }
 
-            const fromBlade = '{{ $event?->id }}';
-            if (fromBlade) return fromBlade;
+            const eventId = resolveEventId();
+            const draftKey = `formBuilderDraft:${eventId || 'new'}`;
 
-            const picker = document.getElementById('eventPicker');
-            if (picker && picker.value) return picker.value;
-
-            return '';
-        }
-
-        const eventId = resolveEventId();
-        const draftKey = `formBuilderDraft:${eventId || 'new'}`;
-
-        // Debug permanen — buka tab Console, harus muncul otomatis begitu halaman dimuat.
-        console.log('[FormBuilder] eventId =', JSON.stringify(eventId), '| draftKey =', draftKey);
-
-        if (!eventId) {
-            console.warn('[FormBuilder] Belum ada Event yang dipilih/tersimpan — draft disimpan ' +
-                'sementara di bawah key "formBuilderDraft:new" dan BARU akan pindah ke key per-event');
-        }
-
-        function getFieldsFromCanvas() {
-            const questions = [...document.querySelectorAll('#questionList .question')];
-            return questions.map((element, index) => ({
-                id: element.dataset.id || null,
-                urutan: index + 1,
-                label: element.dataset.label || '',
-                tipe_input: element.dataset.type,
-                pilihan_jawaban: getOptions(element),
-                konfigurasi: getConfig(element),
-                wajib: element.dataset.required === 'true'
-            }));
-        }
-
-        function saveDraftNow() {
-            if (!draftKey) return;
-            try {
-                localStorage.setItem(draftKey, JSON.stringify({
-                    savedAt: Date.now(),
-                    fields: getFieldsFromCanvas()
+            function getFieldsFromCanvas() {
+                const questions = [...document.querySelectorAll('#questionList .question')];
+                return questions.map((element, index) => ({
+                    id: element.dataset.id || null,
+                    urutan: index + 1,
+                    label: element.dataset.label || '',
+                    tipe_input: element.dataset.type,
+                    pilihan_jawaban: getOptions(element),
+                    konfigurasi: getConfig(element),
+                    wajib: element.dataset.required === 'true'
                 }));
-                showDraftIndicator();
-            } catch (error) {
-                console.error('[FormBuilder] Gagal simpan draft:', error);
             }
-        }
 
-        // saveDraft() langsung save, tanpa debounce, supaya gampang dites.
-        function saveDraft() {
-            saveDraftNow();
-        }
-
-        function clearDraft() {
-            if (!draftKey) return;
-            localStorage.removeItem(draftKey);
-        }
-
-        function showDraftIndicator() {
-            let indicator = document.getElementById('draftIndicator');
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = 'draftIndicator';
-                indicator.style = 'position:fixed;left:20px;bottom:20px;background:#182b26;color:#9ee6c8;padding:6px 12px;border-radius:6px;font-size:10px;opacity:0;transition:opacity .2s;z-index:999';
-                indicator.textContent = '● Draft tersimpan otomatis';
-                document.body.appendChild(indicator);
+            function saveDraftNow() {
+                if (!draftKey) return;
+                try {
+                    localStorage.setItem(draftKey, JSON.stringify({
+                        savedAt: Date.now(),
+                        fields: getFieldsFromCanvas()
+                    }));
+                } catch (error) {
+                    console.error('[FormBuilder] Gagal simpan draft:', error);
+                }
             }
-            indicator.style.opacity = '1';
-            clearTimeout(indicator._hideTimer);
-            indicator._hideTimer = setTimeout(() => indicator.style.opacity = '0', 1200);
-        }
 
-        const fieldTypes = {
-            text: 'Text',
-            email: 'Email',
-            number: 'Angka',
-            textarea: 'Teks Panjang',
-            select: 'Dropdown',
-            radio: 'Radio Option',
-            checkbox: 'Checkbox',
-            file: 'Upload File',
-            heading: 'Judul',
-            subheading: 'Sub Judul'
-        };
-
-        /*
-        |--------------------------------------------------------------------------
-        | Helper
-        |--------------------------------------------------------------------------
-        */
-
-        function parseJSON(value, fallback = {}) {
-            try {
-                return JSON.parse(value || JSON.stringify(fallback));
-            } catch (error) {
-                return fallback;
+            function clearDraft() {
+                if (!draftKey) return;
+                localStorage.removeItem(draftKey);
             }
-        }
 
-        function getOptions(element) {
-            const options = parseJSON(element.dataset.options, []);
-            return Array.isArray(options) ? options : [];
-        }
+            function parseJSON(value, fallback = {}) {
+                try {
+                    return JSON.parse(value || JSON.stringify(fallback));
+                } catch (error) {
+                    return fallback;
+                }
+            }
 
-        function getConfig(element) {
-            const config = parseJSON(element.dataset.config, {});
-            return config && typeof config === 'object' ? config : {};
-        }
+            function getOptions(element) {
+                const options = parseJSON(element.dataset.options, []);
+                return Array.isArray(options) ? options : [];
+            }
 
-        function escapeHTML(value) {
-            const div = document.createElement('div');
-            div.textContent = value ?? '';
-            return div.innerHTML;
-        }
+            function getConfig(element) {
+                const config = parseJSON(element.dataset.config, {});
+                return config && typeof config === 'object' ? config : {};
+            }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Render field
-        |--------------------------------------------------------------------------
-        */
+            function escapeHTML(value) {
+                const div = document.createElement('div');
+                div.textContent = value ?? '';
+                return div.innerHTML;
+            }
 
-        function renderField(element, force = false) {
-
+            function renderField(element, force = false) {
             const type = element.dataset.type;
             const options = getOptions(element);
             const config = getConfig(element);
 
             const preview = element.querySelector('.preview');
             const labelElement = element.querySelector('.question-label');
-            const metaElement = element.querySelector('.question-meta');
 
-            if (!preview || !labelElement) {
-                return;
-            }
+            if (!preview || !labelElement) return;
 
-            element.classList.remove('heading', 'subheading', 'text-field', 'email-field', 'choice-field',
-                'file-field');
+            element.classList.remove('heading', 'subheading', 'text-field', 'email-field', 'choice-field', 'file-field');
 
             if (type === 'heading') element.classList.add('heading');
             if (type === 'subheading') element.classList.add('subheading');
-            if (type === 'text') element.classList.add('text-field');
-            if (type === 'email') element.classList.add('email-field');
             if (['radio', 'checkbox', 'select'].includes(type)) element.classList.add('choice-field');
             if (type === 'file') element.classList.add('file-field');
 
-            /*
-            | LABEL — jangan timpa isi kalau sedang lagi diketik user (activeElement),
-            | supaya kursor gak lompat ke awal tiap kali render ulang.
-            */
             if (document.activeElement !== labelElement) {
                 labelElement.textContent = element.dataset.label || '';
             }
 
+            const metaElement = element.querySelector('.question-meta');
             if (metaElement && document.activeElement !== metaElement) {
-                metaElement.textContent = config.help || fieldTypes[type] || type;
+                metaElement.textContent = config.help || '';
             }
 
+            const requiredToggle = element.querySelector('[data-role="toggle-required"]');
+            if (requiredToggle) {
+                requiredToggle.classList.toggle('active', element.dataset.required === 'true');
+            }
+
+            // 1. Heading / Subheading
             if (type === 'heading' || type === 'subheading') {
                 preview.innerHTML = '';
                 return;
             }
 
-            /*
-            | RADIO / CHECKBOX — opsi bisa diklik & diedit langsung + tombol hapus/tambah
-            */
+            // 2. Radio & Checkbox
             if (type === 'radio' || type === 'checkbox') {
                 if (force || !preview.contains(document.activeElement)) {
                     const optionsHtml = options.map((option, index) => `
-                <label class="choice-option">
-                    <input type="${type}" disabled>
-                    <span class="option-text" contenteditable="true" data-role="option" data-index="${index}">${escapeHTML(option)}</span>
-                    <button type="button" class="option-remove" data-role="remove-option" data-index="${index}" title="Hapus opsi">×</button>
-                </label>
-            `).join('');
+                        <label class="choice-option">
+                            <input type="${type}" disabled>
+                            <span class="option-text" contenteditable="true" data-role="option" data-index="${index}">${escapeHTML(option)}</span>
+                            <button type="button" class="option-remove" data-role="remove-option" data-index="${index}" title="Hapus opsi">×</button>
+                        </label>
+                    `).join('');
 
-                    preview.innerHTML = optionsHtml +
-                        `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
+                    preview.innerHTML = optionsHtml + `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
                 }
                 return;
             }
 
-            /*
-            | DROPDOWN — sama seperti radio, tapi tampilannya list opsi
-            */
+            // 3. Dropdown Select
             if (type === 'select') {
                 if (force || !preview.contains(document.activeElement)) {
                     const optionsHtml = options.length ?
                         options.map((option, index) => `
-                    <div class="choice-option">
-                        <span class="option-text" contenteditable="true" data-role="option" data-index="${index}">${escapeHTML(option)}</span>
-                        <button type="button" class="option-remove" data-role="remove-option" data-index="${index}" title="Hapus opsi">×</button>
-                    </div>
-                `).join('') :
-                        '<div class="choice-option" style="color:#aaa">Belum ada pilihan</div>';
+                            <div class="choice-option">
+                                <span class="option-text" contenteditable="true" data-role="option" data-index="${index}">${escapeHTML(option)}</span>
+                                <button type="button" class="option-remove" data-role="remove-option" data-index="${index}" title="Hapus opsi">×</button>
+                            </div>
+                        `).join('') : '<div class="choice-option" style="color:#aaa">Belum ada pilihan</div>';
 
-                    preview.innerHTML = optionsHtml +
-                        `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
+                    preview.innerHTML = optionsHtml + `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
                 }
                 return;
             }
 
-            /*
-            | FILE — tidak diedit langsung, cukup visual
-            */
+            // 4. File Upload (PERBAIKAN TAMPILAN UPLOAD)
             if (type === 'file') {
                 preview.innerHTML = `
-            <div class="file-preview">
-                <div class="file-icon">▣</div>
-                <div>Tarik berkas ke sini atau pilih file</div>
-            </div>
-        `;
+                    <div class="file-preview" style="padding: 16px; border: 2px dashed #d5cbbd; border-radius: 8px; background: #fcfbf9; text-align: center;">
+                        <div class="file-icon" style="font-size: 24px; color: #c38b22; margin-bottom: 6px;">📁</div>
+                        <div class="file-drop-text" style="font-size: 13px; font-weight: 500; color: #555;">
+                            Pilih File
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
-            /*
-            | TEXT / EMAIL / NUMBER / TEXTAREA — placeholder-nya bisa diklik & diketik langsung
-            */
+            // 5. Input Text / Number / Email / Textarea Biasa
             if (force || !preview.contains(document.activeElement)) {
                 const defaultText = {
                     email: 'Masukkan alamat email (contoh: nama@email.com)',
                     number: 'Masukkan angka',
                     textarea: 'Masukkan jawaban peserta',
-                } [type] || 'Masukkan jawaban peserta';
+                }[type] || 'Masukkan jawaban peserta';
 
-                preview.innerHTML =
-                    `<div class="preview-input" contenteditable="true" data-role="placeholder">${escapeHTML(config.placeholder || defaultText)}</div>`;
+                preview.innerHTML = `<div class="preview-input" contenteditable="true" data-role="placeholder">${escapeHTML(config.placeholder || defaultText)}</div>`;
             }
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Select Question
-        |--------------------------------------------------------------------------
-        */
-
-        function selectQuestion(element) {
-
-            document.querySelectorAll('.question').forEach(question => {
-                question.classList.remove('selected');
-            });
-
-            selected = element;
-
-            if (!selected) {
-                inspectorForm.style.display = 'none';
-                inspectorEmpty.style.display = 'block';
-                return;
-            }
-
-            selected.classList.add('selected');
-
-            inspectorEmpty.style.display = 'none';
-            inspectorForm.style.display = 'block';
-
-            const config = getConfig(selected);
-            const options = getOptions(selected);
-
-            editLabel.value = selected.dataset.label || '';
-            editHelp.value = config.help || '';
-            editPlaceholder.value = config.placeholder || '';
-            editOptions.value = options.join('\n');
-            editRequired.checked =
-                selected.dataset.required === 'true';
-
-            /*
-            | Hide options when field does not need choices
-            */
-
-            const optionsControl =
-                editOptions.closest('.control');
-
-            if (optionsControl) {
-
-                optionsControl.style.display = ['select', 'radio', 'checkbox']
-                    .includes(selected.dataset.type) ?
-                    'block' :
-                    'none';
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update Selected Field
-        |--------------------------------------------------------------------------
-        */
-
-        function updateSelected() {
-
-            if (!selected) {
-                return;
-            }
-
-            const type = selected.dataset.type;
-
-            selected.dataset.label = editLabel.value.trim();
-
-            selected.dataset.required =
-                editRequired.checked ? 'true' : 'false';
-
-            const options =
-                editOptions.value
-                .split('\n')
-                .map(item => item.trim())
-                .filter(item => item !== '');
-
-            selected.dataset.options =
-                JSON.stringify(
-                    ['select', 'radio', 'checkbox'].includes(type) ?
-                    options : []
-                );
-
-            selected.dataset.config =
-                JSON.stringify({
-                    help: editHelp.value.trim(),
-                    placeholder: editPlaceholder.value.trim()
-                });
-
-            renderField(selected);
-
-            saveDraft();
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Field
-        |--------------------------------------------------------------------------
-        */
-
-        function addField(type, label) {
-
-            if (!type) {
-                return;
-            }
-
-            if (empty) {
-                empty.remove();
-            }
-
-            let finalLabel = label;
-
-            if (type === 'heading') {
-                finalLabel = 'Pendaftaran Event Alnay.ID';
-            }
-
-            if (type === 'subheading') {
-                finalLabel =
-                    'Kompetisi & Pergelaran Busana Adat Nusantara';
-            }
-
-            let options = [];
-
-            if (['radio', 'checkbox', 'select'].includes(type)) {
-                options = [
-                    'Pilihan 1',
-                    'Pilihan 2'
-                ];
-            }
-
-            const element =
-                document.createElement('article');
-
-            element.className = 'question';
-            element.draggable = true;
-
-            element.dataset.id = '';
-            element.dataset.type = type;
-            element.dataset.label = finalLabel;
-            element.dataset.required = 'false';
-            element.dataset.options =
-                JSON.stringify(options);
-
-            element.dataset.config =
-                JSON.stringify({
-                    help: '',
-                    placeholder: ''
-                });
-
-            element.innerHTML = `
-                <div class="question-head">
-                    <div>
-                        <div class="question-label" contenteditable="true" data-role="label" spellcheck="false"></div>
-                        <div class="question-meta" contenteditable="true" data-role="help" spellcheck="false"></div>
-                    </div>
-                    <div class="question-actions">
-                        <button class="remove" type="button" title="Hapus elemen" aria-label="Hapus elemen">
-                            <span class="trash-icon">🗑</span>
-                        </button>
-                        <span class="grip">⠿</span>
-                    </div>
-                </div>
-                <div class="preview"></div>
-            `;
-
-            list.appendChild(element);
-
-            bindQuestion(element);
-            renderField(element);
-            selectQuestion(element);
-
-            saveDraft();
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Bind Question
-        |--------------------------------------------------------------------------
-        */
-
-        function bindQuestion(element) {
-
-            /*
-            | Click
-            */
-
-            element.addEventListener('click', function(event) {
-
-                if (
-                    event.target.closest('.remove')
-                ) {
-                    return;
+            function selectQuestion(questionEl) {
+                if (selected) {
+                    selected.classList.remove('selected');
                 }
-
-                selectQuestion(element);
-            });
-
-            /*
-            | Drag start
-            */
-
-            element.addEventListener('dragstart', function(event) {
-
-                draggedQuestion = element;
-
-                element.classList.add('dragging-question');
-
-                event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData(
-                    'text/question-id',
-                    element.dataset.id || ''
-                );
-            });
-
-            /*
-            | Drag end
-            */
-
-            element.addEventListener('dragend', function() {
-
-                element.classList.remove(
-                    'dragging-question'
-                );
-
-                draggedQuestion = null;
-
-                document
-                    .querySelectorAll('.question')
-                    .forEach(question => {
-                        question.classList.remove(
-                            'drag-over'
-                        );
-                    });
-
-                saveDraftNow();
-            });
-
-            /*
-            | Remove
-            */
-
-            const removeButton =
-                element.querySelector('.remove');
-
-            if (removeButton) {
-
-                removeButton.addEventListener(
-                    'click',
-                    function(event) {
-
-                        event.stopPropagation();
-
-                        const wasSelected =
-                            selected === element;
-
-                        element.remove();
-
-                        saveDraft();
-
-                        if (wasSelected) {
-                            selected = null;
-
-                            inspectorForm.style.display =
-                                'none';
-
-                            inspectorEmpty.style.display =
-                                'block';
-                        }
-
-                        if (
-                            !list.querySelector('.question')
-                        ) {
-
-                            if (
-                                !document.getElementById(
-                                    'emptyState'
-                                )
-                            ) {
-
-                                const emptyElement =
-                                    document.createElement('div');
-
-                                emptyElement.id =
-                                    'emptyState';
-
-                                emptyElement.className =
-                                    'empty';
-
-                                emptyElement.innerHTML =
-                                    'Tarik komponen dari panel kiri ke sini<br>' +
-                                    '<small>atau klik komponen untuk menambahkannya</small>';
-
-                                list.prepend(emptyElement);
-                            }
-                        }
-                    }
-                );
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Library Field
-        |--------------------------------------------------------------------------
-        */
-
-        document
-            .querySelectorAll('.field-item')
-            .forEach(item => {
-
-                /*
-                | Email harus benar-benar bertipe email
-                */
-
-                if (
-                    item.dataset.label === 'Email'
-                ) {
-                    item.dataset.type = 'email';
-                }
-
-                /*
-                | Click
-                */
-
-                item.addEventListener(
-                    'click',
-                    function() {
-
-                        let type =
-                            item.dataset.type;
-
-                        let label =
-                            item.dataset.label;
-
-                        if (label === 'Judul') {
-                            type = 'heading';
-                        }
-
-                        if (label === 'Sub Judul') {
-                            type = 'subheading';
-                        }
-
-                        addField(type, label);
-                    }
-                );
-
-                /*
-                | Drag start
-                */
-
-                item.addEventListener(
-                    'dragstart',
-                    function(event) {
-
-                        draggedLibraryItem = item;
-
-                        event.dataTransfer.effectAllowed =
-                            'copy';
-
-                        event.dataTransfer.setData(
-                            'text/field-type',
-                            item.dataset.type
-                        );
-
-                        event.dataTransfer.setData(
-                            'text/field-label',
-                            item.dataset.label
-                        );
-                    }
-                );
-
-                item.addEventListener(
-                    'dragend',
-                    function() {
-                        draggedLibraryItem = null;
-                    }
-                );
-            });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Drop Field ke Canvas
-        |--------------------------------------------------------------------------
-        */
-
-        list.addEventListener(
-            'dragover',
-            function(event) {
-
-                event.preventDefault();
-
-                /*
-                | Jika yang sedang di-drag adalah question,
-                | berarti reorder.
-                */
-
-                if (draggedQuestion) {
-
-                    const target =
-                        event.target.closest('.question');
-
-                    if (
-                        !target ||
-                        target === draggedQuestion
-                    ) {
-                        return;
-                    }
-
-                    const rect =
-                        target.getBoundingClientRect();
-
-                    const before =
-                        event.clientY <
-                        rect.top + rect.height / 2;
-
-                    if (before) {
-                        list.insertBefore(
-                            draggedQuestion,
-                            target
-                        );
-                    } else {
-                        list.insertBefore(
-                            draggedQuestion,
-                            target.nextSibling
-                        );
-                    }
-
-                    return;
-                }
-
-                /*
-                | Library field
-                */
-
-                if (draggedLibraryItem) {
-
-                    list.classList.add(
-                        'drag-target'
-                    );
+                selected = questionEl;
+                if (selected) {
+                    selected.classList.add('selected');
                 }
             }
-        );
 
-        list.addEventListener(
-            'dragleave',
-            function() {
+            function addField(type, label) {
+                if (!type) return;
 
-                list.classList.remove(
-                    'drag-target'
-                );
-            }
-        );
+                document.getElementById('emptyState')?.remove();
 
-        list.addEventListener(
-            'drop',
-            function(event) {
+                let finalLabel = label;
+                if (type === 'heading') finalLabel = 'Pendaftaran Event Alnay.ID';
+                if (type === 'subheading') finalLabel = 'Kompetisi & Pergelaran Busana Adat Nusantara';
 
-                event.preventDefault();
-
-                list.classList.remove(
-                    'drag-target'
-                );
-
-                /*
-                | Tambah field dari library
-                */
-
-                const type =
-                    event.dataTransfer.getData(
-                        'text/field-type'
-                    );
-
-                const label =
-                    event.dataTransfer.getData(
-                        'text/field-label'
-                    );
-
-                if (
-                    type &&
-                    label &&
-                    !draggedQuestion
-                ) {
-
-                    addField(type, label);
+                let options = [];
+                if (['radio', 'checkbox', 'select'].includes(type)) {
+                    options = ['Pilihan 1', 'Pilihan 2'];
                 }
 
-                saveDraft();
-            }
-        );
-
-        list.addEventListener('input', function (event) {
-            const target = event.target;
-            const question = target.closest('.question');
-            if (!question) return;
-
-            if (target.dataset.role === 'label') {
-                question.dataset.label = target.textContent.trim();
-                if (selected === question) editLabel.value = question.dataset.label;
-            } else if (target.dataset.role === 'help') {
-                const config = getConfig(question);
-                config.help = target.textContent.trim();
-                question.dataset.config = JSON.stringify(config);
-                if (selected === question) editHelp.value = config.help;
-            } else if (target.dataset.role === 'placeholder') {
-                const config = getConfig(question);
-                config.placeholder = target.textContent.trim();
-                question.dataset.config = JSON.stringify(config);
-                if (selected === question) editPlaceholder.value = config.placeholder;
-            } else if (target.dataset.role === 'option') {
-                const options = getOptions(question);
-                const index = Number(target.dataset.index);
-                options[index] = target.textContent.trim();
-                question.dataset.options = JSON.stringify(options);
-                if (selected === question) editOptions.value = options.join('\n');
-            } else {
-                return;
-            }
-
-            saveDraft();
-        });
-
-        list.addEventListener('click', function(event) {
-            const addBtn = event.target.closest('[data-role="add-option"]');
-            if (addBtn) {
-                const question = addBtn.closest('.question');
-                const options = getOptions(question);
-                options.push('Opsi ' + (options.length + 1));
-                question.dataset.options = JSON.stringify(options);
-                renderField(question, true);
-
-                saveDraft();
-
-                if (selected === question) editOptions.value = options.join('\n');
-
-                const allOptions = question.querySelectorAll('[data-role="option"]');
-                allOptions[allOptions.length - 1]?.focus();
-                return;
-            }
-
-            const removeBtn = event.target.closest('[data-role="remove-option"]');
-            if (removeBtn) {
-                const question = removeBtn.closest('.question');
-                const options = getOptions(question);
-                options.splice(Number(removeBtn.dataset.index), 1);
-                question.dataset.options = JSON.stringify(options);
-                renderField(question, true);
-
-                saveDraft();
-
-                if (selected === question) editOptions.value = options.join('\n');
-                return;
-            }
-        });
-
-        list.addEventListener('focusout', function (event) {
-            if (event.target.dataset.role !== 'help') return;
-
-            const question = event.target.closest('.question');
-            const config = getConfig(question);
-
-            if (!config.help) {
-                event.target.textContent = fieldTypes[question.dataset.type] || question.dataset.type;
-            }
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Dropzone
-        |--------------------------------------------------------------------------
-        */
-
-        dropzone.addEventListener(
-            'dragover',
-            function(event) {
-
-                event.preventDefault();
-
-                dropzone.classList.add(
-                    'dragging'
-                );
-            }
-        );
-
-        dropzone.addEventListener(
-            'dragleave',
-            function() {
-
-                dropzone.classList.remove(
-                    'dragging'
-                );
-            }
-        );
-
-        dropzone.addEventListener(
-            'drop',
-            function(event) {
-
-                event.preventDefault();
-
-                dropzone.classList.remove(
-                    'dragging'
-                );
-
-                const type =
-                    event.dataTransfer.getData(
-                        'text/field-type'
-                    );
-
-                const label =
-                    event.dataTransfer.getData(
-                        'text/field-label'
-                    );
-
-                if (type && label) {
-                    addField(type, label);
-                }
-            }
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Existing Questions
-        |--------------------------------------------------------------------------
-        */
-
-        document
-            .querySelectorAll('.question')
-            .forEach(question => {
-
-                bindQuestion(question);
-                renderField(question);
-            });
-
-        function restoreDraft() {
-            if (!draftKey) {
-                console.log('[FormBuilder] restoreDraft dilewati karena draftKey kosong.');
-                return;
-            }
-
-            let draft;
-            try {
-                draft = JSON.parse(localStorage.getItem(draftKey) || 'null');
-            } catch (error) {
-                console.warn('[FormBuilder] Draft rusak, dihapus:', error);
-                localStorage.removeItem(draftKey);
-                return;
-            }
-
-            if (!draft || !Array.isArray(draft.fields) || !draft.fields.length) {
-                console.log('[FormBuilder] Tidak ada draft tersimpan untuk', draftKey);
-                return;
-            }
-
-            const menitLalu = Math.max(1, Math.round((Date.now() - draft.savedAt) / 60000));
-            const mauRestore = confirm(
-                `Ditemukan perubahan formulir yang belum tersimpan (± ${menitLalu} menit lalu). Muat perubahan itu kembali?`
-            );
-
-            if (!mauRestore) {
-                clearDraft();
-                return;
-            }
-
-            list.querySelectorAll('.question').forEach(question => question.remove());
-            empty?.remove();
-
-            draft.fields.forEach(field => {
                 const element = document.createElement('article');
                 element.className = 'question';
                 element.draggable = true;
-                element.dataset.id = field.id || '';
-                element.dataset.type = field.tipe_input || 'text';
-                element.dataset.label = field.label || '';
-                element.dataset.required = field.wajib ? 'true' : 'false';
-                element.dataset.options = JSON.stringify(Array.isArray(field.pilihan_jawaban) ? field.pilihan_jawaban : []);
-                element.dataset.config = JSON.stringify(field.konfigurasi || {});
+                element.dataset.id = '';
+                element.dataset.type = type;
+                element.dataset.label = finalLabel;
+                element.dataset.required = 'false';
+                element.dataset.options = JSON.stringify(options);
+                element.dataset.config = JSON.stringify({ help: '', placeholder: '' });
+
                 element.innerHTML = `
                     <div class="question-head">
                         <div>
@@ -2093,210 +917,261 @@ Arial,sans-serif}
                             <div class="question-meta" contenteditable="true" data-role="help" spellcheck="false"></div>
                         </div>
                         <div class="question-actions">
-                            <button class="remove" type="button" title="Hapus elemen" aria-label="Hapus elemen"><span class="trash-icon">🗑</span></button>
+                            <label class="required-switch" data-role="toggle-required" title="Wajib diisi">
+                                <span class="required-switch-track"><span class="required-switch-thumb"></span></span>
+                                <span class="required-switch-label">Wajib</span>
+                            </label>
+                            <button class="remove" type="button" title="Hapus elemen" aria-label="Hapus elemen">
+                                <span class="trash-icon">🗑</span>
+                            </button>
                             <span class="grip">⠿</span>
                         </div>
                     </div>
-                    <div class="preview"></div>`;
+                    <div class="preview"></div>
+                `;
+
                 list.appendChild(element);
+
                 bindQuestion(element);
-                renderField(element, true);
-            });
+                renderField(element);
+                selectQuestion(element);
 
-            console.log('[FormBuilder] Draft berhasil di-restore,', draft.fields.length, 'field.');
-        }
-
-        restoreDraft();
-
-        window.addEventListener('beforeunload', saveDraftNow);
-        window.addEventListener('pagehide', saveDraftNow);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Inspector Events
-        |--------------------------------------------------------------------------
-        */
-
-        [
-            editLabel,
-            editHelp,
-            editPlaceholder,
-            editOptions,
-            editRequired
-        ].forEach(input => {
-
-            if (!input) {
-                return;
+                saveDraftNow();
             }
 
-            input.addEventListener(
-                'input',
-                updateSelected
-            );
+            function bindQuestion(element) {
+                element.addEventListener('click', function(event) {
+                    if (event.target.closest('.remove')) return;
+                    selectQuestion(element);
+                });
 
-            input.addEventListener(
-                'change',
-                updateSelected
-            );
-        });
+                element.addEventListener('dragstart', function(event) {
+                    draggedQuestion = element;
+                    element.classList.add('dragging-question');
+                    event.dataTransfer.effectAllowed = 'move';
+                });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Event Picker
-        |--------------------------------------------------------------------------
-        */
+                element.addEventListener('dragend', function() {
+                    element.classList.remove('dragging-question');
+                    draggedQuestion = null;
+                    saveDraftNow();
+                });
 
-        if (eventPicker) {
+                const removeButton = element.querySelector('.remove');
+                if (removeButton) {
+                    removeButton.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        element.remove();
+                        saveDraftNow();
 
-            eventPicker.addEventListener(
-                'change',
-                function(event) {
-
-                    const newEventId =
-                        event.target.value;
-
-                    if (!newEventId) {
-                        return;
-                    }
-
-                    window.location.href =
-                        '/admin/form-builder/' +
-                        newEventId;
+                        if (!list.querySelector('.question') && !document.getElementById('emptyState')) {
+                            const emptyElement = document.createElement('div');
+                            emptyElement.id = 'emptyState';
+                            emptyElement.className = 'empty';
+                            emptyElement.innerHTML = 'Tarik komponen dari panel kiri ke sini<br><small>atau klik komponen untuk menambahkannya</small>';
+                            list.prepend(emptyElement);
+                        }
+                    });
                 }
-            );
-        }
+            }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Save Form
-        |--------------------------------------------------------------------------
-        */
+            document.querySelectorAll('.field-item').forEach(item => {
+                // Sinkronisasi data-type spesifik berdasarkan label
+                if (item.dataset.label === 'Email') item.dataset.type = 'email';
+                if (item.dataset.label === 'Judul') item.dataset.type = 'heading';
+                if (item.dataset.label === 'Sub Judul') item.dataset.type = 'subheading';
+                if (item.dataset.label.includes('Upload')) item.dataset.type = 'file';
 
-        if (saveButton) {
+                item.addEventListener('click', function() {
+                    addField(item.dataset.type, item.dataset.label);
+                });
 
-            saveButton.addEventListener(
-                'click',
-                async function() {
+                item.addEventListener('dragstart', function(event) {
+                    draggedLibraryItem = item;
+                    event.dataTransfer.effectAllowed = 'copy';
+                    event.dataTransfer.setData('text/field-type', item.dataset.type);
+                    event.dataTransfer.setData('text/field-label', item.dataset.label);
+                });
 
-                    if (!eventId) {
+                item.addEventListener('dragend', function() {
+                    draggedLibraryItem = null;
+                });
+            });
 
-                        alert(
-                            'Pilih event terlebih dahulu.'
-                        );
-
-                        return;
+            list.addEventListener('dragover', function(event) {
+                event.preventDefault();
+                if (draggedQuestion) {
+                    const target = event.target.closest('.question');
+                    if (!target || target === draggedQuestion) return;
+                    const rect = target.getBoundingClientRect();
+                    const before = event.clientY < rect.top + rect.height / 2;
+                    if (before) {
+                        list.insertBefore(draggedQuestion, target);
+                    } else {
+                        list.insertBefore(draggedQuestion, target.nextSibling);
                     }
+                }
+            });
 
-                    const questions = [
-                        ...document.querySelectorAll(
-                            '#questionList .question'
-                        )
-                    ];
+            list.addEventListener('drop', function(event) {
+                event.preventDefault();
+                const type = event.dataTransfer.getData('text/field-type');
+                const label = event.dataTransfer.getData('text/field-label');
 
-                    if (!questions.length) {
+                if (type && label && !draggedQuestion) {
+                    addField(type, label);
+                }
+                saveDraftNow();
+            });
 
-                        alert(
-                            'Tambahkan minimal satu field.'
-                        );
+            list.addEventListener('click', function(event) {
+                const addBtn = event.target.closest('[data-role="add-option"]');
+                if (addBtn) {
+                    const question = addBtn.closest('.question');
+                    const options = getOptions(question);
+                    options.push('Opsi ' + (options.length + 1));
+                    question.dataset.options = JSON.stringify(options);
+                    renderField(question, true);
+                    saveDraftNow();
+                    return;
+                }
 
-                        return;
-                    }
+                const toggleRequiredBtn = event.target.closest('[data-role="toggle-required"]');
+                if (toggleRequiredBtn) {
+                    const question = toggleRequiredBtn.closest('.question');
+                    question.dataset.required = question.dataset.required === 'true' ? 'false' : 'true';
+                    renderField(question, true);
+                    saveDraftNow();
+                    return;
+                }
+
+                const removeBtn = event.target.closest('[data-role="remove-option"]');
+                if (removeBtn) {
+                    const question = removeBtn.closest('.question');
+                    const options = getOptions(question);
+                    options.splice(Number(removeBtn.dataset.index), 1);
+                    question.dataset.options = JSON.stringify(options);
+                    renderField(question, true);
+                    saveDraftNow();
+                    return;
+                }
+            });
+
+            // PENTING: listener ini yang menangkap SEMUA ketikan langsung di
+            // canvas (label, keterangan tambahan, placeholder, teks opsi)
+            // lalu menyimpannya ke dataset element - tanpa ini, isian di
+            // canvas cuma tampil sementara tapi tidak pernah ke-simpan.
+            list.addEventListener('input', function (event) {
+                const target = event.target;
+                const question = target.closest('.question');
+                if (!question) return;
+
+                if (target.dataset.role === 'label') {
+                    question.dataset.label = target.textContent.trim();
+                } else if (target.dataset.role === 'help') {
+                    const config = getConfig(question);
+                    config.help = target.textContent.trim();
+                    question.dataset.config = JSON.stringify(config);
+                } else if (target.dataset.role === 'placeholder') {
+                    const config = getConfig(question);
+                    config.placeholder = target.textContent.trim();
+                    question.dataset.config = JSON.stringify(config);
+                } else if (target.dataset.role === 'option') {
+                    const options = getOptions(question);
+                    const index = Number(target.dataset.index);
+                    options[index] = target.textContent.trim();
+                    question.dataset.options = JSON.stringify(options);
+                } else {
+                    return;
+                }
+
+                saveDraftNow();
+            });
+
+            document.querySelectorAll('.question').forEach(question => {
+                bindQuestion(question);
+                renderField(question);
+            });
+
+            // Tombol Simpan Form
+            const btnHeader = document.getElementById('saveFormHeader');
+            const btnMain = document.getElementById('saveForm');
+            const allSaveButtons = [btnHeader, btnMain].filter(Boolean);
+
+            allSaveButtons.forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    if (!eventId) return alert('Pilih event terlebih dahulu.');
 
                     const fields = getFieldsFromCanvas();
+                    if (!fields.length) return alert('Tambahkan minimal satu field.');
 
-                    /*
-                    | Disable button selama proses save
-                    */
-
-                    const originalText =
-                        saveButton.innerHTML;
-
-                    saveButton.disabled = true;
-
-                    saveButton.innerHTML =
-                        'Menyimpan...';
+                    allSaveButtons.forEach(b => {
+                        b.disabled = true;
+                        b.innerHTML = 'Menyimpan...';
+                    });
 
                     try {
+                        const response = await fetch('{{ $event ? route("admin.form-builder.save", $event) : "#" }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ fields: fields })
+                        });
 
-                        const response =
-                            await fetch(
-                                '{{ $event ? route('admin.form-builder.save', $event) : '#' }}', {
-                                    method: 'POST',
-
-                                    headers: {
-                                        'Content-Type': 'application/json',
-
-                                        'Accept': 'application/json',
-
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-
-                                    body: JSON.stringify({
-                                        fields: fields
-                                    })
-                                }
-                            );
-
-                        const data =
-                            await response.json()
-                            .catch(() => ({}));
-
-                        if (!response.ok) {
-
-                            console.error(
-                                'Form save error:',
-                                data
-                            );
-
-                            throw new Error(
-                                data.message ||
-                                'Form gagal disimpan.'
-                            );
-                        }
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.message || 'Gagal menyimpan.');
 
                         clearDraft();
-
-                        toast.textContent =
-                            data.message ||
-                            'Formulir berhasil disimpan.';
-
-                        toast.classList.add(
-                            'show'
-                        );
-
-                        setTimeout(
-                            function() {
-                                toast.classList.remove(
-                                    'show'
-                                );
-                            },
-                            2500
-                        );
-
+                        alert(data.message || 'Formulir berhasil disimpan.');
                     } catch (error) {
-
-                        console.error(error);
-
-                        alert(
-                            error.message ||
-                            'Terjadi kesalahan saat menyimpan formulir.'
-                        );
-
+                        alert(error.message);
                     } finally {
-
-                        saveButton.disabled =
-                            false;
-
-                        saveButton.innerHTML =
-                            originalText;
+                        allSaveButtons.forEach(b => {
+                            b.disabled = false;
+                            b.innerHTML = 'Simpan Formulir';
+                        });
                     }
-                }
-            );
-        }
+                });
+            });
+        });
 
+        // Contoh fungsi pengumpul data dari DOM sebelum dikirim via AJAX:
+function collectFormData() {
+    const questions = [];
+    document.querySelectorAll('.field-item').forEach((el, index) => {
+        // Ambil nilai help/keterangan tambahan
+        const helpInput = el.querySelector('.input-keterangan, [name="help"], .help-text');
+        const helpValue = helpInput ? helpInput.value.trim() : '';
+
+        // Ambil opsi-opsi jawaban (untuk Dropdown/Radio/Checkbox)
+        const optionInputs = el.querySelectorAll('.option-input, .opsi-item input');
+        const options = Array.from(optionInputs)
+            .map(opt => opt.value.trim())
+            .filter(opt => opt !== ''); // buang yang kosong
+
+        questions.push({
+            id: el.dataset.id || null,
+            label: el.querySelector('.label-input').value,
+            tipe_input: el.dataset.tipe,
+            wajib: el.querySelector('.switch-wajib').checked,
+            // PERBAIKAN: Masukkan help ke dalam konfigurasi
+            konfigurasi: {
+                help: helpValue,
+                placeholder: el.querySelector('.placeholder-input')?.value || ''
+            },
+            // PERBAIKAN: Masukkan opsi jawaban ke pilihan_jawaban
+            pilihan_jawaban: options
+        });
     });
-</script>
+    return questions;
+    }
+    </script>
 
-@include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])</body>
+    @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
+</body>
 
 </html>

@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         AkunStaf::updateOrCreate(['email' => 'admin@alnay.id'], [
-            'nama' => 'Siti Aminah',
+            'nama' => 'MAS RADEN',
             'password_hash' => Hash::make('admin12345'),
         ]);
     }

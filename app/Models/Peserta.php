@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Jawaban;
 
 class Peserta extends Model
 {
+
     use HasFactory;
 
     protected $table = 'peserta_event';
@@ -24,11 +26,13 @@ class Peserta extends Model
         'hasil_akhir',
         'skor_akhir',
         'catatan_admin',
+        'answers',      // JSON, jawaban peserta
     ];
 
     protected $casts = [
         'skor_akhir' => 'decimal:2',
         'tanggal_daftar' => 'datetime',
+        'answers' => 'array',
     ];
 
     public function event(): BelongsTo
@@ -64,5 +68,10 @@ class Peserta extends Model
     public function isOwnedBy(?PenggunaEvent $user): bool
     {
         return $user !== null && $this->user_id === $user->id;
+    }
+
+    public function jawaban()
+    {
+        return $this->hasMany(\App\Models\Jawaban::class, 'peserta_id');
     }
 }

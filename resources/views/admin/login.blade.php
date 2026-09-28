@@ -42,8 +42,9 @@
 
         .brand {
             position: absolute;
-            top: 30px;
-            left: 54px;
+            padding: 0 20px;
+            top: 10px;
+            left: 72px;
             font-family: "Inter", Arial, sans-serif;
             font-size: 25px;
             font-weight: 700;
@@ -55,7 +56,7 @@
         }
 
         .visual {
-            height: 600px;
+            height: 560px;
             border-radius: 15px;
             overflow: hidden;
             position: relative;

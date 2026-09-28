@@ -347,7 +347,7 @@
 </head>
 
 <body>
-    <div class="layout">
+    <div class="layout pt-[76px]">
         <aside class="sidebar">
             <div class="brand">ALNAY<span>.ID</span></div>
             <div class="nav">
@@ -373,14 +373,10 @@
                         Suara Voting</span></a>
             </div>
             <div class="admin"><span class="avatar">SA</span>
-                <div><strong>{{ session('admin_name', 'Siti Aminah') }}</strong><small>Admin Event</small></div>
+                <div><strong>{{ session('admin_name', 'MAS RADEN') }}</strong><small>Admin Event</small></div>
             </div>
         </aside>
         <main class="main">
-            <header class="top">
-                <div class="crumb">Admin Portal <strong>{{ $event?->nama ?? 'Event Alnay' }}</strong></div><a
-                    href="{{ route('admin.dashboard') }}">← Dashboard</a>
-            </header>
             <section class="content">
                 <div class="hero"><span class="eyebrow">Ruang kerja admin</span>
                     <h1>{{ $pageTitle }}</h1>
@@ -395,6 +391,50 @@
                             @endforeach
                         </select></div>
                 </div>
+                @if ($page === 'registrations' && $event)
+                    <form id="manualParticipantForm" class="hero" method="POST" enctype="multipart/form-data"
+                        action="{{ route('admin.registrations.manual.store', $event) }}">
+                        @csrf
+                        <span class="eyebrow">Input manual</span>
+                        <h2>Data Peserta</h2>
+                        <p>Gunakan pertanyaan yang sudah disimpan di Form Builder untuk mencatat peserta secara manual.</p>
+                        <div class="manual-fields" style="display:grid;gap:14px;margin:20px 0">
+                            <div class="control" style="display:grid;gap:6px"><label for="manualNama">Nama peserta</label><input id="manualNama" name="nama" required style="border:1px solid var(--line);border-radius:5px;padding:10px"></div>
+                            <div class="control" style="display:grid;gap:6px"><label for="manualEmail">Email peserta</label><input id="manualEmail" name="email" type="email" required style="border:1px solid var(--line);border-radius:5px;padding:10px"></div>
+                            @forelse ($questions as $question)
+                                @php($config = $question->konfigurasi ?? [])
+                                @if ($question->tipe_input === 'heading')
+                                    <h3>{{ $question->label }}</h3>
+                                @elseif ($question->tipe_input === 'subheading')
+                                    <p>{{ $question->label }}</p>
+                                @else
+                                    <div class="control" style="display:grid;gap:6px"><label for="answer-{{ $question->id }}">{{ $question->label }} @if ($question->wajib)<strong>*</strong>@endif</label>
+                                        @if ($question->tipe_input === 'checkbox')
+                                            <div style="display:grid;gap:8px">@foreach ($question->pilihan_jawaban ?? [] as $option)<label style="font-weight:normal"><input type="checkbox" name="answers[{{ $question->id }}][]" value="{{ $option }}"> {{ $option }}</label>@endforeach</div>
+                                        @elseif (in_array($question->tipe_input, ['select', 'radio'], true))
+                                            <select id="answer-{{ $question->id }}" name="answers[{{ $question->id }}]" style="border:1px solid var(--line);border-radius:5px;padding:10px" @required($question->wajib)>
+                                                <option value="">Pilih jawaban</option>
+                                                @foreach ($question->pilihan_jawaban ?? [] as $option)<option value="{{ $option }}">{{ $option }}</option>@endforeach
+                                            </select>
+                                        @elseif ($question->tipe_input === 'textarea')
+                                            <textarea id="answer-{{ $question->id }}" name="answers[{{ $question->id }}]" placeholder="{{ $config['placeholder'] ?? '' }}" style="border:1px solid var(--line);border-radius:5px;padding:10px;min-height:80px" @required($question->wajib)></textarea>
+                                        @elseif ($question->tipe_input === 'file')
+                                            <input id="answer-{{ $question->id }}" name="answers[{{ $question->id }}]" type="file" @required($question->wajib)>
+                                        @else
+                                            <input id="answer-{{ $question->id }}" name="answers[{{ $question->id }}]" type="{{ in_array($question->tipe_input, ['email', 'number'], true) ? $question->tipe_input : 'text' }}" @if ($question->tipe_input === 'number') inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if (['e', 'E', '+', '-', '.'].includes(event.key)) event.preventDefault()" @endif placeholder="{{ $config['placeholder'] ?? '' }}" style="border:1px solid var(--line);border-radius:5px;padding:10px" @required($question->wajib)>
+                                        @endif
+                                        @if (!empty($config['help']))<small>{{ $config['help'] }}</small>@endif
+                                    </div>
+                                @endif
+                            @empty
+                                <p>Belum ada pertanyaan. Buat dan simpan formulir terlebih dahulu.</p>
+                            @endforelse
+                        </div>
+                        @if ($questions->contains(fn ($question) => ! in_array($question->tipe_input, ['heading', 'subheading'], true)))
+                            <button class="btn primary" type="submit">Simpan Peserta</button>
+                        @endif
+                    </form>
+                @endif
                 <div class="cards">
                     <div class="card"><b>Event aktif</b>
                         <p>{{ $event?->nama ?? 'Belum ada event' }}</p>
@@ -411,6 +451,27 @@
             </section>
         </main>
     </div>
+    @if ($page === 'registrations')
+        <script>
+            document.getElementById('manualParticipantForm')?.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const button = form.querySelector('[type="submit"]');
+                button.disabled = true;
+                try {
+                    const response = await fetch(form.action, { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': form.querySelector('[name="_token"]').value }, body: new FormData(form) });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.message || Object.values(data.errors || {}).flat()[0] || 'Data peserta gagal disimpan.');
+                    form.reset();
+                    window.showAdminToast(data.message || 'Data peserta berhasil disimpan.');
+                } catch (error) {
+                    window.showAdminToast(error.message, 'error');
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        </script>
+    @endif
 </body>
 
 </html>

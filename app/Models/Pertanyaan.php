@@ -31,11 +31,12 @@ class Pertanyaan extends Model
         'pilihan_jawaban' => 'array',
         'konfigurasi' => 'array',
         'wajib' => 'boolean',
+        'options' => 'array',
     ];
 
     public function event(): BelongsTo
     {
-        return $this->belongsTo(Event::class, 'event_id');
+        return $this->belongsTo (Event::class, 'event_id');
     }
 
     public function jawabans(): HasMany

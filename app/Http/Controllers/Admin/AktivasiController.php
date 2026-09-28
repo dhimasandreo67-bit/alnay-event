@@ -79,15 +79,19 @@ class AktivasiController extends Controller
             fn ($jawaban) => $jawaban->pertanyaan && str_contains(strtolower($jawaban->pertanyaan->label), 'kategori')
         );
 
-        $lunas = $peserta->pembayaran?->status_midtrans === 'settlement';
+        $pembayaran = $peserta->pembayaran;
+        $lunas = $pembayaran?->status_midtrans === 'settlement';
 
         return [
             'id' => $peserta->id,
-            'no_registrasi' => 'PPA-'.now()->year.'-'.str_pad($peserta->id, 3, '0', STR_PAD_LEFT),
+            'no_registrasi' => 'PPA-' . now()->year . '-' . str_pad($peserta->id, 3, '0', STR_PAD_LEFT),
             'nama' => $peserta->user->nama ?? '-',
             'email' => $peserta->user->email ?? '-',
             'kategori' => $kategoriJawaban?->jawaban ?? '-',
-            'pembayaran' => $peserta->pembayaran,
+            'pembayaran' => $pembayaran,
+            'nominal_unik' => $pembayaran ? 'Rp ' . number_format($pembayaran->jumlah, 0, ',', '.') : null,
+            'kode_unik' => $pembayaran?->kode_unik,
+            'tarif_dasar' => $pembayaran?->tarif_dasar,
             'statusAkun' => $lunas ? 'aktif' : 'terkunci',
             'peserta' => $peserta,
         ];

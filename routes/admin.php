@@ -52,4 +52,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/peserta/{peserta}/status', [PesertaController::class, 'updateStatus']); // admin/owner
     Route::put('/peserta/{peserta}/hasil', [PesertaController::class, 'updateHasil']);   // admin/owner
     Route::get('/peserta/{peserta}/voter', [PesertaController::class, 'voterList']);     // admin/owner
+    Route::get('peserta/jawaban/{jawaban}/file', [PesertaController::class, 'file'])
+    ->name('admin.jawaban.file');
 });

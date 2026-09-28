@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\JawabanPeserta;
 use App\Models\PenggunaEvent;
 use App\Models\Peserta;
+use App\Models\Pembayaranevent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -92,7 +93,7 @@ class PendaftaranController extends Controller
                     continue;
                 }
 
-                $answer = $request->file("answers.{$question->id}")?->store('peserta');
+                $answer = $request->file("answers.{$question->id}")?->store('peserta' , 'public');
                 $answer ??= $data['answers'][$question->id] ?? null;
 
                 if ($answer === null || $answer === '') {
@@ -142,12 +143,52 @@ class PendaftaranController extends Controller
      * URL publik langsung ke file-nya. Route ini WAJIB didaftarkan di
      * dalam grup middleware 'admin.session'.
      */
-    public function downloadJawabanFile(JawabanPeserta $jawaban): Response
+    public function downloadJawabanFile(JawabanPeserta $jawaban)
     {
-        abort_unless($jawaban->pertanyaan?->tipe_input === 'file', 404);
-        abort_unless($jawaban->jawaban && Storage::disk('local')->exists($jawaban->jawaban), 404);
+        // 1. Ambil path file dari jawaban
+        $filePath = $jawaban->jawaban;
 
-        return Storage::disk('local')->download($jawaban->jawaban);
+        // Jika jawaban berupa array, ambil elemen pertama
+        if (is_array($filePath)) {
+            $filePath = $filePath[0] ?? null;
+        }
+
+        // Bersihkan query string jika ada (misal ?v=123)
+        if ($filePath && str_contains($filePath, '?')) {
+            $filePath = parse_url($filePath, PHP_URL_PATH);
+        }
+
+        // Validasi path tidak kosong
+        if (!$filePath) {
+            abort(404, 'File tidak ditemukan');
+        }
+
+        // Cek keberadaan file di disk 'public'
+        if (!Storage::disk('public')->exists($filePath)) {
+            abort(404, 'File tidak ditemukan di server');
+        }
+
+        // 2. Ambil ekstensi file asli (misal: pdf, jpg, png)
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+
+        // 3. Ambil data peserta untuk kustomisasi nama file
+        $peserta = $jawaban->peserta;
+        $user = $peserta?->user;
+
+        $namaPeserta   = $user?->nama ?? 'Peserta';
+        $emailPeserta  = $user?->email ?? 'tanpa-email';
+        $tanggalDaftar = $peserta?->created_at?->format('Y-m-d') ?? date('Y-m-d');
+
+        // 4. Sanitasi nama file (ganti spasi & karakter aneh dengan underscore)
+        // Agar aman dan tidak error saat didownload di berbagai OS
+        $namaSanitized  = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $namaPeserta);
+        $emailSanitized = preg_replace('/[^a-zA-Z0-9_\-.@]/', '_', $emailPeserta);
+
+        // 5. Format nama file baru: Nama_Email_Tanggal.ext
+        $newFilename = "{$namaSanitized}_{$emailSanitized}_{$tanggalDaftar}.{$extension}";
+
+        // 6. Return file sebagai response download dengan nama baru
+        return Storage::disk('public')->download($filePath, $newFilename);
     }
 
     public function index()
@@ -161,7 +202,7 @@ class PendaftaranController extends Controller
         // 3. Hitung jumlah statistik peserta berdasarkan status
         $totalPendaftar = $pesertas->count();
         $menungguReview = $pesertas->where('status', 'menunggu_review')->count();
-        $perluRevisi    = $pesertas->where('status', 'revisi')->count();
+        // $perluRevisi    = $pesertas->where('status', 'revisi')->count();
         $diterima       = $pesertas->where('status', 'diterima')->count();
         $ditolak        = $pesertas->where('status', 'ditolak')->count();
 
@@ -171,7 +212,7 @@ class PendaftaranController extends Controller
             'pesertas', 
             'totalPendaftar', 
             'menungguReview', 
-            'perluRevisi', 
+            // 'perluRevisi', 
             'diterima', 
             'ditolak'
         ));
@@ -194,6 +235,39 @@ class PendaftaranController extends Controller
         return redirect()->back()->with('success', 'Status peserta berhasil diperbarui.');
     }
 
+    private function buatPembayaranOtomatis(Peserta $peserta): void
+    {
+        // Cek apakah sudah ada pembayaran (hindari duplikasi)
+        if ($peserta->pembayaran) {
+            return;
+        }
+
+        $event = $peserta->event;
+        $tarifDasar = (int) ($event->tarif_pendaftaran ?? 0);
+
+        // Generate kode unik 3 digit dari ID peserta
+        // ID 19 → "019", ID 127 → "127", ID 5 → "005"
+        $kodeUnik = str_pad($peserta->id, 3, '0', STR_PAD_LEFT);
+
+        // Nominal unik = tarif dasar + kode unik
+        // Contoh: 90000 + 19 = 90019
+        $nominalUnik = $tarifDasar + (int) $kodeUnik;
+
+        // Buat order ID yang unik
+        $orderId = 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT);
+
+        PembayaranEvent::create([
+            'peserta_id'        => $peserta->id,
+            'jumlah'            => $nominalUnik,
+            'tarif_dasar'       => $tarifDasar,
+            'kode_unik'         => $kodeUnik,
+            'midtrans_order_id' => $orderId,
+            'status_midtrans'   => 'pending',
+            'metode'            => 'transfer_bank',
+            'tanggal_bayar'     => null,
+        ]);
+    }
+
     // Menghapus Peserta
     public function destroy($id)
     {
@@ -206,5 +280,57 @@ class PendaftaranController extends Controller
         $peserta->delete();
 
         return redirect()->back()->with('success', 'Data peserta dan jawabannya berhasil dihapus.');
+    }
+
+    public function file(Jawaban $jawaban)
+    {
+        $raw = is_array($jawaban->jawaban)
+            ? ($jawaban->jawaban[0] ?? '')
+            : (string) $jawaban->jawaban;
+
+        if ($raw === '') {
+            abort(404, 'Kolom jawaban kosong (tidak ada path file).');
+        }
+
+        // Normalisasi path dari DB
+        $clean = parse_url($raw, PHP_URL_PATH) ?? $raw;
+        $clean = ltrim($clean, '/');
+        $clean = preg_replace('#^(public/|private/|storage/)+#', '', $clean);
+        $basename = basename($clean);
+
+        // --- Tahap 1: lokasi-lokasi kandidat ---
+        $candidates = [
+            storage_path('app/private/' . $clean),  // disk local Laravel 11+
+            storage_path('app/public/' . $clean),   // disk public
+            storage_path('app/' . $clean),          // disk local Laravel <= 10
+            public_path('storage/' . $clean),       // hasil storage:link
+            public_path($clean),                    // kalau sempat masuk public/
+        ];
+
+        foreach ($candidates as $c) {
+            if (is_file($c)) {
+                return response()->file($c); // Content-Type otomatis → gambar tampil
+            }
+        }
+
+        // --- Tahap 2: pencarian rekursif berdasarkan nama file ---
+        foreach ([storage_path(), public_path()] as $root) {
+            if (! is_dir($root)) {
+                continue;
+            }
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)
+            );
+            foreach ($iterator as $f) {
+                if ($f->isFile() && $f->getFilename() === $basename) {
+                    return response()->file($f->getPathname());
+                }
+            }
+        }
+
+        // --- Tidak ketemu: laporkan semua lokasi yang sudah dicari ---
+        abort(404, 'File fisik tidak ditemukan. Path di DB: ' . $raw .
+            ' | Sudah dicari di: ' . implode(', ', $candidates) .
+            ' + pencarian rekursif di storage/ dan public/');
     }
 }
