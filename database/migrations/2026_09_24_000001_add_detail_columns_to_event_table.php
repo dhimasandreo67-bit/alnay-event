@@ -7,34 +7,55 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     public function up(): void
-        {
-            Schema::table('event', function (Blueprint $table) {
-                // Mengubah kolom yang sudah ada di DB agar bisa nullable
-                $table->date('tanggal_selesai')->nullable()->change();
+    {
+        // Tambah kolom hanya kalau belum ada (aman kalau migration ini pernah jalan sebagian)
+        Schema::table('event', function (Blueprint $table) {
+            if (! Schema::hasColumn('event', 'deskripsi')) {
+                $table->text('deskripsi')->nullable();
+            }
+            if (! Schema::hasColumn('event', 'waktu_mulai')) {
+                $table->time('waktu_mulai')->nullable();
+            }
+            if (! Schema::hasColumn('event', 'waktu_selesai')) {
+                $table->time('waktu_selesai')->nullable();
+            }
+            if (! Schema::hasColumn('event', 'lokasi')) {
+                $table->string('lokasi')->nullable();
+            }
+            if (! Schema::hasColumn('event', 'batas_pendaftaran_tanggal')) {
+                $table->date('batas_pendaftaran_tanggal')->nullable();
+            }
+            if (! Schema::hasColumn('event', 'batas_pendaftaran_waktu')) {
+                $table->time('batas_pendaftaran_waktu')->nullable();
+            }
+            if (! Schema::hasColumn('event', 'kuota_peserta')) {
+                $table->unsignedInteger('kuota_peserta')->nullable();
+            }
+        });
 
-                // Menambahkan kolom baru atau mengubah kolom waktu_selesai
-                $table->text('deskripsi')->nullable()->after('nama');
-                $table->time('waktu_mulai')->nullable()->after('tanggal_mulai');
-                $table->time('waktu_selesai')->nullable()->change(); // Diubah agar boleh null
-                $table->string('lokasi')->nullable()->after('waktu_selesai');
-                $table->date('batas_pendaftaran_tanggal')->nullable()->after('lokasi');
-                $table->time('batas_pendaftaran_waktu')->nullable()->after('batas_pendaftaran_tanggal');
-                $table->unsignedInteger('kuota_peserta')->nullable()->after('batas_pendaftaran_waktu');
-            });
-        }
+        // Kolom lama dibuat boleh null
+        Schema::table('event', function (Blueprint $table) {
+            $table->date('tanggal_selesai')->nullable()->change();
+            $table->time('waktu_selesai')->nullable()->change();
+        });
+    }
 
     public function down(): void
     {
-        Schema::table('event', function (Blueprint $table) {
-            $table->dropColumn([
-                'deskripsi',
-                'waktu_mulai',
-                'waktu_selesai',
-                'lokasi',
-                'batas_pendaftaran_tanggal',
-                'batas_pendaftaran_waktu',
-                'kuota_peserta',
-            ]);
-        });
+        $kolom = array_filter([
+            'deskripsi',
+            'waktu_mulai',
+            'waktu_selesai',
+            'lokasi',
+            'batas_pendaftaran_tanggal',
+            'batas_pendaftaran_waktu',
+            'kuota_peserta',
+        ], fn ($k) => Schema::hasColumn('event', $k));
+
+        if ($kolom) {
+            Schema::table('event', function (Blueprint $table) use ($kolom) {
+                $table->dropColumn($kolom);
+            });
+        }
     }
 };

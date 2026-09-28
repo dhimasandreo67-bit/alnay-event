@@ -164,3 +164,32 @@ Route::middleware('api')->group(function () {
     require __DIR__.'/admin.php';
     require __DIR__.'/user.php';
 });
+
+// ===== Kembalikan route main yang tertimpa route han (URI persis sama) =====
+// Grup 'api' han di atas mendaftarkan URI yang sama, dan yang terakhir menang.
+// Blok ini HARUS tetap di paling bawah file, setelah grup 'api'.
+
+// Auth pelanggan (Google, session): han memakai Auth\GoogleAuthController + sanctum
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+Route::post('/auth/logout', [GoogleAuthController::class, 'logout'])->name('auth.logout');
+Route::get('/auth/me', [GoogleAuthController::class, 'me'])->name('auth.me');
+
+// Logout admin API: han menambah auth:sanctum + role:admin, main memakai guard session 'admin'
+Route::post('/auth/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
+
+// Hasil voting publik (han memakai VotingController@hasilEvent)
+Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
+
+// Admin (guard session akun_staf)
+Route::middleware('admin')->group(function () {
+    Route::post('/event', [EventController::class, 'store']);
+    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'voters']);
+});
+
+// Pelanggan (middleware main, bukan auth:sanctum)
+Route::middleware('pelanggan')->group(function () {
+    Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
+    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
+    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
+});

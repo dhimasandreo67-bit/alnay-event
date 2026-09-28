@@ -107,6 +107,7 @@ class PendaftaranController extends Controller
                 JawabanPeserta::create([
                     'peserta_id' => $peserta->id,
                     'pertanyaan_id' => $question->id,
+                    'jawaban' => $answer,
                 ]);
             }
 
@@ -332,5 +333,17 @@ class PendaftaranController extends Controller
         abort(404, 'File fisik tidak ditemukan. Path di DB: ' . $raw .
             ' | Sudah dicari di: ' . implode(', ', $candidates) .
             ' + pencarian rekursif di storage/ dan public/');
+    }
+
+        // Hapus semua pertanyaan milik event (dipanggil dari halaman form builder)
+    public function clearQuestions(Request $request, Event $event)
+    {
+        $event->pertanyaans()->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Semua pertanyaan berhasil dihapus.']);
+        }
+
+        return redirect()->back()->with('success', 'Semua pertanyaan berhasil dihapus.');
     }
 }

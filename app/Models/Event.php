@@ -15,14 +15,22 @@ class Event extends Model
 
     public $timestamps = false;
 
-    protected $fillable = [
+        protected $fillable = [
         'nama',
+        'deskripsi',
+        'form_fields',
         'banner',
         'syarat_ketentuan',
         'biaya_pendaftaran',
         'harga_per_vote',
         'tanggal_mulai',
+        'waktu_mulai',
         'tanggal_selesai',
+        'waktu_selesai',
+        'lokasi',
+        'batas_pendaftaran_tanggal',
+        'batas_pendaftaran_waktu',
+        'kuota_peserta',
         'mode_penilaian',
         'voting_aktif',
         'tampilkan_hasil_voting',
@@ -31,13 +39,19 @@ class Event extends Model
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'waktu_mulai' => 'datetime:H:i',
+        'waktu_selesai' => 'datetime:H:i',
+        'batas_pendaftaran_tanggal' => 'date',
+        'batas_pendaftaran_waktu' => 'datetime:H:i',
         'biaya_pendaftaran' => 'decimal:2',
         'harga_per_vote' => 'decimal:2',
+        'kuota_peserta' => 'integer',
         'voting_aktif' => 'boolean',
         'tampilkan_hasil_voting' => 'boolean',
+        'form_fields' => 'array',
     ];
 
-    protected $appends = ['status'];
+    protected $appends = ['status', 'status_label'];
 
     public function pertanyaans(): HasMany
     {
@@ -54,19 +68,50 @@ class Event extends Model
         return $this->hasMany(Voting::class, 'event_id');
     }
 
+        /**
+     * Status dihitung dari tanggal + waktu mulai/selesai (versi han).
+     * Kalau waktu kosong, dianggap 00:00 (mulai) dan 23:59 (selesai),
+     * jadi event lama milik main tetap dihitung sama seperti sebelumnya.
+     */
     public function getStatusAttribute(): string
     {
-        $hariIni = Carbon::now()->startOfDay();
+        $mulai = $this->combineDateTime($this->tanggal_mulai, $this->waktu_mulai, '00:00');
+        $selesai = $this->tanggal_selesai
+            ? $this->combineDateTime($this->tanggal_selesai, $this->waktu_selesai, '23:59')
+            : null;
 
-        if ($hariIni->lt(Carbon::parse($this->tanggal_mulai))) {
+        $sekarang = Carbon::now();
+
+        if ($sekarang->lt($mulai)) {
             return 'akan_datang';
         }
 
-        if ($hariIni->gt(Carbon::parse($this->tanggal_selesai))) {
+        if ($selesai && $sekarang->gt($selesai)) {
+            return 'selesai';
+        }
+
+        if (! $selesai && $sekarang->gt($mulai->copy()->endOfDay())) {
             return 'selesai';
         }
 
         return 'berlangsung';
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'akan_datang' => 'Akan Datang',
+            'berlangsung' => 'Sedang Berlangsung',
+            'selesai' => 'Telah Berakhir',
+        };
+    }
+
+    private function combineDateTime($date, $time, string $fallbackTime): Carbon
+    {
+        $tanggal = Carbon::parse($date)->format('Y-m-d');
+        $jam = $time ? Carbon::parse($time)->format('H:i:s') : $fallbackTime . ':00';
+
+        return Carbon::parse("{$tanggal} {$jam}");
     }
 
     public function scopeWithStatus($query, string $status)

@@ -15,21 +15,23 @@ class Peserta extends Model
 
     public $timestamps = false;
 
-    protected $fillable = [
-    'event_id',
-    'user_id',
-    'status',
-    'hasil_akhir',
-    'skor_akhir',
-    'catatan_admin',
-    'galeri_foto',
-    'total_vote',
+        protected $fillable = [
+        'event_id',
+        'user_id',
+        'status',       // menunggu_pembayaran | diterima | ditolak
+        'hasil_akhir',
+        'skor_akhir',
+        'catatan_admin',
+        'galeri_foto',
+        'total_vote',
+        'answers',      // dari han: JSON jawaban peserta
     ];
 
     protected $casts = [
-    'skor_akhir' => 'decimal:2',
-    'tanggal_daftar' => 'datetime',
-    'galeri_foto' => 'array',
+        'skor_akhir' => 'decimal:2',
+        'tanggal_daftar' => 'datetime',
+        'galeri_foto' => 'array',
+        'answers' => 'array',
     ];
 
     public function event(): BelongsTo
@@ -60,5 +62,11 @@ class Peserta extends Model
     public function isOwnedBy(?PenggunaEvent $user): bool
     {
         return $user !== null && $this->user_id === $user->id;
+    }
+
+        // Dari han: dipakai halaman admin Blade
+    public function jawaban()
+    {
+        return $this->hasMany(\App\Models\Jawaban::class, 'peserta_id');
     }
 }

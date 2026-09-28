@@ -6,22 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-        {
-            Schema::table('event', function (Blueprint $table) {
+    {
+        Schema::table('event', function (Blueprint $table) {
+            if (Schema::hasColumn('event', 'tanggal_selesai')) {
                 $table->date('tanggal_selesai')->nullable()->change();
+            }
+            if (Schema::hasColumn('event', 'waktu_selesai')) {
                 $table->time('waktu_selesai')->nullable()->change();
-            });
-        }
+            }
+        });
+    }
 
     public function down(): void
-        {
-            Schema::table('event', function (Blueprint $table) {
-                $table->date('tanggal_selesai')->nullable(false)->change();
-                $table->time('waktu_selesai')->nullable(false)->change();
-            });
-        }
+    {
+        Schema::table('event', function (Blueprint $table) {
+            $table->date('tanggal_selesai')->nullable(false)->change();
+            $table->time('waktu_selesai')->nullable(false)->change();
+        });
+    }
 };
