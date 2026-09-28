@@ -26,7 +26,7 @@ class PendaftaranController extends Controller
 
         $answeredIds = collect($data['jawaban'])->pluck('pertanyaan_id');
         $requiredIds = Pertanyaan::where('event_id', $id)->where('wajib', true)->pluck('id');
-        
+
         if ($requiredIds->diff($answeredIds)->isNotEmpty()) {
             return response()->json(['message' => 'Semua pertanyaan wajib harus diisi.'], 422);
         }
@@ -62,5 +62,40 @@ class PendaftaranController extends Controller
             ->get();
 
         return response()->json($pesertas);
+    }
+
+    // GET /event/{id}/peserta
+    public function daftarPeserta($id)
+    {
+        $pesertas = Peserta::with('user:id,nama,foto_url')
+            ->where('event_id', $id)
+            ->where('status', 'diterima')
+            ->get(['id', 'event_id', 'user_id']);
+
+        return response()->json($pesertas);
+    }
+
+    // GET /peserta/{id}
+    // GET /peserta/{id}
+    public function show(Request $request, $id)
+    {
+        $peserta = Peserta::with([
+            'user:id,nama,foto_url',
+            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif',
+            'jawabans.pertanyaan:id,label,tag_tampilan',
+        ])
+            ->select('id', 'event_id', 'user_id', 'galeri_foto')
+            ->findOrFail($id);
+
+        // Jika dipanggil via JavaScript / API (Expect JSON)
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($peserta);
+        }
+
+        // Jika dibuka langsung via URL Browser, tampilkan Halaman Detail Peserta
+        return view('voting.index', [
+            'pesertaId' => $id,
+            'peserta' => $peserta
+        ]);
     }
 }

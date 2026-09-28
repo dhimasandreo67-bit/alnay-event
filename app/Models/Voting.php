@@ -18,18 +18,27 @@ class Voting extends Model
         'event_id',
         'peserta_id',
         'user_id',
+        'nama_pemilih',
+        'email_pemilih',
         'nama_tampilan',
         'jumlah_vote',
-        'harga_per_vote',   // snapshot harga saat transaksi, JANGAN ambil ulang dari event
+        'harga_per_vote',
         'total_bayar',
+        'metode_pembayaran',
+        'va_number',
+        'qr_url',
+        'expired_at',
         'midtrans_order_id',
         'status_midtrans',
+        'pesan_dukungan',
+        'tanggal_vote',
     ];
 
     protected $casts = [
         'harga_per_vote' => 'decimal:2',
         'total_bayar' => 'decimal:2',
         'tanggal_vote' => 'datetime',
+        'expired_at' => 'datetime',
     ];
 
     public function event(): BelongsTo

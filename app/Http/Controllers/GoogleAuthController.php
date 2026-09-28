@@ -38,12 +38,9 @@ class GoogleAuthController extends Controller
             ]);
         }
 
-        Auth::guard('pelanggan')->login($pengguna);
+                Auth::guard('pelanggan')->login($pengguna);
 
-        return response()->json([
-            'message' => 'Login berhasil',
-            'pengguna' => $pengguna,
-        ]);
+        return redirect('/beranda');
     }
 
     // POST /auth/logout
