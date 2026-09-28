@@ -31,130 +31,138 @@ class VotingController extends Controller
      * POST /peserta/{peserta}/vote
      */
     public function vote(Request $request, Peserta $peserta)
-{
-    $event = $peserta->event;
+    {
+        $event = $peserta->event;
 
-    if (! $event->voting_aktif) {
-        return response()->json(['message' => 'Voting untuk event ini belum/tidak aktif.'], 403);
-    }
-
-    if ($peserta->status !== 'diterima') {
-        return response()->json(['message' => 'Peserta ini belum berstatus diterima.'], 403);
-    }
-
-    $data = $request->validate([
-        'nama' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'email', 'max:255'],
-        'jumlah_vote' => ['required', 'integer', 'min:1'],
-        'pesan_dukungan' => ['nullable', 'string', 'max:1000'],
-        'metode_pembayaran' => [
-            'required',
-            'string',
-            'in:qris,bri_va'
-        ],
-    ]);
-
-    $user = $request->user();
-    $namaTampilan = $data['nama'];
-    $hargaPerVote = (float) $event->harga_per_vote;
-    $totalBayar = (int) round($hargaPerVote * (int) $data['jumlah_vote']);
-    $orderId = 'VOTING-' . $peserta->id . '-' . time() . '-' . Str::random(4);
-
-    Config::$serverKey = config('services.midtrans.server_key');
-    Config::$isProduction = config('services.midtrans.is_production');
-    Config::$isSanitized = config('services.midtrans.is_sanitized', true);
-    Config::$is3ds = config('services.midtrans.is_3ds', true);
-
-    $vaNumber = null;
-    $qrUrl = null;
-    $expiredAt = null;
-
-    try {
-        if ($data['metode_pembayaran'] === 'qris') {
-            $chargeResponse = CoreApi::charge([
-                'payment_type' => 'qris',
-                'transaction_details' => [
-                    'order_id' => $orderId,
-                    'gross_amount' => $totalBayar,
-                ],
-                'qris' => [
-                    'acquirer' => 'gopay',
-                ],
-            ]);
-
-            foreach ($chargeResponse->actions as $action) {
-                if ($action->name === 'generate-qr-code') {
-                    $qrUrl = $action->url;
-                }
-            }
-
-            $expiredAt = isset($chargeResponse->expiry_time)
-                ? Carbon::parse($chargeResponse->expiry_time)
-                : Carbon::now()->addMinutes(15);
-
-        } else {
-            // BRI Virtual Account via Midtrans Core API
-            $chargeResponse = CoreApi::charge([
-                'payment_type' => 'bank_transfer',
-                'transaction_details' => [
-                    'order_id' => $orderId,
-                    'gross_amount' => $totalBayar,
-                ],
-                'bank_transfer' => [
-                    'bank' => 'bri',
-                ],
-            ]);
-
-            if (isset($chargeResponse->va_numbers) && count($chargeResponse->va_numbers) > 0) {
-                $vaNumber = $chargeResponse->va_numbers[0]->va_number;
-            }
-
-            $expiredAt = isset($chargeResponse->expiry_time)
-                ? Carbon::parse($chargeResponse->expiry_time)
-                : Carbon::now()->addHours(24);
+        if (! $event->voting_aktif) {
+            return response()->json(['message' => 'Voting untuk event ini belum/tidak aktif.'], 403);
         }
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Gagal membuat transaksi via Midtrans: ' . $e->getMessage()
-        ], 500);
-    }
 
-    try {
-        $voting = DB::transaction(function () use (
-            $event, $peserta, $user, $namaTampilan, $data,
-            $hargaPerVote, $totalBayar, $orderId, $vaNumber, $qrUrl, $expiredAt
-        ) {
-            return Voting::create([
-                'event_id'          => $event->id,
-                'peserta_id'        => $peserta->id,
-                'user_id'           => $user?->id,
-                'nama_pemilih'      => $data['nama'],
-                'email_pemilih'     => $data['email'],
-                'nama_tampilan'     => $namaTampilan,
-                'jumlah_vote'       => $data['jumlah_vote'],
-                'harga_per_vote'    => $hargaPerVote,
-                'total_bayar'       => $totalBayar,
-                'metode_pembayaran' => $data['metode_pembayaran'],
-                'va_number'         => $vaNumber,
-                'qr_url'            => $qrUrl,
-                'expired_at'        => $expiredAt,
-                'midtrans_order_id' => $orderId,
-                'status_midtrans'   => 'pending',
-                'pesan_dukungan'    => $data['pesan_dukungan'] ?? null,
-                'tanggal_vote'      => Carbon::now(),
-            ]);
-        });
+        if ($peserta->status !== 'diterima') {
+            return response()->json(['message' => 'Peserta ini belum berstatus diterima.'], 403);
+        }
 
-        return response()->json([
-            'status'       => 'success',
-            'order_id'     => $orderId,
-            'redirect_url' => "/voting/{$orderId}/instruksi"
+        $data = $request->validate([
+            'nama' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'jumlah_vote' => ['required', 'integer', 'min:1'],
+            'pesan_dukungan' => ['nullable', 'string', 'max:1000'],
+            'metode_pembayaran' => ['required', 'string', 'in:qris,bri_va'],
         ]);
 
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'Gagal membuat transaksi: ' . $e->getMessage()], 500);
+        // Batas waktu bayar (menit). 60 = 1 jam, 180 = 3 jam.
+        $durasiMenit = 60;
+
+        $user = $request->user();
+        $namaTampilan = $data['nama'];
+        $hargaPerVote = (float) $event->harga_per_vote;
+        $totalBayar = (int) round($hargaPerVote * (int) $data['jumlah_vote']);
+        $orderId = 'VOTING-' . $peserta->id . '-' . time() . '-' . Str::random(4);
+
+        Config::$serverKey = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production');
+        Config::$isSanitized = config('services.midtrans.is_sanitized', true);
+        Config::$is3ds = config('services.midtrans.is_3ds', true);
+
+        $sekarang = Carbon::now();
+        $expiredAt = $sekarang->copy()->addMinutes($durasiMenit);
+
+        $customExpiry = [
+            'order_time' => $sekarang->format('Y-m-d H:i:s O'),
+            'expiry_duration' => $durasiMenit,
+            'unit' => 'minute',
+        ];
+
+        $vaNumber = null;
+        $qrUrl = null;
+
+        try {
+            if ($data['metode_pembayaran'] === 'qris') {
+                $chargeResponse = CoreApi::charge([
+                    'payment_type' => 'qris',
+                    'transaction_details' => [
+                        'order_id' => $orderId,
+                        'gross_amount' => $totalBayar,
+                    ],
+                    'qris' => [
+                        'acquirer' => 'gopay',
+                    ],
+                    'custom_expiry' => $customExpiry,
+                ]);
+
+                foreach ($chargeResponse->actions as $action) {
+                    if ($action->name === 'generate-qr-code') {
+                        $qrUrl = $action->url;
+                    }
+                }
+            } else {
+                $chargeResponse = CoreApi::charge([
+                    'payment_type' => 'bank_transfer',
+                    'transaction_details' => [
+                        'order_id' => $orderId,
+                        'gross_amount' => $totalBayar,
+                    ],
+                    'bank_transfer' => [
+                        'bank' => 'bri',
+                    ],
+                    'custom_expiry' => $customExpiry,
+                ]);
+
+                if (isset($chargeResponse->va_numbers) && count($chargeResponse->va_numbers) > 0) {
+                    $vaNumber = $chargeResponse->va_numbers[0]->va_number;
+                }
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal membuat transaksi via Midtrans: ' . $e->getMessage()
+            ], 500);
+        }
+
+        try {
+            $voting = DB::transaction(function () use (
+                $event,
+                $peserta,
+                $user,
+                $namaTampilan,
+                $data,
+                $hargaPerVote,
+                $totalBayar,
+                $orderId,
+                $vaNumber,
+                $qrUrl,
+                $expiredAt,
+                $sekarang
+            ) {
+                return Voting::create([
+                    'event_id'          => $event->id,
+                    'peserta_id'        => $peserta->id,
+                    'user_id'           => $user?->id,
+                    'nama_pemilih'      => $user?->nama ?? $data['nama'],
+                    'email_pemilih'     => $data['email'],
+                    'nama_tampilan'     => $namaTampilan,
+                    'jumlah_vote'       => $data['jumlah_vote'],
+                    'harga_per_vote'    => $hargaPerVote,
+                    'total_bayar'       => $totalBayar,
+                    'metode_pembayaran' => $data['metode_pembayaran'],
+                    'va_number'         => $vaNumber,
+                    'qr_url'            => $qrUrl,
+                    'expired_at'        => $expiredAt,
+                    'midtrans_order_id' => $orderId,
+                    'status_midtrans'   => 'pending',
+                    'pesan_dukungan'    => $data['pesan_dukungan'] ?? null,
+                    'tanggal_vote'      => $sekarang,
+                ]);
+            });
+
+            return response()->json([
+                'status'       => 'success',
+                'order_id'     => $orderId,
+                'redirect_url' => "/voting/{$orderId}/instruksi"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal membuat transaksi: ' . $e->getMessage()], 500);
+        }
     }
-}
 
     /**
      * Menampilkan Halaman Instruksi Pembayaran (Custom Invoice Page)

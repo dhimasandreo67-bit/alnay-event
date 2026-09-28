@@ -13,49 +13,44 @@
         .font-display { font-family: 'Playfair Display', serif; }
     </style>
 </head>
-<body class="h-screen overflow-hidden bg-[#FBF9F5]">
-    <div class="max-w-[1280px] mx-auto flex flex-col h-full">
+<body class="min-h-screen bg-[#FBF9F5]">
+    <div class="max-w-[1280px] mx-auto flex flex-col min-h-screen">
 
         <!-- Header -->
-        <header class="flex items-center justify-between px-16 py-6">
-            <span class="font-display font-bold text-[26px] tracking-[-0.65px] text-[#0E1828]">
+        <header class="flex items-center px-6 md:px-16 py-6">
+            <a href="{{ url('/') }}" class="font-display font-bold text-[26px] tracking-[-0.65px] text-[#0E1828]">
                 EVENT ALNAY.ID
-            </span>
-            <div class="flex items-center gap-3">
-                <a href="{{ url('/login') }}"
-                   class="px-7 py-2 rounded-md bg-[#B8862B] text-white text-sm font-semibold shadow-sm">
-                    Masuk
-                </a>
-                <a href="{{ url('/login') }}"
-                   class="px-7 py-2 rounded-md border border-[#B8862B] text-[#B8862B] text-sm font-semibold">
-                    Daftar
-                </a>
-            </div>
+            </a>
         </header>
 
         <!-- Main content -->
-        <div class="flex-1 flex items-center justify-center px-6 h-full">
-            <div class="flex items-stretch gap-16 max-w-[1040px] w-full justify-center">
+        <div class="flex-1 flex items-center justify-center px-6 pb-10">
+            <div class="flex flex-col md:flex-row items-stretch gap-8 md:gap-16 max-w-[1040px] w-full justify-center">
 
                 <!-- Kartu kiri -->
-                <div class="w-[430px] bg-[#0A1526] rounded-2xl shadow-xl flex flex-col justify-end p-8 shrink-0 overflow-auto" style="min-height:480px; max-height:calc(100vh - 160px);">
-                    <span class="inline-block w-fit mb-4 px-3.5 py-1 rounded-full bg-[#B8862B] text-[11px] font-bold uppercase tracking-[0.55px] text-white">
+                <div class="relative overflow-hidden w-full md:w-[430px] bg-[#0A1526] rounded-2xl shadow-xl flex flex-col justify-end p-8 md:shrink-0 min-h-[300px] md:min-h-[480px]">
+                    <!-- Hiasan -->
+                    <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full border border-[#B8862B]/30"></div>
+                    <div class="absolute -top-8 -right-8 w-36 h-36 rounded-full border border-[#B8862B]/40"></div>
+
+                    <span class="relative inline-block w-fit mb-4 px-3.5 py-1 rounded-full bg-[#B8862B] text-[11px] font-bold uppercase tracking-[0.55px] text-white">
                         Duta Budaya 2026
                     </span>
-                    <h2 class="font-display font-bold text-[30px] leading-[38px] tracking-[0.75px] text-white mb-4">
+                    <h2 class="relative font-display font-bold text-[30px] leading-[38px] tracking-[0.75px] text-white mb-4">
                         Dukung Kandidat<br>Favoritmu
                     </h2>
-                    <p class="text-[13px] leading-[21px] text-[#D1D5DB]">
+                    <p class="relative text-[13px] leading-[21px] text-[#D1D5DB]">
                         Masuk untuk memberikan suara dan ikut menentukan siapa yang akan membawa warisan budaya Nusantara ke kancah global.
                     </p>
                 </div>
 
                 <!-- Form kanan -->
-                <div class="w-[420px] flex flex-col items-center justify-center px-6" style="min-height:480px; max-height:calc(100vh - 160px);">
-                    <h1 class="font-bold text-[34px] leading-[36px] tracking-[-0.85px] text-[#0C1A30] mb-2 teZzZxt-center">
+                <div class="w-full md:w-[420px] flex flex-col items-center justify-center px-2 md:px-6 md:min-h-[480px]">
+                    <h1 class="font-bold text-[34px] leading-[36px] tracking-[-0.85px] text-[#0C1A30] mb-2 text-center">
                         Masuk
                     </h1>
                     <p class="text-sm text-[#64748B] text-center mb-7">
+                        Masuk dengan dengan akun google anda
                     </p>
 
                     <a href="{{ url('/auth/google') }}"

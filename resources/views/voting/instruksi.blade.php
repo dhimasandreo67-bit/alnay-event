@@ -90,6 +90,7 @@
             </div>
 
             @if ($voting->pesan_dukungan)
+                <span class="font-semibold text-[#7F766C] block mb-1 rid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs">Pesan dukungan</span>
                 <div class="bg-[#FAF3E7]/60 rounded-xl p-3 border border-[#CDC5BC]/20 text-xs text-[#4B463F] italic">
                     "{{ $voting->pesan_dukungan }}"
                 </div>
@@ -97,12 +98,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs">
                 <div>
-                    <span class="font-semibold text-[#7F766C] block mb-1">Identitas Pemilih</span>
-                    <p class="font-bold text-black">{{ $voting->nama_tampilan }}</p>
-                    <p class="text-[#7F766C]">{{ $voting->email_pemilih }}</p>
-                </div>
-                <div>
-                    <span class="font-semibold text-[#7F766C] block mb-1">NAMA TAMPIL DI PUBLIK</span>
+                    <span class="font-semibold text-[#7F766C] block mb-1">Nama pendukung</span>
                     <span
                         class="inline-block bg-[#FAF3E7] text-[#C28E27] font-semibold px-2.5 py-0.5 rounded-full border border-[#C28E27]/20">
                         {{ $voting->nama_tampilan }}
@@ -229,7 +225,7 @@
         </div>
     </div>
 
-    <script>
+        <script>
         function salinVA() {
             const va = document.getElementById('va-num').innerText;
             navigator.clipboard.writeText(va.replace(/\s+/g, ''));
@@ -241,16 +237,13 @@
             const btn = document.getElementById('modal-btn');
 
             if (jenis === 'sukses') {
-                ikon.className =
-                    'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-green-100 text-green-600';
+                ikon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-green-100 text-green-600';
                 ikon.textContent = '✓';
             } else if (jenis === 'pending') {
-                ikon.className =
-                    'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-[#FAF3E7] text-[#C28E27]';
+                ikon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-[#FAF3E7] text-[#C28E27]';
                 ikon.textContent = '⏳';
             } else {
-                ikon.className =
-                    'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-[#FAF3E7] text-[#7F766C]';
+                ikon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-[#FAF3E7] text-[#7F766C]';
                 ikon.textContent = 'i';
             }
 
@@ -281,28 +274,42 @@
                 const data = await res.json();
 
                 if (data.status_midtrans === 'settlement') {
-                    tampilkanModal('sukses', 'Pembayaran Berhasil', 'Terima kasih sudah memberikan dukungan vote.', data
-                        .redirect_url);
+                    tampilkanModal('sukses', 'Pembayaran Berhasil', 'Terima kasih sudah memberikan dukungan vote.', data.redirect_url);
                 } else {
-                    tampilkanModal('pending', 'Belum Kami Terima',
-                        'Pembayaran belum kami terima. Silakan selesaikan transfer/pembayaran terlebih dahulu.');
+                    tampilkanModal('pending', 'Belum Kami Terima', 'Pembayaran belum kami terima. Silakan selesaikan transfer/pembayaran terlebih dahulu.');
                 }
             } catch (err) {
-                tampilkanModal('pending', 'Gagal Mengecek',
-                    'Terjadi kendala saat mengecek status. Coba lagi sebentar lagi.');
+                tampilkanModal('pending', 'Gagal Mengecek', 'Terjadi kendala saat mengecek status. Coba lagi sebentar lagi.');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Saya Sudah Bayar (Cek Status)';
             }
         }
 
-        let time = 3584;
+        // Timer dihitung dari waktu kedaluwarsa asli (expired_at)
+        let sisaDetik = {{ $voting->expired_at ? max(0, $voting->expired_at->timestamp - now()->timestamp) : 0 }};
+
+        function tampilkanTimer() {
+            const el = document.getElementById('timer');
+
+            if (sisaDetik <= 0) {
+                el.innerText = 'Kedaluwarsa';
+                return; 
+            }
+
+            const jam = Math.floor(sisaDetik / 3600);
+            const menit = String(Math.floor((sisaDetik % 3600) / 60)).padStart(2, '0');
+            const detik = String(sisaDetik % 60).padStart(2, '0');
+
+            el.innerText = jam > 0 ? `${jam}:${menit}:${detik}` : `${menit}:${detik}`;
+        }
+
+        tampilkanTimer();
         setInterval(() => {
-            if (time <= 0) return;
-            time--;
-            let m = Math.floor(time / 60);
-            let s = time % 60;
-            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            if (sisaDetik > 0) {
+                sisaDetik--;
+                tampilkanTimer();
+            }
         }, 1000);
     </script>
 </body>
