@@ -14,8 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            // Milik main
             'admin' => \App\Http\Middleware\EnsureAdminLoggedIn::class,
             'pelanggan' => \App\Http\Middleware\EnsurePelangganLoggedIn::class,
+            // Milik han
+            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'admin.session' => \App\Http\Middleware\EnsureAdminSession::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
@@ -29,8 +33,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Force agar semua error Unauthenticated selalu direspon JSON 401 (tanpa redirect GET)
         $exceptions->render(function (AuthenticationException $e, Request $request) {
+            // Halaman Blade admin (han): arahkan ke login admin, bukan JSON
+            if ($request->is('admin/*')) {
+                return redirect()->route('admin.login');
+            }
+
+            // API main: tetap JSON 401
             return response()->json([
                 'message' => 'Anda harus login terlebih dahulu.'
             ], 401);

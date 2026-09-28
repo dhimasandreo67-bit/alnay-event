@@ -7,8 +7,17 @@ use App\Http\Controllers\PendaftaranController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\VotingController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\AktivasiController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\FormBuilderController;
+use App\Http\Controllers\Admin\NavigationController;
+use App\Http\Controllers\Admin\PendaftaranController as AdminPendaftaranController;
+use App\Http\Controllers\Admin\PesertaController;
+use App\Http\Controllers\Admin\WebAuthController;
 use Illuminate\Support\Facades\Route;
 
+// Route Halaman Depan
 Route::get('/', function () {
     return view('welcome');
 });
@@ -39,7 +48,7 @@ Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta'
 // Halaman Detail Peserta Publik (Blade/View)
 Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
 
-// API JSON Detail Peserta Khusus Checkout (Dipisah rutenya agar tidak bentrok dengan PendaftaranController)
+// API JSON Detail Peserta Khusus Checkout
 Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
 
 // Voting & Hasil Voting - Publik
@@ -48,7 +57,7 @@ Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingControlle
 Route::post('/voting/midtrans/webhook', [VotingController::class, 'webhook']);
 Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook']);
 
-// Event - Hanya Admin
+// Event - Hanya Admin (API JSON, guard session akun_staf)
 Route::middleware('admin')->group(function () {
     Route::post('/event', [EventController::class, 'store']);
     Route::put('/event/{id}', [EventController::class, 'update']);
@@ -69,11 +78,11 @@ Route::middleware('pelanggan')->group(function () {
     Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
     Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
     Route::get('/voting/{orderId}/status', [VotingController::class, 'cekStatus']);
-    
+
     // API Proses Transaksi Midtrans
     Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
-    
-    // HALAMAN FORM CHECKOUT VOTE
+
+    // Halaman Form Checkout Vote
     Route::get('/peserta/{id}/checkout', function ($id) {
         return view('vote-checkout', [
             'pesertaId' => $id,
@@ -82,8 +91,76 @@ Route::middleware('pelanggan')->group(function () {
         ]);
     });
 
-    // Halaman Instruksi Pembayaran
     // Halaman Instruksi Pembayaran (Custom Invoice Page)
     Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
-    
+});
+
+// ===== Route Pendaftaran Publik (dari han) =====
+// HANYA 1 pasang route ini. Jangan tambah route GET/POST ke '/daftar/{event}'
+// di tempat lain, karena Laravel akan menimpa registrasi sebelumnya.
+Route::get('/daftar/{event}', [PendaftaranController::class, 'showPublicForm'])
+    ->name('public.registration');
+Route::post('/daftar/{event}', [PendaftaranController::class, 'storePublic'])
+    ->name('public.registration.store');
+
+// ===== Route Auth Admin Blade (dari han) =====
+Route::get('/admin/login', [WebAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.login.store');
+
+// ===== Group Admin Blade (dari han) =====
+Route::middleware('admin.session')->prefix('admin')->group(function () {
+
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Event Management
+    Route::resource('events', AdminEventController::class)->names('admin.events');
+
+    // Toggle voting & tampilkan hasil
+    Route::patch('/events/{event}/voting', [AdminEventController::class, 'toggleVoting'])
+        ->name('admin.events.toggle-voting');
+    Route::patch('/events/{event}/tampilkan-hasil', [AdminEventController::class, 'toggleTampilkanHasil'])
+        ->name('admin.events.toggle-hasil');
+    Route::delete('/admin/events/{event}/questions/clear', [AdminPendaftaranController::class, 'clearQuestions'])
+        ->name('admin.events.questions.clear');
+
+    // Export peserta ke CSV
+    Route::get('/admin/events/{event}/peserta/export', [PesertaController::class, 'export'])
+        ->name('admin.peserta.export');
+
+    // Form Builder
+    Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])->name('admin.form-builder');
+    Route::post('/form-builder/{event}/save', [FormBuilderController::class, 'save'])->name('admin.form-builder.save');
+
+    // Registrasi
+    Route::get('/registrations/{event?}', [NavigationController::class, 'page'])->defaults('page', 'registrations')->name('admin.registrations');
+    Route::post('/registrations/{event}/manual', [AdminPendaftaranController::class, 'storeManual'])->name('admin.registrations.manual.store');
+
+    // Aktivasi
+    Route::get('/activation/{event?}', [AktivasiController::class, 'index'])->name('admin.activation');
+    Route::post('/activation/{peserta}/verifikasi', [AktivasiController::class, 'verifikasi'])->name('admin.activation.verifikasi');
+
+    // Voting, voters, leaderboard
+    Route::get('/voting/settings/{event?}', [NavigationController::class, 'page'])->defaults('page', 'voting-settings')->name('admin.voting.settings');
+    Route::get('/voting/settings-page/{event?}', [NavigationController::class, 'page'])->defaults('page', 'voting-settings')->name('admin.voting-settings');
+    Route::get('/voters/{event?}', [NavigationController::class, 'page'])->defaults('page', 'voters')->name('admin.voters');
+    Route::get('/leaderboard/{event?}', [NavigationController::class, 'page'])->defaults('page', 'leaderboard')->name('admin.leaderboard');
+
+    Route::get('/peserta/jawaban/{jawaban}/file', [AdminPendaftaranController::class, 'downloadJawabanFile'])->name('admin.jawaban.file');
+    Route::post('/logout', [WebAuthController::class, 'logout'])->name('admin.logout.web');
+
+    // Dashboard/verifikasi utama (menimpa route '/' di atas, sama seperti di branch han)
+    Route::get('/', [AdminPendaftaranController::class, 'index'])->name('admin.dashboard');
+
+    // Detail, status, hapus peserta
+    Route::get('/peserta/{id}', [AdminPendaftaranController::class, 'show'])->name('admin.peserta.show');
+    Route::post('/peserta/{id}/status', [AdminPendaftaranController::class, 'updateStatus'])->name('admin.peserta.update-status');
+    Route::delete('/peserta/{id}', [AdminPendaftaranController::class, 'destroy'])->name('admin.peserta.destroy');
+});
+
+// Route API han (auth, admin, user) -> dibungkus middleware 'api'
+Route::middleware('api')->group(function () {
+    require __DIR__.'/auth.php';
+    require __DIR__.'/admin.php';
+    require __DIR__.'/user.php';
 });

@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Event;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class EventController extends Controller
+{
+    // 1. Tampilkan Daftar Event
+    public function index()
+    {
+        $events = Event::orderBy('id', 'desc')->paginate(10);
+        $event = Event::query()->latest('id')->first(); // buat konteks sidebar
+
+        return view('admin.events.index', compact('events', 'event'));
+    }
+
+    // 2. Form Edit Event
+    public function edit($id)
+    {
+        $event = Event::findOrFail($id);
+        return view('admin.events.edit', compact('event'));
+    }
+
+    public function create()
+    {
+        return view('admin.events.create');
+    }
+
+    /**
+     * POST /admin/events (admin, web session)
+     * Buat event baru.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama'                      => 'required|string|max:255',
+            'deskripsi'                 => 'nullable|string',
+            'biaya_pendaftaran'         => 'nullable|numeric|min:0',
+            'harga_per_vote'            => 'nullable|numeric|min:0',
+            'tanggal_mulai'             => 'required|date',
+            'waktu_mulai'               => 'nullable',
+            'tanggal_selesai'           => 'nullable|date',
+            'waktu_selesai'             => 'nullable',
+            'lokasi'                    => 'required|string',
+            'batas_pendaftaran_tanggal' => 'nullable|date',
+            'batas_pendaftaran_waktu'   => 'nullable',
+            'kuota_peserta'             => 'nullable|integer',
+            'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ]);
+
+        if ($request->hasFile('banner')) {
+            $validated['banner'] = $request->file('banner')->store('banners', 'public');
+        }
+
+        // 3 kolom ini NOT NULL tanpa default di database, dan form "Buat
+        // Event Baru" belum mengumpulkannya (baru diisi di step "Pengaturan
+        // Event & Voting"). Tanpa baris ini, Event::create() di bawah bakal
+        // gagal dengan integrity constraint violation.
+        $validated['biaya_pendaftaran'] ??= 0;
+        $validated['harga_per_vote'] ??= 0;
+        $validated['mode_penilaian'] ??= 'voting';
+
+        $event = Event::create($validated);
+
+        return redirect()
+            ->route('admin.events.index')
+            ->with('success', 'Event "'.$event->nama.'" berhasil dipublikasikan!');
+    }
+
+    /**
+     * PUT /admin/events/:id (admin)
+     * Update detail event.
+     */
+    public function update(Request $request, $id)
+    {
+        $event = Event::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama'                      => 'required|string|max:255',
+            'deskripsi'                 => 'nullable|string',
+            'syarat_ketentuan'          => 'nullable|string',
+            'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'biaya_pendaftaran'         => 'nullable|numeric|min:0',
+            'harga_per_vote'            => 'nullable|numeric|min:0',
+            'tanggal_mulai'             => 'required|date',
+            'waktu_mulai'               => 'nullable',
+            'tanggal_selesai'           => 'nullable|date|after_or_equal:tanggal_mulai',
+            'waktu_selesai'             => 'nullable',
+            'lokasi'                    => 'nullable|string|max:255',
+            'batas_pendaftaran_tanggal' => 'nullable|date',
+            'batas_pendaftaran_waktu'   => 'nullable',
+            'kuota_peserta'             => 'nullable|integer|min:1',
+        ]);
+
+        if ($request->hasFile('banner')) {
+            if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+                Storage::disk('public')->delete($event->banner);
+            }
+            $validated['banner'] = $request->file('banner')->store('banners', 'public');
+        }
+
+        $event->update($validated);
+
+        return redirect()->route('admin.events.index')->with('success', 'Data event berhasil diperbarui!');
+    }
+
+    /**
+     * DELETE /admin/events/:id (admin)
+     * Hapus event.
+     */
+    public function destroy($id)
+    {
+        $event = Event::findOrFail($id);
+
+        if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+            Storage::disk('public')->delete($event->banner);
+        }
+
+        $event->delete();
+
+        return redirect()->route('admin.events.index')->with('success', 'Event berhasil dihapus!');
+    }
+
+    /**
+     * PATCH /event/:id/voting (admin)
+     * Aktifkan/nonaktifkan sistem voting.
+     */
+    public function toggleVoting(Event $event)
+    {
+        $event->update(['voting_aktif' => ! $event->voting_aktif]);
+
+        return response()->json($event);
+    }
+
+    /**
+     * PATCH /event/:id/tampilkan-hasil (admin)
+     * Toggle tampil/sembunyikan leaderboard persentase suara ke publik.
+     */
+    public function toggleTampilkanHasil(Event $event)
+    {
+        $event->update(['tampilkan_hasil_voting' => ! $event->tampilkan_hasil_voting]);
+
+        return response()->json($event);
+    }
+}
