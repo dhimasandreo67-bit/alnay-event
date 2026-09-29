@@ -926,7 +926,7 @@
                         </div>
                         <p class="text-xs text-slate-500 mb-4">Status transaksi peserta</p>
 
-                        @php
+                                                @php
                             // pembayaran() adalah hasMany di model Peserta (untuk dukung kode main).
                             // View ini ditulis dengan asumsi satu pembayaran, jadi ambil yang terbaru saja.
                             $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
@@ -935,61 +935,69 @@
                             $paymentIsPaid = $pembayaran?->status_midtrans === 'settlement';
                         @endphp
 
-                        {{-- Status Badge --}}
-                        <div class="mb-4">
-                            <span class="text-xs text-slate-500">Status</span>
-                            <div class="mt-1">
-                                @if ($paymentIsPaid)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        Lunas
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                        {{ ucfirst($pembayaran->status_midtrans) }}
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        {{-- NOMINAL UNIK (Highlight) --}}
-                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-4">
-                            <span class="text-xs text-amber-700 font-medium">Nominal Transfer Unik</span>
-                            <div class="text-2xl font-bold text-amber-900 mt-1">
-                                Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}
-                            </div>
-                            <div class="text-xs text-amber-700 mt-2 space-y-1">
-                                <div class="flex justify-between">
-                                    <span>Tarif Dasar:</span>
-                                    <span class="font-medium">Rp {{ number_format($pembayaran->tarif_dasar ?? 0, 0, ',', '.') }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Kode Unik:</span>
-                                    <span class="font-mono font-bold bg-amber-200 px-1.5 py-0.5 rounded">
-                                        + {{ $pembayaran->kode_unik }}
-                                    </span>
+                        @if ($pembayaran)
+                            {{-- Status Badge --}}
+                            <div class="mb-4">
+                                <span class="text-xs text-slate-500">Status</span>
+                                <div class="mt-1">
+                                    @if ($paymentIsPaid)
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            Lunas
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                            {{ ucfirst($pembayaran->status_midtrans) }}
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
-                        </div>
 
-                        {{-- Order ID --}}
-                        <div class="flex justify-between items-center py-2 border-t border-slate-100">
-                            <span class="text-xs text-slate-500">Order ID</span>
-                            <span class="text-xs font-mono text-slate-700">{{ $pembayaran->midtrans_order_id }}</span>
-                        </div>
+                            {{-- NOMINAL UNIK (Highlight) --}}
+                            <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-4">
+                                <span class="text-xs text-amber-700 font-medium">Nominal Transfer Unik</span>
+                                <div class="text-2xl font-bold text-amber-900 mt-1">
+                                    Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}
+                                </div>
+                                <div class="text-xs text-amber-700 mt-2 space-y-1">
+                                    <div class="flex justify-between">
+                                        <span>Tarif Dasar:</span>
+                                        <span class="font-medium">Rp {{ number_format($pembayaran->tarif_dasar ?? 0, 0, ',', '.') }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Kode Unik:</span>
+                                        <span class="font-mono font-bold bg-amber-200 px-1.5 py-0.5 rounded">
+                                            + {{ $pembayaran->kode_unik }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
-                        {{-- Metode --}}
-                        <div class="flex justify-between items-center py-2 border-t border-slate-100">
-                            <span class="text-xs text-slate-500">Metode</span>
-                            <span class="text-xs text-slate-700">{{ ucfirst($pembayaran->metode ?? '-') }}</span>
-                        </div>
+                            {{-- Order ID --}}
+                            <div class="flex justify-between items-center py-2 border-t border-slate-100">
+                                <span class="text-xs text-slate-500">Order ID</span>
+                                <span class="text-xs font-mono text-slate-700">{{ $pembayaran->midtrans_order_id }}</span>
+                            </div>
 
-                        @if ($pembayaran->tanggal_bayar)
-                        <div class="flex justify-between items-center py-2 border-t border-slate-100">
-                            <span class="text-xs text-slate-500">Tanggal Bayar</span>
-                            <span class="text-xs text-slate-700">{{ $pembayaran->tanggal_bayar->format('d M Y, H:i') }} WIB</span>
-                        </div>
+                            {{-- Metode --}}
+                            <div class="flex justify-between items-center py-2 border-t border-slate-100">
+                                <span class="text-xs text-slate-500">Metode</span>
+                                <span class="text-xs text-slate-700">{{ ucfirst($pembayaran->metode ?? '-') }}</span>
+                            </div>
+
+                            @if ($pembayaran->tanggal_bayar)
+                            <div class="flex justify-between items-center py-2 border-t border-slate-100">
+                                <span class="text-xs text-slate-500">Tanggal Bayar</span>
+                                <span class="text-xs text-slate-700">{{ $pembayaran->tanggal_bayar->format('d M Y, H:i') }} WIB</span>
+                            </div>
+                            @endif
+                        @else
+                            <div class="text-center py-6">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                                    Belum ada pembayaran
+                                </span>
+                            </div>
                         @endif
                     </div>
 

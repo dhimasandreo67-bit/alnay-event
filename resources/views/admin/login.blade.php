@@ -49,7 +49,7 @@
             font-size: 25px;
             font-weight: 700;
             letter-spacing: -1.5px
-            z-index: 10
+            z-index: 1
         }
 
         .brand span {
@@ -57,7 +57,7 @@
         }
 
         .visual {
-            height: 560px;
+            height: clamp(400px, 72vh, 560px);
             border-radius: 15px;
             overflow: hidden;
             position: relative;

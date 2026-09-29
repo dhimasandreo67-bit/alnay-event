@@ -1,5 +1,12 @@
+@php
+    // pembayaran() adalah hasMany di model Peserta (untuk dukung kode main).
+    $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
+        ? $peserta->pembayaran->sortByDesc('id')->first()
+        : $peserta->pembayaran;
+@endphp
+
 {{-- Tampilkan hanya jika peserta sudah diterima --}}
-@if ($peserta->status === 'diterima' && $peserta->pembayaran)
+@if ($peserta->status === 'diterima' && $pembayaran)
     <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 my-6">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
@@ -13,9 +20,9 @@
             </div>
         </div>
 
-        @if ($peserta->pembayaran->is_lunas)
+        @if ($pembayaran->is_lunas)
             <div class="bg-emerald-100 border border-emerald-300 rounded-lg p-4 text-center">
-                <span class="text-emerald-800 font-bold text-lg">✅ Pembayaran Sudah Diterima</span>
+                <span class="text-emerald-800 font-bold text-lg">&#9989; Pembayaran Sudah Diterima</span>
                 <p class="text-emerald-700 text-sm mt-1">Akun Anda sedang dalam proses aktivasi.</p>
             </div>
         @else
@@ -23,11 +30,11 @@
             <div class="bg-white rounded-xl p-5 text-center mb-4 border border-amber-200">
                 <p class="text-sm text-slate-500 mb-1">Transfer Tepat Sejumlah</p>
                 <div class="text-4xl font-black text-amber-600 tracking-tight">
-                    Rp {{ number_format($peserta->pembayaran->jumlah, 0, ',', '.') }}
+                    Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}
                 </div>
                 <p class="text-xs text-slate-500 mt-2">
-                    ⚠️ <strong>WAJIB</strong> transfer <strong>persis</strong> sesuai nominal di atas 
-                    (termasuk kode unik <strong class="font-mono bg-amber-100 px-2 py-0.5 rounded">{{ $peserta->pembayaran->kode_unik }}</strong>)
+                    &#9888;&#65039; <strong>WAJIB</strong> transfer <strong>persis</strong> sesuai nominal di atas
+                    (termasuk kode unik <strong class="font-mono bg-amber-100 px-2 py-0.5 rounded">{{ $pembayaran->kode_unik }}</strong>)
                 </p>
             </div>
 
@@ -35,15 +42,15 @@
             <div class="bg-white rounded-lg p-4 space-y-2 text-sm">
                 <div class="flex justify-between">
                     <span class="text-slate-600">Biaya Pendaftaran</span>
-                    <span class="font-medium">Rp {{ number_format($peserta->pembayaran->tarif_dasar, 0, ',', '.') }}</span>
+                    <span class="font-medium">Rp {{ number_format($pembayaran->tarif_dasar, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-600">Kode Unik (3 digit terakhir No. Reg)</span>
-                    <span class="font-mono font-bold text-amber-700">+ {{ $peserta->pembayaran->kode_unik }}</span>
+                    <span class="font-mono font-bold text-amber-700">+ {{ $pembayaran->kode_unik }}</span>
                 </div>
                 <div class="flex justify-between border-t border-slate-200 pt-2 font-bold">
                     <span class="text-slate-800">Total Transfer</span>
-                    <span class="text-amber-700">Rp {{ number_format($peserta->pembayaran->jumlah, 0, ',', '.') }}</span>
+                    <span class="text-amber-700">Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}</span>
                 </div>
             </div>
 
@@ -55,19 +62,19 @@
                         <p class="font-bold text-slate-800">BCA 1234567890</p>
                         <p class="text-sm text-slate-600">a.n. ALNAY.ID</p>
                     </div>
-                    <button onclick="navigator.clipboard.writeText('1234567890')" 
+                    <button onclick="navigator.clipboard.writeText('1234567890')"
                             class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition">
-                        📋 Salin
+                        &#128203; Salin
                     </button>
                 </div>
             </div>
 
             {{-- Instruksi --}}
             <div class="mt-4 text-xs text-slate-600 bg-white rounded-lg p-4 border border-slate-200">
-                <p class="font-semibold text-slate-700 mb-2">📌 Instruksi Penting:</p>
+                <p class="font-semibold text-slate-700 mb-2">&#128204; Instruksi Penting:</p>
                 <ol class="list-decimal list-inside space-y-1">
                     <li>Transfer <strong>tepat</strong> sesuai nominal unik di atas</li>
-                    <li>Kode unik <strong>{{ $peserta->pembayaran->kode_unik }}</strong> membantu kami mengidentifikasi pembayaran Anda secara otomatis</li>
+                    <li>Kode unik <strong>{{ $pembayaran->kode_unik }}</strong> membantu kami mengidentifikasi pembayaran Anda secara otomatis</li>
                     <li>Jangan dibulatkan (jangan transfer Rp 90.000 saja)</li>
                     <li>Simpan bukti transfer untuk verifikasi</li>
                     <li>Akun akan aktif otomatis dalam 1x24 jam setelah pembayaran terverifikasi</li>

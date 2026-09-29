@@ -53,7 +53,10 @@ class AktivasiController extends Controller
      */
     public function verifikasi(Peserta $peserta): RedirectResponse
     {
-        $pembayaran = $peserta->pembayaran;
+                // pembayaran() adalah hasMany di model Peserta (untuk dukung kode main).
+        $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
+            ? $peserta->pembayaran->sortByDesc('id')->first()
+            : $peserta->pembayaran;
 
         if (! $pembayaran) {
             return back()->with('error', 'Peserta ini belum punya transaksi pembayaran.');
@@ -79,7 +82,9 @@ class AktivasiController extends Controller
             fn ($jawaban) => $jawaban->pertanyaan && str_contains(strtolower($jawaban->pertanyaan->label), 'kategori')
         );
 
-        $pembayaran = $peserta->pembayaran;
+        $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
+            ? $peserta->pembayaran->sortByDesc('id')->first()
+            : $peserta->pembayaran;
         $lunas = $pembayaran?->status_midtrans === 'settlement';
 
         return [
