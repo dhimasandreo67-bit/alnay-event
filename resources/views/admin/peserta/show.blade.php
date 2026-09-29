@@ -1032,30 +1032,6 @@
 
                         @csrf
 
-                        {{-- Catatan --}}
-                        <div class="mb-5">
-
-                            <label
-                                for="catatan_admin"
-                                class="block text-xs font-semibold text-slate-600 mb-2"
-                            >
-                                Catatan untuk Peserta
-                                <span class="font-normal text-slate-400">
-                                    (opsional)
-                                </span>
-                            </label>
-
-                            <textarea
-                                id="catatan_admin"
-                                name="catatan_admin"
-                                rows="4"
-                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y transition"
-                                placeholder="Contoh: Foto KTP kurang jelas, mohon upload ulang."
-                            >{{ old('catatan_admin', $peserta->catatan_admin) }}</textarea>
-
-                        </div>
-
-
                         {{-- Buttons --}}
                         <div class="space-y-2.5">
 
@@ -1147,11 +1123,7 @@
                     {{-- Delete --}}
                     <div class="px-5 pb-5">
 
-                        <form
-                            action="{{ route('admin.peserta.destroy', $peserta) }}"
-                            method="POST"
-                            onsubmit="return confirm('Yakin ingin menghapus data peserta ini? Tindakan ini tidak bisa dibatalkan.')"
-                        >
+                        <form action="{{ route('admin.peserta.destroy', $peserta->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus data peserta ini? Tindakan ini tidak bisa dibatalkan.')">
 
                             @csrf
                             @method('DELETE')
