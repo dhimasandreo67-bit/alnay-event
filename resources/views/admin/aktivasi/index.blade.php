@@ -60,39 +60,61 @@
         <div class="grid grid-cols-[1fr_1.3fr] gap-5 items-start">
 
             {{-- ===== Kolom kiri: antrean ===== --}}
-            <div class="space-y-3" id="listFinalis">
-                @forelse ($finalis as $f)
-                    <button type="button"
-                        class="finalis-card w-full text-left bg-white border rounded-xl p-4 hover:border-gold transition {{ $loop->first ? 'border-gold ring-1 ring-gold' : 'border-[#e3ded6]' }}"
-                        data-id="{{ $f['id'] }}"
-                        data-status="{{ $f['statusAkun'] }}"
-                        data-search="{{ strtolower($f['nama'].' '.$f['no_registrasi'].' '.$f['email']) }}">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <div class="text-[10px] text-[#98958f]">#{{ $f['no_registrasi'] }}</div>
-                                <div class="font-bold text-[14px]">{{ $f['nama'] }}</div>
-                            </div>
-                            @if ($f['statusAkun'] === 'aktif')
-                                <span class="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">Lunas &amp; Aktif</span>
-                            @else
-                                <span class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">Menunggu Verifikasi</span>
-                            @endif
-                        </div>
-                        <div class="text-[11px] text-[#73716c] mt-2 flex items-center gap-2">
-                            @if ($f['pembayaran'])
-                                <span>{{ $f['pembayaran']->metode ?? 'Midtrans' }} · Rp {{ number_format($f['pembayaran']->jumlah, 0, ',', '.') }}</span>
-                                <span>· {{ $f['pembayaran']->tanggal_bayar?->diffForHumans() ?? 'belum bayar' }}</span>
-                            @else
-                                <span class="text-rose-500">Belum ada transaksi pembayaran</span>
-                            @endif
-                        </div>
-                    </button>
-                @empty
-                    <div class="bg-white border border-dashed border-[#e3ded6] rounded-xl p-8 text-center text-[#98958f]">
-                        Belum ada finalis yang diterima untuk event ini.
+        <div class="space-y-3">
+            @forelse ($finalis as $f)
+                <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-amber-300 transition cursor-pointer peserta-card"
+                    onclick="showDetail({{ $f['id'] }})"
+                    id="card-{{ $f['id'] }}"
+                    data-status="{{ $f['statusAkun'] }}"
+                    data-nama="{{ strtolower($f['nama']) }}"
+                    data-email="{{ strtolower($f['email']) }}"
+                    data-no-reg="{{ strtolower($f['no_registrasi']) }}">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-mono text-slate-500">#{{ $f['no_registrasi'] }}</span>
+
+                        {{-- TAMBAHKAN BADGE NOMINAL UNIK DI SINI --}}
+                        @if ($f['nominal_unik'])
+                            <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                {{ $f['nominal_unik'] }}
+                            </span>
+                        @endif
+
+                        @if ($f['statusAkun'] === 'aktif')
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Lunas & Aktif
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                                Menunggu Verifikasi
+                            </span>
+                        @endif
                     </div>
-                @endforelse
-            </div>
+
+                    <h3 class="font-semibold text-slate-800">{{ $f['nama'] }}</h3>
+
+                    {{-- TAMBAHKAN KODE UNIK --}}
+                    @if ($f['kode_unik'])
+                        <p class="text-xs text-slate-500 mt-1">
+                            Kode unik: <span class="font-mono font-bold text-amber-600">{{ $f['kode_unik'] }}</span>
+                        </p>
+                    @endif
+
+                    @if ($f['pembayaran'])
+                        <p class="text-xs text-slate-500 mt-2">
+                            {{ $f['pembayaran']->metode ?? 'Transfer Bank' }} ·
+                            Rp {{ number_format($f['pembayaran']->jumlah, 0, ',', '.') }} ·
+                            {{ $f['pembayaran']->tanggal_bayar?->diffForHumans() ?? 'belum bayar' }}
+                        </p>
+                    @else
+                        <p class="text-xs text-rose-500 mt-2">Belum ada transaksi pembayaran</p>
+                    @endif
+                </div>
+            @empty
+                <div class="bg-white rounded-xl border border-slate-200 p-8 text-center">
+                    <p class="text-slate-500">Belum ada finalis yang diterima untuk event ini.</p>
+                </div>
+            @endforelse
+        </div>
 
             {{-- ===== Kolom kanan: detail ===== --}}
             <div class="bg-white border border-[#e3ded6] rounded-xl p-5 sticky top-6" id="panelDetail">
@@ -152,48 +174,157 @@
 </div>
 
 <script>
-    const cards = document.querySelectorAll('.finalis-card');
-    const panel = document.getElementById('panelDetail');
-    const search = document.getElementById('cariFinalis');
-    const tabs = document.querySelectorAll('.tab-btn');
-    let activeTab = 'semua';
+    document.addEventListener('DOMContentLoaded', function () {
+        const cards = document.querySelectorAll('.peserta-card');
+        const panel = document.getElementById('panelDetail');
+        const searchInput = document.getElementById('cariFinalis');
+        const tabs = document.querySelectorAll('.tab-btn');
+        let activeTab = 'semua';
 
-    function showDetail(id) {
-        const tpl = document.getElementById('detail-' + id);
-        if (tpl) panel.innerHTML = tpl.innerHTML;
+        // 1. FUNGSI MENAMPILKAN DETAIL PESERTA
+        window.showDetail = function (id) {
+            const tpl = document.getElementById('detail-' + id);
+            if (tpl && panel) {
+                panel.innerHTML = tpl.innerHTML;
+            }
 
-        cards.forEach(c => c.classList.remove('border-gold', 'ring-1', 'ring-gold'));
-        const card = document.querySelector(`.finalis-card[data-id="${id}"]`);
-        if (card) card.classList.add('border-gold', 'ring-1', 'ring-gold');
-    }
+            // Highlighting kartu yang aktif
+            cards.forEach(c => {
+                c.classList.remove('border-gold', 'ring-1', 'ring-gold');
+            });
+            const activeCard = document.getElementById('card-' + id);
+            if (activeCard) {
+                activeCard.classList.add('border-gold', 'ring-1', 'ring-gold');
+            }
+        };
 
-    cards.forEach(card => {
-        card.addEventListener('click', () => showDetail(card.dataset.id));
+        // Show detail kartu pertama saat pertama dimuat
+        if (cards.length > 0) {
+            const firstId = cards[0].id.replace('card-', '');
+            showDetail(firstId);
+        }
+
+        // 2. FUNGSI FILTER TAB & SEARCH
+        function applyFilters() {
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+            cards.forEach(card => {
+                const status = card.dataset.status; // 'aktif' atau 'terkunci' / 'pending'
+                const nama = card.dataset.nama || '';
+                const email = card.dataset.email || '';
+                const noReg = card.dataset.noReg || '';
+
+                // Filter Tab Status
+                let matchTab = false;
+                if (activeTab === 'semua') {
+                    matchTab = true;
+                } else if (activeTab === 'perlu') {
+                    matchTab = (status !== 'aktif');
+                } else if (activeTab === 'aktif') {
+                    matchTab = (status === 'aktif');
+                }
+
+                // Filter Pencarian
+                let matchSearch = true;
+                if (query) {
+                    matchSearch = nama.includes(query) || 
+                                  email.includes(query) || 
+                                  noReg.includes(query);
+                }
+
+                // Tampilkan / Sembunyikan elemen
+                if (matchTab && matchSearch) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Event Listener Input Pencarian
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+        }
+
+        // Event Listener Tab Click & Styling Active
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Reset style semua tab
+                tabs.forEach(t => {
+                    t.classList.remove('active', 'bg-gold', 'text-white');
+                    t.classList.add('bg-white', 'border', 'border-[#e3ded6]', 'text-[#22201d]');
+                });
+
+                // Set style tab aktif
+                this.classList.add('active', 'bg-gold', 'text-white');
+                this.classList.remove('bg-white', 'border', 'border-[#e3ded6]', 'text-[#22201d]');
+
+                activeTab = this.dataset.tab; // 'semua', 'perlu', atau 'aktif'
+                applyFilters();
+            });
+        });
     });
 
-    if (cards.length) showDetail(cards[0].dataset.id);
+    let currentFilter = 'semua';
+    let searchQuery = '';
 
-    function applyFilter() {
-        const q = search.value.toLowerCase();
-        cards.forEach(card => {
-            const matchSearch = card.dataset.search.includes(q);
-            const matchTab = activeTab === 'semua' ||
-                (activeTab === 'perlu' && card.dataset.status === 'terkunci') ||
-                (activeTab === 'aktif' && card.dataset.status === 'aktif');
-            card.style.display = (matchSearch && matchTab) ? '' : 'none';
+    function filterPeserta(status) {
+        currentFilter = status;
+        applyFilters();
+        updateTabStyles();
+    }
+
+    function updateTabStyles() {
+        const tabs = ['semua', 'perlu_verifikasi', 'lunas'];
+        tabs.forEach(tab => {
+            const tabEl = document.getElementById('tab-' + tab);
+            if (tab === currentFilter) {
+                tabEl.className = 'px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg transition';
+            } else {
+                tabEl.className = 'px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition';
+            }
         });
     }
 
-    search.addEventListener('input', applyFilter);
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active', 'bg-gold', 'text-white'));
-            tabs.forEach(t => t.classList.add('bg-white', 'border', 'border-[#e3ded6]'));
-            tab.classList.add('active', 'bg-gold', 'text-white');
-            tab.classList.remove('bg-white', 'border', 'border-[#e3ded6]');
-            activeTab = tab.dataset.tab;
-            applyFilter();
+    function applyFilters() {
+        const cards = document.querySelectorAll('.peserta-card');
+        cards.forEach(card => {
+            const cardStatus = card.dataset.status;
+            const cardNama = card.dataset.nama;
+            const cardEmail = card.dataset.email;
+            const cardNoReg = card.dataset.noReg;
+
+            let statusMatch = false;
+            if (currentFilter === 'semua') {
+                statusMatch = true;
+            } else if (currentFilter === 'perlu_verifikasi') {
+                statusMatch = cardStatus !== 'aktif';
+            } else if (currentFilter === 'lunas') {
+                statusMatch = cardStatus === 'aktif';
+            }
+
+            let searchMatch = true;
+            if (searchQuery) {
+                searchMatch = cardNama.includes(searchQuery) || 
+                              cardEmail.includes(searchQuery) || 
+                              cardNoReg.includes(searchQuery);
+            }
+
+            card.style.display = (statusMatch && searchMatch) ? '' : 'none';
         });
+    }
+
+    document.getElementById('search-input').addEventListener('input', function(e) {
+        searchQuery = e.target.value.toLowerCase();
+        applyFilters();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstCard = document.querySelector('.peserta-card');
+        if (firstCard) {
+            const id = firstCard.id.replace('card-', '');
+            showDetail(id);
+        }
     });
 </script>
 </body>
