@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\JawabanPeserta;
+use App\Models\Jawabanpeserta;
 use App\Models\PenggunaEvent;
 use App\Models\Peserta;
 use Illuminate\Http\Request;
@@ -147,7 +147,7 @@ class PendaftaranController extends Controller
                     $answer = json_encode($answer, JSON_THROW_ON_ERROR);
                 }
 
-                JawabanPeserta::create([
+                Jawabanpeserta::create([
                     'peserta_id' => $peserta->id,
                     'pertanyaan_id' => $question->id,
                     'jawaban' => $answer,
@@ -270,8 +270,19 @@ class PendaftaranController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $peserta = Peserta::findOrFail($id);
-        $peserta->status = $request->status; // 'diterima', 'ditolak', atau 'revisi'
+        $statusBaru = $request->status; // 'diterima', 'ditolak', atau 'revisi'
+
+        // Simpan catatan admin jika ada
+        if ($request->filled('catatan_admin')) {
+            $peserta->catatan_admin = $request->catatan_admin;
+        }
+
+        $peserta->status = $statusBaru;
         $peserta->save();
+
+        if ($statusBaru === 'diterima') {
+            $this->buatPembayaranOtomatis($peserta);
+        }
 
         return redirect()->back()->with('success', 'Status peserta berhasil diperbarui.');
     }
@@ -318,4 +329,35 @@ class PendaftaranController extends Controller
 
         return response()->json(['status' => 'success', 'message' => 'Formulir berhasil diperbarui']);
     }
+
+    private function buatPembayaranOtomatis(Peserta $peserta): void
+{
+    // Cek apakah sudah ada pembayaran (hindari duplikasi)
+    if ($peserta->pembayaran) {
+        return;
+    }
+
+    $event = $peserta->event;
+    $tarifDasar = (int) ($event->biaya_pendaftaran ?? 0);
+
+    // Generate kode unik 3 digit dari ID peserta
+    $kodeUnik = str_pad($peserta->id, 3, '0', STR_PAD_LEFT);
+
+    // Nominal unik = biaya dasar + kode unik
+    $nominalUnik = $tarifDasar + (int) $kodeUnik;
+
+    // Buat order ID yang unik
+    $orderId = 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT);
+
+    \App\Models\PembayaranEvent::create([
+        'peserta_id'        => $peserta->id,
+        'jumlah'            => $nominalUnik,
+        'tarif_dasar'       => $tarifDasar,
+        'kode_unik'         => $kodeUnik,
+        'midtrans_order_id' => $orderId,
+        'status_midtrans'   => 'pending',
+        'metode'            => 'transfer_bank',
+        'tanggal_bayar'     => null,
+    ]);
+}
 }
