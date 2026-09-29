@@ -12,6 +12,7 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Database\Eloquent\Model;
 
 
 class PesertaController extends Controller
@@ -107,25 +108,23 @@ class PesertaController extends Controller
 
     public function destroy(Peserta $peserta): RedirectResponse
     {
-        $event = $peserta->event;
- 
-        // Jangan hapus kalau sudah ada riwayat voting (uang sungguhan sudah
-        // masuk) - itu butuh proses lain (refund dsb), bukan hapus biasa.
+        // Cek jika ada voting
         if ($peserta->votingMasuk()->exists()) {
             return redirect()
-                ->route('admin.peserta.show', $peserta)
+                ->route('admin.peserta.index') // <-- kembalikan ke daftar peserta
                 ->with('error', 'Peserta ini sudah punya riwayat voting, tidak bisa dihapus langsung.');
         }
- 
-        // Hapus data anak dulu, karena foreign key di migration pakai
-        // restrictOnDelete (bukan cascade), jadi Peserta::delete() langsung
-        // akan gagal kalau masih ada jawaban/pembayaran yang nempel.
+
+        // Hapus data relasi
         $peserta->jawabans()->delete();
         $peserta->pembayaran()->delete();
+        
+        // Hapus peserta
         $peserta->delete();
- 
+
+        // REDIRECT KE DAFTAR PESERTA (Jangan ke halaman detail peserta yang sudah terhapus)
         return redirect()
-            ->route('admin.registrations', $event)
+            ->route('admin.peserta.index') // <-- Ganti dengan nama route daftar/tabel peserta kamu
             ->with('success', 'Data peserta berhasil dihapus.');
     }
 
