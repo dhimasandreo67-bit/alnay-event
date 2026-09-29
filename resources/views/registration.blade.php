@@ -394,6 +394,92 @@
                 });
             }
         });
+
+        // draft agar data gak hilang
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form');
+            // Key unik lokal berdasarkan ID Event agar data form tidak tertukar antar-event
+            const STORAGE_KEY = 'form_draft_event_{{ $event->id }}';
+
+            if (form) {
+                // 1. FUNGSI: Memuat data dari localStorage saat halaman di-refresh
+                function loadFormData() {
+                    const savedData = localStorage.getItem(STORAGE_KEY);
+                    if (!savedData) return;
+
+                    try {
+                        const data = JSON.parse(savedData);
+
+                        Object.keys(data).forEach(name => {
+                            const elements = form.querySelectorAll(`[name="${name}"]`);
+                            if (!elements.length) return;
+
+                            const val = data[name];
+
+                            elements.forEach(el => {
+                                if (el.type === 'file') return; // File upload tidak bisa di-restore secara otomatis oleh browser demi keamanan
+
+                                if (el.type === 'checkbox') {
+                                    if (Array.isArray(val) && val.includes(el.value)) {
+                                        el.checked = true;
+                                    }
+                                } else if (el.type === 'radio') {
+                                    if (el.value === val) {
+                                        el.checked = true;
+                                    }
+                                } else {
+                                    // Text, Email, Number, Textarea, Select
+                                    el.value = val;
+                                }
+                            });
+                        });
+                    } catch (e) {
+                        console.error('Gagal memuat draf form:', e);
+                    }
+                }
+
+                // 2. FUNGSI: Menyimpan data form ke localStorage setiap kali ada perubahan
+                function saveFormData() {
+                    const formData = new FormData(form);
+                    const dataObj = {};
+
+                    formData.forEach((value, key) => {
+                        // Abaikan CSRF token dan file upload dari penyimpanan lokal
+                        if (key === '_token' || value instanceof File) return;
+
+                        if (key.endsWith('[]')) {
+                            // Tangani input bertipe array (misal: Checkbox)
+                            if (!dataObj[key]) dataObj[key] = [];
+                            dataObj[key].push(value);
+                        } else {
+                            dataObj[key] = value;
+                        }
+                    });
+
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataObj));
+                }
+
+                // Jalankan Muat Data Draf
+                loadFormData();
+
+                // Listen perubahan input untuk menyimpan draf secara otomatis
+                form.addEventListener('input', saveFormData);
+                form.addEventListener('change', saveFormData);
+
+                // 3. FUNGSI: Hapus draf dari localStorage jika form berhasil dikirimkan (submit)
+                form.addEventListener('submit', function () {
+                    localStorage.removeItem(STORAGE_KEY);
+                });
+
+                // 4. FUNGSI Opsional: Bersihkan localStorage jika tombol "Clear / Reset" diklik
+                const clearBtn = document.getElementById('btn-clear-form');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', function () {
+                        localStorage.removeItem(STORAGE_KEY);
+                    });
+                }
+            }
+        });
     </script>
 </body>
 
