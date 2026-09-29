@@ -927,8 +927,12 @@
                         <p class="text-xs text-slate-500 mb-4">Status transaksi peserta</p>
 
                         @php
-                            $paymentIsPaid = $peserta->pembayaran->status_midtrans === 'settlement';
-                            $pembayaran = $peserta->pembayaran;
+                            // pembayaran() adalah hasMany di model Peserta (untuk dukung kode main).
+                            // View ini ditulis dengan asumsi satu pembayaran, jadi ambil yang terbaru saja.
+                            $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
+                                ? $peserta->pembayaran->sortByDesc('id')->first()
+                                : $peserta->pembayaran;
+                            $paymentIsPaid = $pembayaran?->status_midtrans === 'settlement';
                         @endphp
 
                         {{-- Status Badge --}}
