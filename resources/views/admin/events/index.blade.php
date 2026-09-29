@@ -48,6 +48,7 @@
                         <thead>
                             <tr class="bg-[#fcfbf9] border-b border-[#e3ded6] text-[11px] text-[#8a8984] uppercase tracking-wider">
                                 <th class="py-3.5 px-4 font-bold">Nama Event & Lokasi</th>
+                                <th class="py-3.5 px-4 font-bold">Status</th>
                                 <th class="py-3.5 px-4 font-bold">Pelaksanaan</th>
                                 <th class="py-3.5 px-4 font-bold">Tarif</th>
                                 <th class="py-3.5 px-4 font-bold">Kuota</th>
@@ -70,6 +71,30 @@
                                                 </span>
                                             </div>
                                         </div>
+                                    </td>
+
+                                    {{-- KOLOM STATUS EVENT --}}
+                                    <td class="py-3 px-4 text-[11px]">
+                                        @if ($item->status === 'akan_datang')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                                                Akan Datang
+                                            </span>
+                                        @elseif ($item->status === 'sedang_berlangsung')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                                Sedang Berlangsung
+                                            </span>
+                                        @elseif ($item->status === 'telah_berakhir')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0"></span>
+                                                Telah Berakhir
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-50 text-gray-600 border border-gray-200 whitespace-nowrap">
+                                                {{ $item->status_label ?? 'Tidak Diketahui' }}
+                                            </span>
+                                        @endif
                                     </td>
 
                                     <td class="py-3 px-4 text-[11px]">
@@ -113,7 +138,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="py-8 text-center text-[#8a8984]">
+                                    <td colspan="6" class="py-8 text-center text-[#8a8984]">
                                         Belum ada data event. <a href="{{ route('admin.events.create') }}" class="text-gold underline font-bold">Buat Event Pertama</a>
                                     </td>
                                 </tr>
