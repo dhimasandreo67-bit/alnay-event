@@ -35,7 +35,7 @@
             grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr);
             max-width: 1280px;
             margin: auto;
-            padding: 28px 54px;
+            padding: 90px 54px 28px;
             gap: 90px;
             align-items: center
         }
@@ -49,6 +49,7 @@
             font-size: 25px;
             font-weight: 700;
             letter-spacing: -1.5px
+            z-index: 10
         }
 
         .brand span {
