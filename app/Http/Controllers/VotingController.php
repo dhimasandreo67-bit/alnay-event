@@ -7,28 +7,24 @@ use App\Models\Peserta;
 use App\Models\Voting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Midtrans\Config;
 use Midtrans\CoreApi;
-use Midtrans\Snap;
 use Midtrans\Notification;
-
 
 class VotingController extends Controller
 {
+    // ============================================================
+    // METHOD DARI VERSI KITA (vote pakai CoreApi — BRI VA & QRIS)
+    // ============================================================
+
     /**
-     * Memproses checkout vote & generate Midtrans Snap Token
      * POST /peserta/{peserta}/vote
-     */
-    /**
-     * Memproses checkout vote & redirect ke halaman instruksi
-     * POST /peserta/{peserta}/vote
-     */
-    /**
-     * Memproses checkout vote & redirect ke halaman instruksi
-     * POST /peserta/{peserta}/vote
+     * Proses checkout vote & generate Midtrans (QRIS / BRI VA)
      */
     public function vote(Request $request, Peserta $peserta)
     {
@@ -50,9 +46,7 @@ class VotingController extends Controller
             'metode_pembayaran' => ['required', 'string', 'in:qris,bri_va'],
         ]);
 
-        // Batas waktu bayar (menit). 60 = 1 jam, 180 = 3 jam.
         $durasiMenit = 60;
-
         $user = $request->user();
         $namaTampilan = $data['nama'];
         $hargaPerVote = (float) $event->harga_per_vote;
@@ -84,9 +78,7 @@ class VotingController extends Controller
                         'order_id' => $orderId,
                         'gross_amount' => $totalBayar,
                     ],
-                    'qris' => [
-                        'acquirer' => 'gopay',
-                    ],
+                    'qris' => ['acquirer' => 'gopay'],
                     'custom_expiry' => $customExpiry,
                 ]);
 
@@ -102,9 +94,7 @@ class VotingController extends Controller
                         'order_id' => $orderId,
                         'gross_amount' => $totalBayar,
                     ],
-                    'bank_transfer' => [
-                        'bank' => 'bri',
-                    ],
+                    'bank_transfer' => ['bank' => 'bri'],
                     'custom_expiry' => $customExpiry,
                 ]);
 
@@ -119,19 +109,10 @@ class VotingController extends Controller
         }
 
         try {
-            $voting = DB::transaction(function () use (
-                $event,
-                $peserta,
-                $user,
-                $namaTampilan,
-                $data,
-                $hargaPerVote,
-                $totalBayar,
-                $orderId,
-                $vaNumber,
-                $qrUrl,
-                $expiredAt,
-                $sekarang
+            DB::transaction(function () use (
+                $event, $peserta, $user, $namaTampilan, $data,
+                $hargaPerVote, $totalBayar, $orderId, $vaNumber, $qrUrl,
+                $expiredAt, $sekarang
             ) {
                 return Voting::create([
                     'event_id'          => $event->id,
@@ -165,7 +146,6 @@ class VotingController extends Controller
     }
 
     /**
-     * Menampilkan Halaman Instruksi Pembayaran (Custom Invoice Page)
      * GET /voting/{orderId}/instruksi
      */
     public function instruksiPembayaran($orderId)
@@ -182,7 +162,6 @@ class VotingController extends Controller
     }
 
     /**
-     * Cek status transaksi terkini (dipanggil tombol "Saya Sudah Bayar")
      * GET /voting/{orderId}/status
      */
     public function cekStatus($orderId)
@@ -198,7 +177,6 @@ class VotingController extends Controller
     }
 
     /**
-     * Webhook HTTP Callback dari Midtrans
      * POST /voting/midtrans/webhook
      */
     public function webhook(Request $request)
@@ -240,9 +218,7 @@ class VotingController extends Controller
             }
 
             DB::transaction(function () use ($voting, $statusPembayaranBaru) {
-                $voting->update([
-                    'status_midtrans' => $statusPembayaranBaru,
-                ]);
+                $voting->update(['status_midtrans' => $statusPembayaranBaru]);
 
                 if ($statusPembayaranBaru === 'settlement') {
                     $peserta = $voting->peserta;
@@ -259,7 +235,6 @@ class VotingController extends Controller
     }
 
     /**
-     * Menampilkan Rekap Hasil Voting Per Event
      * GET /event/{event}/hasil-voting
      */
     public function hasilVoting(Event $event)
@@ -284,7 +259,6 @@ class VotingController extends Controller
     }
 
     /**
-     * Menampilkan Detail Peserta Tunggal (JSON API untuk Checkout)
      * GET /api/peserta/{peserta}
      */
     public function showPeserta(Peserta $peserta)
@@ -303,7 +277,6 @@ class VotingController extends Controller
     }
 
     /**
-     * Menampilkan Dukungan/Ulasan Terkini Per Peserta
      * GET /event/{event}/peserta/{peserta}/dukungan-terkini
      */
     public function dukunganTerkini(Event $event, Peserta $peserta)
@@ -329,10 +302,10 @@ class VotingController extends Controller
     }
 
     /**
-     * Khusus Admin: Melihat Daftar Pemilih (Voters) Per Peserta
-     * GET /peserta/{peserta}/voter
+     * GET /peserta/{peserta}/voter (JSON API)
+     * RENAME dari voters() → votersByPeserta() agar tidak konflik dengan method admin
      */
-    public function voters(Peserta $peserta)
+    public function votersByPeserta(Peserta $peserta)
     {
         $voters = Voting::with('voter:id,nama,email')
             ->where('peserta_id', $peserta->id)
@@ -341,5 +314,228 @@ class VotingController extends Controller
             ->paginate(15);
 
         return response()->json($voters);
+    }
+
+    // ============================================================
+    // METHOD DARI VERSI HAN (admin voting, voter, leaderboard)
+    // ============================================================
+
+    /**
+     * GET /admin/voting/settings/{event?}
+     */
+    public function edit(?Event $event = null): View
+    {
+        $event ??= Event::query()->latest('id')->first();
+
+        return view('admin.voting.settings', [
+            'event' => $event,
+            'events' => Event::query()->latest('id')->get(['id', 'nama']),
+        ]);
+    }
+
+    /**
+     * POST /admin/voting/settings/{event}
+     */
+    public function update(Request $request, Event $event): RedirectResponse
+    {
+        $data = $request->validate([
+            'voting_aktif' => ['nullable', 'boolean'],
+            'format_hasil_voting' => ['required', 'in:angka,persentase,keduanya'],
+            'voting_mulai' => ['nullable', 'date'],
+            'voting_selesai' => ['nullable', 'date', 'after_or_equal:voting_mulai'],
+            'auto_freeze_voting' => ['nullable', 'boolean'],
+            'blackout_h2_voting' => ['nullable', 'boolean'],
+            'metode_pembayaran' => ['nullable', 'array'],
+            'rekening_bank' => ['nullable', 'string', 'max:100'],
+            'rekening_nomor' => ['nullable', 'string', 'max:50'],
+            'rekening_atas_nama' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $data['voting_aktif'] = $request->boolean('voting_aktif');
+        $data['auto_freeze_voting'] = $request->boolean('auto_freeze_voting');
+        $data['blackout_h2_voting'] = $request->boolean('blackout_h2_voting');
+
+        $event->update($data);
+
+        return redirect()
+            ->route('admin.voting.settings', $event)
+            ->with('success', 'Pengaturan event & voting berhasil disimpan.');
+    }
+
+    /**
+     * Varian update settings (dari han)
+     */
+    public function updateSettings(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'voting_aktif' => 'boolean',
+            'voting_mulai' => 'nullable|date',
+            'voting_selesai' => 'nullable|date|after_or_equal:voting_mulai',
+            'auto_freeze_voting' => 'boolean',
+            'blackout_h2_voting' => 'boolean',
+            'format_hasil_voting' => 'required|in:angka,persentase,keduanya',
+        ]);
+
+        $event->update($validated);
+
+        return redirect()->back()->with('success', 'Pengaturan voting berhasil diperbarui!');
+    }
+
+    /**
+     * GET /admin/voters/{event?}
+     * Halaman Daftar Voter (admin)
+     */
+    public function voters(?Event $event = null): View
+    {
+        $event ??= Event::query()->latest('id')->first();
+
+        $votingQuery = Voting::where('event_id', $event?->id ?? 0)
+            ->where('status_midtrans', 'settlement')
+            ->with(['peserta.user', 'user']);
+
+        $totalSuaraMasuk = (clone $votingQuery)->sum('jumlah_vote');
+        $voterUnik = (clone $votingQuery)->distinct('user_id')->count('user_id');
+
+        $pesertaTerpopuler = Peserta::where('event_id', $event?->id ?? 0)
+            ->withSum(['voting as total_vote' => function ($q) {
+                $q->where('status_midtrans', 'settlement');
+            }], 'jumlah_vote')
+            ->with('user:id,nama')
+            ->orderByDesc('total_vote')
+            ->first();
+
+        $suaraTerakhir = (clone $votingQuery)->latest('id')->first();
+
+        $votings = $votingQuery
+            ->latest('id')
+            ->get()
+            ->map(function ($voting) {
+                $waktu = '-';
+                if (property_exists($voting, 'updated_at') && $voting->updated_at) {
+                    $waktu = $voting->updated_at->format('H.i.s');
+                } elseif (property_exists($voting, 'created_at') && $voting->created_at) {
+                    $waktu = $voting->created_at->format('H.i.s');
+                } else {
+                    $waktu = '#' . $voting->id;
+                }
+
+                return [
+                    'id' => $voting->id,
+                    'waktu' => $waktu,
+                    'nama_voter' => $voting->nama_tampilan ?? $voting->user?->nama ?? 'Anonim',
+                    'no_hp' => $voting->user?->no_hp ?? $voting->user?->email ?? '-',
+                    'peserta_id' => $voting->peserta_id,
+                    'peserta_nama' => $voting->peserta?->user?->nama ?? 'Peserta dihapus',
+                    'peserta_inisial' => strtoupper(substr($voting->peserta?->user?->nama ?? 'P', 0, 2)),
+                    'jumlah_vote' => $voting->jumlah_vote,
+                ];
+            });
+
+        $pesertaList = Peserta::where('event_id', $event?->id ?? 0)
+            ->with('user:id,nama')
+            ->orderBy('user_id')
+            ->get(['id', 'user_id']);
+
+        return view('admin.voters.index', [
+            'event' => $event,
+            'events' => Event::query()->latest('id')->get(['id', 'nama']),
+            'totalSuaraMasuk' => $totalSuaraMasuk,
+            'voterUnik' => $voterUnik,
+            'pesertaTerpopuler' => $pesertaTerpopuler,
+            'suaraTerakhir' => $suaraTerakhir ? ($suaraTerakhir->updated_at?->format('H.i.s') ?? '#' . $suaraTerakhir->id) : '-',
+            'votings' => $votings,
+            'pesertaList' => $pesertaList,
+        ]);
+    }
+
+    /**
+     * GET /admin/leaderboard/{event?}
+     */
+    public function leaderboard($event = null)
+    {
+        if ($event) {
+            $eventData = Event::findOrFail($event);
+        } else {
+            $eventData = Event::latest()->firstOrFail();
+        }
+
+        $rawPeserta = Peserta::where('event_id', $eventData->id)
+            ->where('status', 'diterima')
+            ->whereHas('pembayaran', function ($query) {
+                $query->where('status_midtrans', 'settlement');
+            })
+            ->with(['user'])
+            ->withCount('votingMasuk')
+            ->orderByDesc('voting_masuk_count')
+            ->get();
+
+        $totalSuara = $rawPeserta->sum('voting_masuk_count');
+        $pesertaCount = $rawPeserta->count();
+
+        $warnaList = [
+            'bg-[#edf3fb] text-[#42658c] border-[#d8e5f4]',
+            'bg-[#f0e6cf] text-[#8a6d1f] border-[#d9bd79]',
+            'bg-[#fff1e8] text-[#a96335] border-[#f1d5c4]',
+            'bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]',
+        ];
+
+        $pesertas = $rawPeserta->map(function ($p, $index) use ($totalSuara, $warnaList) {
+            $nama = $p->user->nama ?? $p->nama ?? 'Tanpa Nama';
+            $totalVote = $p->voting_masuk_count ?? 0;
+            $persentase = $totalSuara > 0 ? round(($totalVote / $totalSuara) * 100, 1) : 0;
+
+            $words = explode(' ', trim($nama));
+            $inisial = strtoupper(substr($words[0], 0, 1));
+            if (count($words) > 1) {
+                $inisial .= strtoupper(substr(end($words), 0, 1));
+            }
+
+            return [
+                'id'          => $p->id,
+                'nama'        => $nama,
+                'total_vote'  => $totalVote,
+                'persentase'  => $persentase,
+                'inisial'     => $inisial,
+                'warna'       => $warnaList[$index % count($warnaList)],
+            ];
+        });
+
+        $peringkat1 = $pesertas->get(0);
+        $peringkat2 = $pesertas->get(1);
+        $peringkat3 = $pesertas->get(2);
+
+        $persenPeringkat1 = $peringkat1['persentase'] ?? 0;
+
+        return view('admin.leaderboard.index', [
+            'event'            => $eventData,
+            'pesertas'         => $pesertas,
+            'totalSuara'       => $totalSuara,
+            'pesertaCount'     => $pesertaCount,
+            'peringkat1'       => $peringkat1,
+            'peringkat2'       => $peringkat2,
+            'peringkat3'       => $peringkat3,
+            'persenPeringkat1' => $persenPeringkat1,
+        ]);
+    }
+
+    /**
+     * Helper untuk warna berdasarkan rank
+     */
+    private function getColorForRank(int $votes): string
+    {
+        $colors = [
+            'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-700 border-amber-200',
+            'bg-gradient-to-br from-blue-100 to-blue-50 text-blue-700 border-blue-200',
+            'bg-gradient-to-br from-orange-100 to-orange-50 text-orange-700 border-orange-200',
+            'bg-gradient-to-br from-purple-100 to-purple-50 text-purple-700 border-purple-200',
+            'bg-gradient-to-br from-pink-100 to-pink-50 text-pink-700 border-pink-200',
+            'bg-gradient-to-br from-indigo-100 to-indigo-50 text-indigo-700 border-indigo-200',
+            'bg-gradient-to-br from-teal-100 to-teal-50 text-teal-700 border-teal-200',
+        ];
+
+        static $index = 0;
+        $color = $colors[$index % count($colors)];
+        $index++;
+        return $color;
     }
 }

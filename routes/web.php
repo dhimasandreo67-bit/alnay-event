@@ -70,7 +70,7 @@ Route::middleware('admin')->group(function () {
     Route::put('/pertanyaan/{id}', [PertanyaanEventController::class, 'update']);
     Route::delete('/pertanyaan/{id}', [PertanyaanEventController::class, 'destroy']);
 
-    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'voters']);
+    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'votersByPeserta']);
 });
 
 // Pelanggan - Hanya yang Login Google
@@ -179,7 +179,7 @@ Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting
 
 Route::middleware('admin')->group(function () {
     Route::post('/event', [EventController::class, 'store']);
-    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'voters']);
+    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'votersByPeserta']);
 });
 
 Route::middleware('pelanggan')->group(function () {
