@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\NavigationController;
 use App\Http\Controllers\Admin\PendaftaranController as AdminPendaftaranController;
 use App\Http\Controllers\Admin\PesertaController;
+use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\WebAuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -128,6 +129,9 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::get('/admin/events/{event}/peserta/export', [PesertaController::class, 'export'])
         ->name('admin.peserta.export');
 
+    Route::get('/api/event/{event}/pending-payments', [EventController::class, 'getPendingPayments'])
+        ->name('admin.events.pending-payments');
+
     // Form Builder
     Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])->name('admin.form-builder');
     Route::post('/form-builder/{event}/save', [FormBuilderController::class, 'save'])->name('admin.form-builder.save');
@@ -140,11 +144,15 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::get('/activation/{event?}', [AktivasiController::class, 'index'])->name('admin.activation');
     Route::post('/activation/{peserta}/verifikasi', [AktivasiController::class, 'verifikasi'])->name('admin.activation.verifikasi');
 
-    // Voting, voters, leaderboard
-    Route::get('/voting/settings/{event?}', [NavigationController::class, 'page'])->defaults('page', 'voting-settings')->name('admin.voting.settings');
-    Route::get('/voting/settings-page/{event?}', [NavigationController::class, 'page'])->defaults('page', 'voting-settings')->name('admin.voting-settings');
-    Route::get('/voters/{event?}', [NavigationController::class, 'page'])->defaults('page', 'voters')->name('admin.voters');
-    Route::get('/leaderboard/{event?}', [NavigationController::class, 'page'])->defaults('page', 'leaderboard')->name('admin.leaderboard');
+    // Voting settings (dari han)
+    Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])->name('admin.voting.settings');
+    Route::post('/voting/settings/{event}', [VotingController::class, 'update'])->name('admin.voting.settings.update');
+
+    // Voter (dari han)
+    Route::get('/voters/{event?}', [VotingController::class, 'voters'])->name('admin.voters');
+
+    // Leaderboard (dari han)
+    Route::get('/leaderboard/{event?}', [VotingController::class, 'leaderboard'])->name('admin.leaderboard');
 
     Route::get('/peserta/jawaban/{jawaban}/file', [AdminPendaftaranController::class, 'downloadJawabanFile'])->name('admin.jawaban.file');
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('admin.logout.web');
