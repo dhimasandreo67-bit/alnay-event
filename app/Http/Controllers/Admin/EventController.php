@@ -45,11 +45,14 @@ class EventController extends Controller
             'waktu_mulai'               => 'nullable',
             'tanggal_selesai'           => 'nullable|date',
             'waktu_selesai'             => 'nullable',
+            'pembukaan_pendaftaran_tanggal'     => 'nullable|date',
+            'pembukaan_pendaftaran_waktu'       => 'nullable',
             'lokasi'                    => 'required|string',
             'batas_pendaftaran_tanggal' => 'nullable|date',
             'batas_pendaftaran_waktu'   => 'nullable',
             'kuota_peserta'             => 'nullable|integer',
             'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',
         ]);
 
         if ($request->hasFile('banner')) {
@@ -90,10 +93,13 @@ class EventController extends Controller
             'waktu_mulai'               => 'nullable',
             'tanggal_selesai'           => 'nullable|date|after_or_equal:tanggal_mulai',
             'waktu_selesai'             => 'nullable',
+            'pembukaan_pendaftaran_tanggal'     => 'nullable|date',
+            'pembukaan_pendaftaran_waktu'       => 'nullable',
             'lokasi'                    => 'nullable|string|max:255',
             'batas_pendaftaran_tanggal' => 'nullable|date',
             'batas_pendaftaran_waktu'   => 'nullable',
             'kuota_peserta'             => 'nullable|integer|min:1',
+            'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',
         ]);
 
         if ($request->hasFile('banner')) {
@@ -145,5 +151,28 @@ class EventController extends Controller
         $event->update(['tampilkan_hasil_voting' => ! $event->tampilkan_hasil_voting]);
 
         return response()->json($event);
+    }
+
+    /**
+ * PATCH /admin/events/{event}/update-pending-payments
+ * Update semua tagihan pending ke harga baru
+ */
+    public function updatePendingPayments(Request $request, Event $event)
+    {
+        $hargaBaru = (int) $request->input('biaya_pendaftaran', $event->biaya_pendaftaran);
+        
+        // Update semua tagihan pending
+        $updated = \App\Models\PembayaranEvent::whereHas('peserta', function ($q) use ($event) {
+                $q->where('event_id', $event->id);
+            })
+            ->where('status_midtrans', '!=', 'settlement')
+            ->update([
+                'tarif_dasar' => $hargaBaru,
+                'jumlah' => \DB::raw("{$hargaBaru} + CAST(kode_unik AS UNSIGNED)"),
+            ]);
+
+        return redirect()->back()->with('success', 
+            "{$updated} tagihan pending berhasil diupdate ke harga baru Rp " . number_format($hargaBaru, 0, ',', '.')
+        );
     }
 }
