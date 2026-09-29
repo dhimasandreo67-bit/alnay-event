@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Jawaban;
+use App\Models\Voting;
 
 class Peserta extends Model
 {
@@ -15,7 +17,7 @@ class Peserta extends Model
 
     public $timestamps = false;
 
-        protected $fillable = [
+    protected $fillable = [
         'event_id',
         'user_id',
         'status',       // menunggu_pembayaran | diterima | ditolak
@@ -54,9 +56,21 @@ class Peserta extends Model
         return $this->hasMany(PembayaranEvent::class, 'peserta_id');
     }
 
+    /**
+     * Voting yang MASUK ke peserta ini (dia yang divote)
+     * Nama asli di mainv2
+     */
     public function votingMasuk(): HasMany
     {
-        return $this->hasMany   (Voting::class, 'peserta_id');
+        return $this->hasMany(Voting::class, 'peserta_id');
+    }
+
+    /**
+     * Alias dari han — supaya kompatibel dengan kode yang pakai voting()
+     */
+    public function voting(): HasMany
+    {
+        return $this->hasMany(Voting::class, 'peserta_id');
     }
 
     public function isOwnedBy(?PenggunaEvent $user): bool
@@ -64,9 +78,9 @@ class Peserta extends Model
         return $user !== null && $this->user_id === $user->id;
     }
 
-        // Dari han: dipakai halaman admin Blade
+    // Dari han: dipakai halaman admin Blade
     public function jawaban()
     {
-        return $this->hasMany(\App\Models\Jawaban::class, 'peserta_id');
+        return $this->hasMany(Jawaban::class, 'peserta_id');
     }
 }
