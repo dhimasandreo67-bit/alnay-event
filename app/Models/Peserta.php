@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\Jawaban;
+use App\Models\Voting;
 
 class Peserta extends Model
 {
@@ -56,7 +57,7 @@ class Peserta extends Model
     }
 
     // Voting yang MASUK ke peserta ini (dia yang divote)
-    public function votingMasuk(): HasMany
+    public function voting(): HasMany
     {
         return $this->hasMany(Voting::class, 'peserta_id');
     }
@@ -73,5 +74,10 @@ class Peserta extends Model
     public function jawaban()
     {
         return $this->hasMany(\App\Models\Jawaban::class, 'peserta_id');
+    }
+
+    public function votingMasuk()
+    {
+        return $this->hasMany(\App\Models\Voting::class, 'peserta_id'); 
     }
 }
