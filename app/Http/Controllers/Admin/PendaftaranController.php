@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\JawabanPeserta;
-use App\Models\PenggunaEvent;
+use App\Models\Jawabanpeserta;
+use App\Models\Penggunaevent;
 use App\Models\Peserta;
 use App\Models\Pembayaranevent;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\Model;
 
 class PendaftaranController extends Controller
 {
@@ -104,7 +105,7 @@ class PendaftaranController extends Controller
                     $answer = json_encode($answer, JSON_THROW_ON_ERROR);
                 }
 
-                JawabanPeserta::create([
+                Jawabanpeserta::create([
                     'peserta_id' => $peserta->id,
                     'pertanyaan_id' => $question->id,
                 ]);
@@ -229,8 +230,30 @@ class PendaftaranController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $peserta = Peserta::findOrFail($id);
-        $peserta->status = $request->status; // 'diterima', 'ditolak', atau 'revisi'
+        $statusBaru = $request->status; // 'diterima', 'ditolak', atau 'revisi'
+        $statusLama = $peserta->status;
+
+        // Simpan catatan admin jika ada
+        if ($request->filled('catatan_admin')) {
+            $peserta->catatan_admin = $request->catatan_admin;
+        }
+
+        $peserta->status = $statusBaru;
         $peserta->save();
+
+        // ============================================
+        // LOGIKA PEMBAYARAN BERDASARKAN STATUS
+        // ============================================
+
+        // 1. Jika status berubah menjadi 'diterima' → buat pembayaran otomatis
+        if ($statusBaru === 'diterima') {
+            $this->buatPembayaranOtomatis($peserta);
+        }
+
+        // 2. Jika status berubah menjadi 'ditolak' → hapus pembayaran yang ada
+        if ($statusBaru === 'ditolak' && $peserta->pembayaran) {
+            $peserta->pembayaran->delete();
+        }
 
         return redirect()->back()->with('success', 'Status peserta berhasil diperbarui.');
     }
@@ -243,13 +266,15 @@ class PendaftaranController extends Controller
         }
 
         $event = $peserta->event;
-        $tarifDasar = (int) ($event->tarif_pendaftaran ?? 0);
+        
+        // Ambil biaya dasar dari event
+        $tarifDasar = (int) ($event->biaya_pendaftaran ?? 0);
 
         // Generate kode unik 3 digit dari ID peserta
         // ID 19 → "019", ID 127 → "127", ID 5 → "005"
         $kodeUnik = str_pad($peserta->id, 3, '0', STR_PAD_LEFT);
 
-        // Nominal unik = tarif dasar + kode unik
+        // Nominal unik = biaya dasar + kode unik
         // Contoh: 90000 + 19 = 90019
         $nominalUnik = $tarifDasar + (int) $kodeUnik;
 
@@ -272,14 +297,29 @@ class PendaftaranController extends Controller
     public function destroy($id)
     {
         $peserta = Peserta::findOrFail($id);
+        
+        // 1. Cek riwayat voting (menggunakan DB Facade agar aman dari method missing)
+        $hasVoting = \Illuminate\Support\Facades\DB::table('voting')
+            ->where('peserta_id', $peserta->id)
+            ->exists();
 
-        // 1. Hapus semua jawaban yang dimiliki oleh peserta ini
-        JawabanPeserta::where('peserta_id', $peserta->id)->delete();
+        if ($hasVoting) {
+            return redirect()
+                ->route('admin.dashboard') // Menggunakan nama route yang valid
+                ->with('error', 'Peserta ini sudah punya riwayat voting, tidak bisa dihapus langsung.');
+        }
 
-        // 2. Hapus data peserta
+        // 2. Hapus data relasi
+        \App\Models\JawabanPeserta::where('peserta_id', $peserta->id)->delete();
+        \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)->delete();
+        
+        // 3. Hapus data peserta
         $peserta->delete();
-
-        return redirect()->back()->with('success', 'Data peserta dan jawabannya berhasil dihapus.');
+        
+        // 4. Redirect ke halaman dashboard admin / daftar peserta
+        return redirect()
+            ->route('admin.dashboard') // <-- ATAU gunakan route('admin.registrations')
+            ->with('success', 'Data peserta berhasil dihapus.');
     }
 
     public function file(Jawaban $jawaban)
