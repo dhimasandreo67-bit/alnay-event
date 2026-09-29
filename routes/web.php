@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AktivasiController;
 use App\Http\Controllers\Admin\PesertaController;
 use App\Http\Controllers\Admin\VoterController;
+use App\Http\Controllers\Admin\ProfileController;
 
 // Route Halaman Depan
 Route::get('/', function () {
@@ -91,6 +92,11 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
 
     // Route untuk menghapus peserta
     Route::delete('/peserta/{id}', [PendaftaranController::class, 'destroy'])->name('admin.peserta.destroy');
+
+    // Profile admin
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password');
 });
 
 // Route API (auth, admin, pelanggan) -> dibungkus middleware 'api'
