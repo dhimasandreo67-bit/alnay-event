@@ -208,32 +208,70 @@
                     </div>
 
                     {{-- Pendaftaran --}}
-                    <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
-                        <h2 class="font-bold text-[16px] mb-1">Pendaftaran</h2>
-                        <p class="text-[11px] text-[#73716c] mb-4">Batas waktu dan jumlah slot yang tersedia untuk calon peserta.</p>
+                    <div class="bg-white rounded-xl border border-[#e5e1db] p-6">
+                        <h3 class="font-bold text-slate-800 mb-1">Pendaftaran</h3>
+                        <p class="text-xs text-slate-500 mb-4">Batas waktu dan jumlah slot yang tersedia untuk calon peserta.</p>
 
                         <div class="grid grid-cols-2 gap-4 mb-4">
+                            {{-- ✅ PEMBUKAAN PENDAFTARAN (BARU) --}}
                             <div>
-                                <label class="block text-[12px] font-bold mb-2">Batas Pendaftaran (Tanggal)</label>
-                                <input type="date" name="batas_pendaftaran_tanggal" id="inputBatasTanggal" value="{{ old('batas_pendaftaran_tanggal') }}"
-                                       class="w-full border border-[#e5e1db] rounded-lg px-3 py-2.5 text-[12px]">
-                                @error('batas_pendaftaran_tanggal')<div class="text-red-600 text-[10px] mt-1">{{ $message }}</div>@enderror
+                                <label class="block font-bold mb-1">Pembukaan Pendaftaran (Tanggal)</label>
+                                <input type="date" name="pembukaan_pendaftaran_tanggal" 
+                                    value="{{ old('pembukaan_pendaftaran_tanggal') }}" 
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
+                                @error('pembukaan_pendaftaran_tanggal')
+                                    <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
-                                <label class="block text-[12px] font-bold mb-2">Batas Pendaftaran (Waktu)</label>
-                                <input type="time" name="batas_pendaftaran_waktu" id="inputBatasWaktu" value="{{ old('batas_pendaftaran_waktu') }}"
-                                       class="w-full border border-[#e5e1db] rounded-lg px-3 py-2.5 text-[12px]">
-                                @error('batas_pendaftaran_waktu')<div class="text-red-600 text-[10px] mt-1">{{ $message }}</div>@enderror
+                                <label class="block font-bold mb-1">Pembukaan Pendaftaran (Waktu)</label>
+                                <input type="time" name="pembukaan_pendaftaran_waktu" 
+                                    value="{{ old('pembukaan_pendaftaran_waktu') }}" 
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
+                                @error('pembukaan_pendaftaran_waktu')
+                                    <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
 
-                        <label class="block text-[12px] font-bold mb-2">Kuota Peserta</label>
-                        <div class="relative">
-                            <input type="number" name="kuota_peserta" id="inputKuota" min="1" value="{{ old('kuota_peserta') }}"
-                                   class="w-full border border-[#e5e1db] rounded-lg px-3 py-2.5 text-[12px] pr-14" placeholder="Contoh: 100">
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#98958f]">orang</span>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            {{-- Batas Pendaftaran --}}
+                            <div>
+                                <label class="block font-bold mb-1">Batas Pendaftaran (Tanggal)</label>
+                                <input type="date" name="batas_pendaftaran_tanggal" 
+                                    value="{{ old('batas_pendaftaran_tanggal') }}" 
+                                    required
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
+                                @error('batas_pendaftaran_tanggal')
+                                    <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block font-bold mb-1">Batas Pendaftaran (Waktu)</label>
+                                <input type="time" name="batas_pendaftaran_waktu" 
+                                    value="{{ old('batas_pendaftaran_waktu') }}" 
+                                    required
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
+                                @error('batas_pendaftaran_waktu')
+                                    <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
-                        @error('kuota_peserta')<div class="text-red-600 text-[10px] mt-1">{{ $message }}</div>@enderror
+
+                        <div>
+                            <label class="block font-bold mb-1">Kuota Peserta</label>
+                            <div class="relative">
+                                <input type="number" name="kuota_peserta" 
+                                    value="{{ old('kuota_peserta') }}" 
+                                    min="1"
+                                    placeholder="Contoh: 100"
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9] pr-16">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">orang</span>
+                            </div>
+                            @error('kuota_peserta')
+                                <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full py-3 bg-[#ba8320] hover:bg-[#a06f1a] text-white font-bold rounded-lg transition-colors">
