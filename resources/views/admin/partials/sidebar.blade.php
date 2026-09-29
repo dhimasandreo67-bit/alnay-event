@@ -51,7 +51,6 @@
         href="{{ isset($event) ? route('admin.voters', $event->id) : '#' }}">
             <span class="admin-sidebar__step">5</span>
             <span>Daftar Voter</span>
-            <b class="admin-sidebar__live">Live</b>
         </a>
 
         {{-- Leaderboard Suara Voting --}}
@@ -62,7 +61,20 @@
         </a>
     </nav>
 
-    <div class="admin-sidebar__user"><span class="admin-sidebar__avatar">SA</span>
-        <div><strong>{{ session('admin_name', 'MAS RADEN') }}</strong><small>Admin Event</small></div>
-    </div>
+    @php
+    $adminName = session('admin_name', 'MAS RADEN');
+
+    $initials = collect(explode(' ', trim($adminName)))
+        ->filter()
+        ->map(fn($word) => strtoupper(substr($word, 0, 1)))
+        ->join('');
+    @endphp
+
+    <a href="{{ route('admin.profile') }}" class="admin-sidebar__user {{ ($active ?? '') === 'profile' ? 'is-active' : '' }}">
+        <span class="admin-sidebar__avatar">{{ $initials }}</span>
+        <div>
+            <strong>{{ $adminName }}</strong>
+            <small>Admin Event</small>
+        </div>
+    </a>
 </aside>
