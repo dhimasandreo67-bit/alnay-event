@@ -20,6 +20,7 @@ class Event extends Model
         'deskripsi',
         'form_fields',
         'banner',
+        'status',
         'syarat_ketentuan',
         'biaya_pendaftaran',
         'harga_per_vote',
@@ -27,12 +28,19 @@ class Event extends Model
         'waktu_mulai',
         'tanggal_selesai',
         'waktu_selesai',
+        'pembukaan_pendaftaran_tanggal',
+        'pembukaan_pendaftaran_waktu',
         'lokasi',
         'batas_pendaftaran_tanggal',
         'batas_pendaftaran_waktu',
         'kuota_peserta',
         'mode_penilaian',
+        'voting_mulai',
         'voting_aktif',
+        'voting_selesai',
+        'auto_freeze_voting',
+        'blackout_h2_voting',
+        'format_hasil_voting',
         'tampilkan_hasil_voting',
     ];
 
@@ -41,17 +49,23 @@ class Event extends Model
         'tanggal_selesai' => 'date',
         'waktu_mulai' => 'datetime:H:i',
         'waktu_selesai' => 'datetime:H:i',
+        'pembukaan_pendaftaran_tanggal' => 'date',
+        'pembukaan_pendaftaran_waktu' => 'datetime:H:i',
         'batas_pendaftaran_tanggal' => 'date',
         'batas_pendaftaran_waktu' => 'datetime:H:i',
         'biaya_pendaftaran' => 'decimal:2',
         'harga_per_vote' => 'decimal:2',
         'kuota_peserta' => 'integer',
         'voting_aktif' => 'boolean',
+        'auto_freeze_voting' => 'boolean',
+        'blackout_h2_voting' => 'boolean',
+        'voting_mulai' => 'datetime',
+        'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
         'form_fields' => 'array',
     ];
 
-    protected $appends = ['status', 'status_label'];
+    // protected $appends = ['status', 'status_label'];
 
     public function pertanyaans(): HasMany
     {
@@ -73,53 +87,54 @@ class Event extends Model
      * Menggabungkan tanggal_mulai (date) + waktu_mulai (time, opsional)
      * supaya perhitungan tetap akurat sampai ke jam.
      */
-    public function getStatusAttribute(): string
-    {
-        $mulai = $this->combineDateTime($this->tanggal_mulai, $this->waktu_mulai, '00:00');
-        $selesai = $this->tanggal_selesai
-            ? $this->combineDateTime($this->tanggal_selesai, $this->waktu_selesai, '23:59')
-            : null;
+    // public function getStatusAttribute(): string
+    // {
+    //     $mulai = $this->combineDateTime($this->tanggal_mulai, $this->waktu_mulai, '00:00');
+    //     $selesai = $this->tanggal_selesai
+    //         ? $this->combineDateTime($this->tanggal_selesai, $this->waktu_selesai, '23:59')
+    //         : null;
 
-        $sekarang = Carbon::now();
+    //     $sekarang = Carbon::now();
 
-        if ($sekarang->lt($mulai)) {
-            return 'akan_datang';
-        }
+    //     if ($sekarang->lt($mulai)) {
+    //         return 'akan_datang';
+    //     }
 
-        if ($selesai && $sekarang->gt($selesai)) {
-            return 'selesai';
-        }
+    //     if ($selesai && $sekarang->gt($selesai)) {
+    //         return 'selesai';
+    //     }
 
-        if (! $selesai && $sekarang->gt($mulai->copy()->endOfDay())) {
-            // Tidak ada tanggal_selesai -> anggap event 1 hari, selesai di akhir hari mulai.
-            return 'selesai';
-        }
+    //     if (! $selesai && $sekarang->gt($mulai->copy()->endOfDay())) {
+    //         // Tidak ada tanggal_selesai -> anggap event 1 hari, selesai di akhir hari mulai.
+    //         return 'selesai';
+    //     }
 
-        return 'berlangsung';
-    }
+    //     return 'berlangsung';
+    // }
 
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
             'akan_datang' => 'Akan Datang',
-            'berlangsung' => 'Sedang Berlangsung',
-            'selesai' => 'Telah Berakhir',
+            'sedang_berlangsung' => 'Sedang Berlangsung',
+            'telah_berakhir' => 'Telah Berakhir',
+            default => 'Tidak Diketahui',
         };
     }
 
-    private function combineDateTime($date, $time, string $fallbackTime): Carbon
-    {
-        $tanggal = Carbon::parse($date)->format('Y-m-d');
-        $jam = $time ? Carbon::parse($time)->format('H:i:s') : $fallbackTime.':00';
+    // private function combineDateTime($date, $time, string $fallbackTime): Carbon
+    // {
+    //     $tanggal = Carbon::parse($date)->format('Y-m-d');
+    //     $jam = $time ? Carbon::parse($time)->format('H:i:s') : $fallbackTime.':00';
 
-        return Carbon::parse("{$tanggal} {$jam}");
-    }
+    //     return Carbon::parse("{$tanggal} {$jam}");
+    // }
 
-    public function scopeWithStatus($query, string $status)
-    {
-        // Catatan: filter status dilakukan di memori (bukan query SQL) kalau
-        // butuh presisi jam, karena kombinasi tanggal+waktu sulit di-query
-        // langsung. Untuk dataset besar, pertimbangkan generated column.
-        return $query->get()->filter(fn ($event) => $event->status === $status);
-    }
+    // public function scopeWithStatus($query, string $status)
+    // {
+    //     // Catatan: filter status dilakukan di memori (bukan query SQL) kalau
+    //     // butuh presisi jam, karena kombinasi tanggal+waktu sulit di-query
+    //     // langsung. Untuk dataset besar, pertimbangkan generated column.
+    //     return $query->get()->filter(fn ($event) => $event->status === $status);
+    // }
 }
