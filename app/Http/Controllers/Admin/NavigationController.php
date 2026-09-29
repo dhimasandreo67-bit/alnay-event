@@ -7,8 +7,12 @@ use App\Models\Event;
 
 class NavigationController extends Controller
 {
-    public function page(string $page, ?Event $event = null)
+    public function page($event = null, string $page = 'voting-settings')
     {
+        if ($event !== null && !$event instanceof Event) {
+            $event = Event::findOrFail($event);
+        }
+
         $pages = [
             'event-create' => ['Buat Event Baru', 'Atur identitas, jadwal, biaya, dan mode penilaian event.'],
             'registrations' => ['Verifikasi Pendaftaran Peserta', 'Tinjau data peserta dan putuskan status pendaftaran.'],
@@ -19,6 +23,7 @@ class NavigationController extends Controller
         ];
 
         abort_unless(isset($pages[$page]), 404);
+
         $event ??= Event::query()->latest('id')->first();
 
         return view('admin.navigation-page', [
