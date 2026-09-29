@@ -97,8 +97,6 @@ Route::middleware('pelanggan')->group(function () {
 });
 
 // ===== Route Pendaftaran Publik (dari han) =====
-// HANYA 1 pasang route ini. Jangan tambah route GET/POST ke '/daftar/{event}'
-// di tempat lain, karena Laravel akan menimpa registrasi sebelumnya.
 Route::get('/daftar/{event}', [PendaftaranController::class, 'showPublicForm'])
     ->name('public.registration');
 Route::post('/daftar/{event}', [PendaftaranController::class, 'storePublic'])
@@ -157,9 +155,6 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::get('/peserta/jawaban/{jawaban}/file', [AdminPendaftaranController::class, 'downloadJawabanFile'])->name('admin.jawaban.file');
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('admin.logout.web');
 
-    // Dashboard/verifikasi utama (menimpa route '/' di atas, sama seperti di branch han)
-    Route::get('/', [AdminPendaftaranController::class, 'index'])->name('admin.dashboard');
-
     // Detail, status, hapus peserta
     Route::get('/peserta/{id}', [AdminPendaftaranController::class, 'show'])->name('admin.peserta.show');
     Route::post('/peserta/{id}/status', [AdminPendaftaranController::class, 'updateStatus'])->name('admin.peserta.update-status');
@@ -174,28 +169,19 @@ Route::middleware('api')->group(function () {
 });
 
 // ===== Kembalikan route main yang tertimpa route han (URI persis sama) =====
-// Grup 'api' han di atas mendaftarkan URI yang sama, dan yang terakhir menang.
-// Blok ini HARUS tetap di paling bawah file, setelah grup 'api'.
-
-// Auth pelanggan (Google, session): han memakai Auth\GoogleAuthController + sanctum
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 Route::post('/auth/logout', [GoogleAuthController::class, 'logout'])->name('auth.logout');
 Route::get('/auth/me', [GoogleAuthController::class, 'me'])->name('auth.me');
 
-// Logout admin API: han menambah auth:sanctum + role:admin, main memakai guard session 'admin'
 Route::post('/auth/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
-
-// Hasil voting publik (han memakai VotingController@hasilEvent)
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
 
-// Admin (guard session akun_staf)
 Route::middleware('admin')->group(function () {
     Route::post('/event', [EventController::class, 'store']);
     Route::get('/peserta/{peserta}/voter', [VotingController::class, 'voters']);
 });
 
-// Pelanggan (middleware main, bukan auth:sanctum)
 Route::middleware('pelanggan')->group(function () {
     Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
     Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
