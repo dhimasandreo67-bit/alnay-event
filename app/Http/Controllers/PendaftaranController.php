@@ -2,22 +2,149 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pertanyaan;
+use App\Models\Event;
 use App\Models\JawabanPeserta;
+use App\Models\PenggunaEvent;
+use App\Models\Pertanyaan;
 use App\Models\Peserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PendaftaranController extends Controller
 {
-    // POST /event/{id}/daftar
+    // =====================================================================
+    // DARI HAN: form pendaftaran publik (Blade) di /daftar/{event}
+    // =====================================================================
+
+    public function showPublicForm(Event $event)
+    {
+        return view('registration', [
+            'event' => $event,
+            'questions' => $event->pertanyaans()->orderBy('urutan')->get(),
+        ]);
+    }
+
+    public function storePublic(Request $request, Event $event)
+    {
+        // 1. User WAJIB login (dari Google)
+        $user = Auth::guard('pelanggan')->user();
+
+        if (! $user) {
+            return redirect()
+                ->route('auth.google', ['redirect_to' => url()->current()]);
+        }
+
+        // 2. Cek sudah pernah daftar event ini?
+        $sudahDaftar = Peserta::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($sudahDaftar) {
+            return redirect()
+                ->route('public.registration', $event)
+                ->with('error', 'Kamu sudah pernah mendaftar di event ini.');
+        }
+
+        // 3. Bangun aturan validasi dari pertanyaan
+        $questions = $event->pertanyaans()->get();
+        $rules = [
+            'answers' => ['required', 'array'],
+        ];
+
+        foreach ($questions as $question) {
+            $type = strtolower($question->tipe_input);
+
+            if (in_array($type, ['heading', 'subheading'], true)) {
+                continue;
+            }
+
+            $field = "answers.{$question->id}";
+            $fieldRules = [$question->wajib ? 'required' : 'nullable'];
+
+            $rawOptions = $question->pilihan_jawaban ?? [];
+            if (is_string($rawOptions)) {
+                $rawOptions = json_decode($rawOptions, true) ?? [];
+            }
+
+            $cleanOptions = array_map(function ($opt) {
+                return trim(str_replace(["\r", "\n"], '', (string) $opt));
+            }, (array) $rawOptions);
+
+            if ($type === 'file') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'max:5120';
+            } elseif (in_array($type, ['number', 'angka'], true)) {
+                $fieldRules[] = 'regex:/^\d+$/';
+            } elseif ($type === 'checkbox') {
+                $fieldRules[] = 'array';
+                if (! empty($cleanOptions)) {
+                    $rules["{$field}. *"] = ['string', Rule::in($cleanOptions)];
+                }
+            } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
+                if (! empty($cleanOptions)) {
+                    $fieldRules[] = Rule::in($cleanOptions);
+                }
+            } elseif ($type === 'email') {
+                $fieldRules[] = 'email';
+            } else {
+                $fieldRules[] = 'string';
+                $fieldRules[] = 'max:5000';
+            }
+
+            $rules[$field] = $fieldRules;
+        }
+
+        $data = $request->validate($rules);
+
+        // 4. Simpan peserta + jawaban
+        DB::transaction(function () use ($request, $event, $questions, $user, $data) {
+            $peserta = Peserta::create([
+                'event_id' => $event->id,
+                'user_id' => $user->id,
+                'status' => 'menunggu_review',
+            ]);
+
+            foreach ($questions as $question) {
+                if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
+                    continue;
+                }
+
+                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
+                $answer ??= $data['answers'][$question->id] ?? null;
+
+                if ($answer === null || $answer === '') {
+                    continue;
+                }
+
+                if (is_array($answer)) {
+                    $answer = json_encode($answer, JSON_THROW_ON_ERROR);
+                }
+
+                JawabanPeserta::create([
+                    'peserta_id' => $peserta->id,
+                    'pertanyaan_id' => $question->id,
+                    'jawaban' => $answer,
+                ]);
+            }
+        });
+
+        // 5. Redirect dengan flash message
+        return redirect()
+            ->route('public.registration', $event)
+            ->with('success', 'Pendaftaran berhasil dikirim. Tunggu review dari admin ya!');
+    }
+
+    // =====================================================================
+    // DARI MAIN: API JSON
+    // =====================================================================
+
     public function store(Request $request, $id)
     {
-        // 1. Ambil ID pertanyaan dari DB berdasarkan event_id di URL
         $questionIds = Pertanyaan::where('event_id', $id)->pluck('id')->toArray();
 
-        // 2. Validasi input
         $data = $request->validate([
             'jawaban' => ['required', 'array'],
             'jawaban.*.pertanyaan_id' => ['required', 'integer', Rule::in($questionIds)],
@@ -31,7 +158,6 @@ class PendaftaranController extends Controller
             return response()->json(['message' => 'Semua pertanyaan wajib harus diisi.'], 422);
         }
 
-        // 3. Simpan data peserta & jawaban
         $peserta = DB::transaction(function () use ($id, $request, $data) {
             $peserta = Peserta::create([
                 'event_id' => $id,
@@ -53,7 +179,6 @@ class PendaftaranController extends Controller
         return response()->json($peserta->load('jawabans'), 201);
     }
 
-    // GET /pendaftaran/saya
     public function milikSaya(Request $request)
     {
         $pesertas = Peserta::with(['event', 'pembayaran'])
@@ -64,7 +189,6 @@ class PendaftaranController extends Controller
         return response()->json($pesertas);
     }
 
-    // GET /event/{id}/peserta
     public function daftarPeserta($id)
     {
         $pesertas = Peserta::with('user:id,nama,foto_url')
@@ -75,27 +199,23 @@ class PendaftaranController extends Controller
         return response()->json($pesertas);
     }
 
-    // GET /peserta/{id}
-    // GET /peserta/{id}
     public function show(Request $request, $id)
     {
         $peserta = Peserta::with([
             'user:id,nama,foto_url',
-            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif',
+            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
             'jawabans.pertanyaan:id,label,tag_tampilan',
         ])
             ->select('id', 'event_id', 'user_id', 'galeri_foto')
             ->findOrFail($id);
 
-        // Jika dipanggil via JavaScript / API (Expect JSON)
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json($peserta);
         }
 
-        // Jika dibuka langsung via URL Browser, tampilkan Halaman Detail Peserta
         return view('voting.index', [
             'pesertaId' => $id,
-            'peserta' => $peserta
+            'peserta' => $peserta,
         ]);
     }
 }

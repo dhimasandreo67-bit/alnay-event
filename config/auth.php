@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use App\Models\PenggunaEvent;
+use App\Models\Admin;
 
 return [
 
@@ -15,6 +17,7 @@ return [
             'provider' => 'users',
         ],
 
+        // Milik main
         'pelanggan' => [
             'driver' => 'session',
             'provider' => 'pengguna_event',
@@ -24,12 +27,18 @@ return [
             'driver' => 'session',
             'provider' => 'akun_staf',
         ],
+
+        // Milik han (sebelumnya bernama 'admin', diganti agar tidak bentrok)
+        'admin_api' => [
+            'driver' => 'sanctum',
+            'provider' => 'admins',
+        ],
     ],
 
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => PenggunaEvent::class,
         ],
 
         'pengguna_event' => [
@@ -40,6 +49,12 @@ return [
         'akun_staf' => [
             'driver' => 'eloquent',
             'model' => App\Models\AkunStaf::class,
+        ],
+
+        // Milik han
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => Admin::class,
         ],
     ],
 

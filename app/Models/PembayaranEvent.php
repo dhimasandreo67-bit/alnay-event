@@ -17,15 +17,18 @@ class PembayaranEvent extends Model
     protected $fillable = [
         'peserta_id',
         'jumlah',
-        'metode',
+        'tarif_dasar',
+        'kode_unik',
         'midtrans_order_id',
         'midtrans_transaction_id',
         'status_midtrans',
+        'metode',
         'tanggal_bayar',
     ];
 
     protected $casts = [
-        'jumlah' => 'decimal:2',
+        'jumlah'      => 'integer',
+        'tarif_dasar' => 'integer',
         'tanggal_bayar' => 'datetime',
     ];
 
@@ -34,8 +37,18 @@ class PembayaranEvent extends Model
         return $this->belongsTo(Peserta::class, 'peserta_id');
     }
 
-    public function isLunas(): bool
+    public function getIsLunasAttribute(): bool
     {
-        return $this->status_midtrans === 'settlement';
+        return $this->status_midtrans === 'settlement' || $this->status_midtrans === 'paid';
+    }
+
+    public function getNominalPembayaranAttribute(): string
+    {
+        if (!$this->pembayaran) {
+            return 'Belum ada tagihan';
+        }
+        
+        return 'Rp ' . number_format($this->pembayaran->jumlah, 0, ',', '.') 
+             . ' (kode unik: ' . $this->pembayaran->kode_unik . ')';
     }
 }

@@ -2,15 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\PenggunaEvent;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
 {
     // GET /auth/google
-    public function redirect()
+    public function redirect(Request $request)
     {
+        // Simpan URL asal biar bisa balik setelah login
+        if ($request->has('redirect_to')) {
+            session(['redirect_after_login' => $request->get('redirect_to')]);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -23,9 +30,9 @@ class GoogleAuthController extends Controller
 
         if ($pengguna) {
             $pengguna->update([
-                'nama' => $googleUser->getName(),
                 'foto_url' => $googleUser->getAvatar(),
                 'login_terakhir' => now(),
+                // 'nama' sengaja tidak di-update — biar user bisa edit sendiri
             ]);
         } else {
             $pengguna = PenggunaEvent::create([
@@ -38,9 +45,12 @@ class GoogleAuthController extends Controller
             ]);
         }
 
-                Auth::guard('pelanggan')->login($pengguna);
+        Auth::guard('pelanggan')->login($pengguna);
 
-        return redirect('/beranda');
+        // Redirect ke URL asal (kalau ada), atau ke /beranda
+        $redirectTo = session()->pull('redirect_after_login', '/beranda');
+
+        return redirect($redirectTo);
     }
 
     // POST /auth/logout

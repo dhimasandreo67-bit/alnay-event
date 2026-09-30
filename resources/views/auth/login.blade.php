@@ -6,50 +6,51 @@
     <title>Masuk - Event AL-NAY.ID</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .font-display { font-family: 'Playfair Display', serif; }
+        html, body { height: 100%; }
+        body { font-family: 'Inter', Arial, sans-serif; }
+        .font-display { font-family: 'Inter', Arial, sans-serif; }
     </style>
 </head>
 <body class="min-h-screen bg-[#FBF9F5]">
-    <div class="max-w-[1280px] mx-auto flex flex-col min-h-screen">
+    <div class="max-w-[1280px] mx-auto flex flex-col h-full">
 
         <!-- Header -->
-        <header class="flex items-center px-6 md:px-16 py-6">
-            <a href="{{ url('/') }}" class="font-display font-bold text-[26px] tracking-[-0.65px] text-[#0E1828]">
+        <header class="flex items-center px-6 md:px-16 py-4 shrink-0">
+            <a href="{{ url('/') }}" class="font-display font-bold text-[22px] tracking-[-0.65px] text-[#0E1828]">
                 EVENT ALNAY.ID
             </a>
         </header>
 
         <!-- Main content -->
-        <div class="flex-1 flex items-center justify-center px-6 pb-10">
-            <div class="flex flex-col md:flex-row items-stretch gap-8 md:gap-16 max-w-[1040px] w-full justify-center">
+        <div class="flex-1 flex items-center justify-center px-6 py-6">
+            <div class="flex flex-col md:flex-row items-stretch gap-6 md:gap-14 max-w-[1040px] w-full md:h-[clamp(420px,75vh,520px)] justify-center">
 
                 <!-- Kartu kiri -->
-                <div class="relative overflow-hidden w-full md:w-[430px] bg-[#0A1526] rounded-2xl shadow-xl flex flex-col justify-end p-8 md:shrink-0 min-h-[300px] md:min-h-[480px]">
+                <div class="relative overflow-hidden w-full md:w-[420px] bg-[#0A1526] rounded-2xl shadow-xl flex flex-col justify-end p-6 md:p-8 md:shrink-0 min-h-[220px] md:h-full">
                     <!-- Hiasan -->
                     <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full border border-[#B8862B]/30"></div>
                     <div class="absolute -top-8 -right-8 w-36 h-36 rounded-full border border-[#B8862B]/40"></div>
 
-                    <span class="relative inline-block w-fit mb-4 px-3.5 py-1 rounded-full bg-[#B8862B] text-[11px] font-bold uppercase tracking-[0.55px] text-white">
+                    <span class="relative inline-block w-fit mb-3 px-3.5 py-1 rounded-full bg-[#B8862B] text-[11px] font-bold uppercase tracking-[0.55px] text-white">
                         Duta Budaya 2026
                     </span>
-                    <h2 class="relative font-display font-bold text-[30px] leading-[38px] tracking-[0.75px] text-white mb-4">
+                    <h2 class="relative font-display font-bold text-[26px] leading-[32px] tracking-[0.5px] text-white mb-3">
                         Dukung Kandidat<br>Favoritmu
                     </h2>
-                    <p class="relative text-[13px] leading-[21px] text-[#D1D5DB]">
+                    <p class="relative text-[13px] leading-[20px] text-[#D1D5DB]">
                         Masuk untuk memberikan suara dan ikut menentukan siapa yang akan membawa warisan budaya Nusantara ke kancah global.
                     </p>
                 </div>
 
                 <!-- Form kanan -->
-                <div class="w-full md:w-[420px] flex flex-col items-center justify-center px-2 md:px-6 md:min-h-[480px]">
-                    <h1 class="font-bold text-[34px] leading-[36px] tracking-[-0.85px] text-[#0C1A30] mb-2 text-center">
+                <div class="w-full md:w-[400px] flex flex-col items-center justify-center px-2 md:px-6 md:h-full">
+                    <h1 class="font-display font-bold text-[30px] leading-[34px] tracking-[-0.7px] text-[#0C1A30] mb-2 text-center">
                         Masuk
                     </h1>
-                    <p class="text-sm text-[#64748B] text-center mb-7">
+                    <p class="text-sm text-[#64748B] text-center mb-6">
                         Masuk dengan dengan akun google anda
                     </p>
 
@@ -64,7 +65,7 @@
                         <span class="text-sm font-bold text-[#1E293B]">Masuk dengan Google</span>
                     </a>
 
-                    <p class="text-xs text-[#475569] text-center mt-7">
+                    <p class="text-xs text-[#475569] text-center mt-6">
                         Dengan masuk, Anda menyetujui
                         <a href="#" class="text-[#C08929] font-medium">Syarat &amp; Ketentuan Voting</a>
                     </p>

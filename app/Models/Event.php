@@ -17,27 +17,55 @@ class Event extends Model
 
     protected $fillable = [
         'nama',
+        'deskripsi',
+        'form_fields',
         'banner',
+        'status',
         'syarat_ketentuan',
         'biaya_pendaftaran',
         'harga_per_vote',
         'tanggal_mulai',
+        'waktu_mulai',
         'tanggal_selesai',
+        'waktu_selesai',
+        'pembukaan_pendaftaran_tanggal',
+        'pembukaan_pendaftaran_waktu',
+        'lokasi',
+        'batas_pendaftaran_tanggal',
+        'batas_pendaftaran_waktu',
+        'kuota_peserta',
         'mode_penilaian',
+        'voting_mulai',
         'voting_aktif',
+        'voting_selesai',
+        'auto_freeze_voting',
+        'blackout_h2_voting',
+        'format_hasil_voting',
         'tampilkan_hasil_voting',
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'waktu_mulai' => 'datetime:H:i',
+        'waktu_selesai' => 'datetime:H:i',
+        'pembukaan_pendaftaran_tanggal' => 'date',
+        'pembukaan_pendaftaran_waktu' => 'datetime:H:i',
+        'batas_pendaftaran_tanggal' => 'date',
+        'batas_pendaftaran_waktu' => 'datetime:H:i',
         'biaya_pendaftaran' => 'decimal:2',
         'harga_per_vote' => 'decimal:2',
+        'kuota_peserta' => 'integer',
         'voting_aktif' => 'boolean',
+        'auto_freeze_voting' => 'boolean',
+        'blackout_h2_voting' => 'boolean',
+        'voting_mulai' => 'datetime',
+        'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
+        'form_fields' => 'array',
     ];
 
-    protected $appends = ['status'];
+    // protected $appends = ['status', 'status_label'];
 
     public function pertanyaans(): HasMany
     {
@@ -54,31 +82,13 @@ class Event extends Model
         return $this->hasMany(Voting::class, 'event_id');
     }
 
-    public function getStatusAttribute(): string
+    public function getStatusLabelAttribute(): string
     {
-        $hariIni = Carbon::now()->startOfDay();
-
-        if ($hariIni->lt(Carbon::parse($this->tanggal_mulai))) {
-            return 'akan_datang';
-        }
-
-        if ($hariIni->gt(Carbon::parse($this->tanggal_selesai))) {
-            return 'selesai';
-        }
-
-        return 'berlangsung';
-    }
-
-    public function scopeWithStatus($query, string $status)
-    {
-        $hariIni = Carbon::now()->toDateString();
-
-        return match ($status) {
-            'akan_datang' => $query->where('tanggal_mulai', '>', $hariIni),
-            'selesai' => $query->where('tanggal_selesai', '<', $hariIni),
-            'berlangsung' => $query->where('tanggal_mulai', '<=', $hariIni)
-                                   ->where('tanggal_selesai', '>=', $hariIni),
-            default => $query,
+        return match ($this->status) {
+            'akan_datang' => 'Akan Datang',
+            'sedang_berlangsung' => 'Sedang Berlangsung',
+            'telah_berakhir' => 'Telah Berakhir',
+            default => 'Tidak Diketahui',
         };
     }
 }

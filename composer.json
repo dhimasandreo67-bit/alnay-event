@@ -5,9 +5,10 @@
     "description": "The skeleton application for the Laravel framework.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
-    "require": {
+        "require": {
         "php": "^8.2",
         "laravel/framework": "^13.17",
+        "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.31",
         "laravel/tinker": "^3.0",
         "midtrans/midtrans-php": "^2.6"
@@ -15,6 +16,7 @@
     "require-dev": {
         "beyondcode/expose": "^3.2",
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^2.9",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
         "laravel/pint": "^1.27",
