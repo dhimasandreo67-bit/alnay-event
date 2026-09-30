@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    @include('admin.partials.pwa-head')
     <title>Profil Admin | ALNAY.ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +13,7 @@
 </head>
 <body class="bg-cream font-['Inter'] text-[13px] text-[#22201d]">
 <div class="flex min-h-screen">
-    @include('admin.partials.sidebar', ['active' => 'profile'])
+    @include('admin.partials.sidebar', ['active' => 'profile', 'event' => $event])
 
     <main class="flex-1 min-w-0 p-6 max-w-2xl ml-[235px]">
         <h1 class="text-2xl font-bold m-0">Profil Admin</h1>

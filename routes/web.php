@@ -32,6 +32,13 @@ Route::post('/daftar/{event}', [PublicPendaftaranController::class, 'storePublic
 Route::get('/admin/login', [WebAuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.login.store');
 
+Route::get('/pwa/admin-sw.js', function () {
+    return response()->file(public_path('pwa/admin-sw.js'), [
+        'Content-Type' => 'application/javascript',
+        'Service-Worker-Allowed' => '/admin/',
+    ]);
+});
+
 // Group Admin
 Route::middleware('admin.session')->prefix('admin')->group(function () {
 
@@ -48,6 +55,11 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.events.toggle-hasil');
     Route::delete('/admin/events/{event}/questions/clear', [PendaftaranController::class, 'clearQuestions'])
     ->name('admin.events.questions.clear');
+
+    // Toggle buka dan tutup form
+    Route::patch('/admin/events/{event}/toggle-status', [EventController::class, 'toggleStatus'])->name('admin.event.toggle-status');
+    Route::patch('/events/{event}/toggle-status', [PendaftaranController::class, 'toggleStatus'])
+    ->name('admin.event.toggle-status');
 
     // Export peserta ke CSV
     Route::get('/admin/events/{event}/peserta/export', [PesertaController::class, 'export'])

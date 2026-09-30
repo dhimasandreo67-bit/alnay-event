@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('admin.partials.pwa-head')
 
     <title>Dashboard Admin | ALNAY.ID</title>
 

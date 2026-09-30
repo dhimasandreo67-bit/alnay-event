@@ -175,4 +175,23 @@ class EventController extends Controller
             "{$updated} tagihan pending berhasil diupdate ke harga baru Rp " . number_format($hargaBaru, 0, ',', '.')
         );
     }
+
+    public function toggleStatus(Request $request, Event $event)
+    {
+        $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        // Mengubah nilai is_active secara langsung
+        $event->is_active = $request->boolean('is_active');
+        
+        // Simpan perubahan ke MySQL
+        $event->save();
+
+        return response()->json([
+            'success' => true,
+            'is_active' => (bool)$event->is_active,
+            'message' => $event->is_active ? 'Pendaftaran berhasil dibuka.' : 'Pendaftaran berhasil ditutup.'
+        ]);
+    }
 }

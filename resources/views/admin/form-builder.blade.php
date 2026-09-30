@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    @include('admin.partials.pwa-head')
     <title>Form Builder | ALNAY.ID</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1140,7 +1141,7 @@
         });
 
         // Contoh fungsi pengumpul data dari DOM sebelum dikirim via AJAX:
-function collectFormData() {
+    function collectFormData() {
     const questions = [];
     document.querySelectorAll('.field-item').forEach((el, index) => {
         // Ambil nilai help/keterangan tambahan
@@ -1169,6 +1170,8 @@ function collectFormData() {
     });
     return questions;
     }
+
+
     </script>
 
     @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])

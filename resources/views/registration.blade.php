@@ -167,15 +167,25 @@
 <body>
     <div class="wrap">
 
-        <button type="button" onclick="window.location.href='/admin'"
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+        <button type="button" onclick="goToPreviousPage()"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span>Kembali</span>
         </button>
 
+        {{-- KONDISI 1: JIKA FORM SUDAH DITUTUP / NONAKTIF --}}
+        @if (isset($event) && !$event->is_active)
+            <div class="closed-banner" style="background: #fff; border: 1px solid #e5e1db; border-top: 4px solid #d94d43; border-radius: 12px; padding: 40px 20px; text-align: center; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="font-size: 48px; margin-bottom: 12px;">🚫</div>
+                <h2 style="font: 700 22px Georgia, serif; color: #d94d43; margin: 0 0 10px;">Pendaftaran Sudah Ditutup</h2>
+                <p style="color: #666; font-size: 14px; margin: 0; line-height: 1.5;">
+                    Mohon maaf, formulir pendaftaran untuk acara <strong>{{ $event->nama }}</strong> telah ditutup karena telah memenuhi kuota atau melebihi batas waktu pendaftaran.
+                </p>
+            </div>
+        @else
+        {{-- KONDISI 2: JIKA FORM MASIH AKTIF (TAMPILKAN FORMULIR) --}}
         @if (session('success'))
             <div class="banner success">{{ session('success') }}</div>
         @endif
@@ -324,9 +334,15 @@
 
             <button type="submit" class="btn-submit">Daftar Sekarang juga</button>
         </form>
-
+@endif
     </div>
     <script>
+        function goToPreviousPage() {
+            // Mengambil URL sebelumnya dari Laravel, jika kosong gunakan '/admin'
+            const previousUrl = "{{ url()->previous() ?? route('admin.dashboard') }}";
+            window.location.href = previousUrl;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
 

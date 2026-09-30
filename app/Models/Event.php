@@ -18,6 +18,7 @@ class Event extends Model
     protected $fillable = [
         'nama',
         'deskripsi',
+        'is_active',
         'form_fields',
         'banner',
         'status',
@@ -63,6 +64,7 @@ class Event extends Model
         'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
         'form_fields' => 'array',
+        'is_active' => 'boolean',
     ];
 
     // protected $appends = ['status', 'status_label'];

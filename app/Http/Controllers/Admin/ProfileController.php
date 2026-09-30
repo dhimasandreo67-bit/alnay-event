@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AkunStaf;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -19,8 +20,9 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $admin = AkunStaf::findOrFail($request->session()->get('admin_id'));
+        $event = Event::query()->latest('id')->first(); // konteks buat sidebar
 
-        return view('admin.profile.edit', compact('admin'));
+        return view('admin.profile.edit', compact('admin', 'event'));
     }
 
     /**
