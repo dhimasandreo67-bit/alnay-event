@@ -20,8 +20,12 @@ class PenggunaEvent extends Authenticatable
     protected $fillable = [
         'google_id',
         'nama',
+        'nama_custom',
         'email',
+        'no_hp',
         'foto_url',
+        'foto_custom',
+        'tanggal_daftar',   // ← tambah
         'login_terakhir',
     ];
 
