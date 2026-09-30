@@ -29,6 +29,26 @@ class PendaftaranController extends Controller
 
     public function storePublic(Request $request, Event $event)
     {
+        // 1. User WAJIB login (dari Google)
+        $user = Auth::guard('pelanggan')->user();
+
+        if (! $user) {
+            return redirect()
+                ->route('auth.google', ['redirect_to' => url()->current()]);
+        }
+
+        // 2. Cek sudah pernah daftar event ini?
+        $sudahDaftar = Peserta::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($sudahDaftar) {
+            return redirect()
+                ->route('public.registration', $event)
+                ->with('error', 'Kamu sudah pernah mendaftar di event ini.');
+        }
+
+        // 3. Bangun aturan validasi dari pertanyaan
         $questions = $event->pertanyaans()->get();
         $rules = [
             'answers' => ['required', 'array'],
@@ -61,7 +81,7 @@ class PendaftaranController extends Controller
             } elseif ($type === 'checkbox') {
                 $fieldRules[] = 'array';
                 if (! empty($cleanOptions)) {
-                    $rules["{$field}.*"] = ['string', Rule::in($cleanOptions)];
+                    $rules["{$field}. *"] = ['string', Rule::in($cleanOptions)];
                 }
             } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
                 if (! empty($cleanOptions)) {
@@ -78,55 +98,9 @@ class PendaftaranController extends Controller
         }
 
         $data = $request->validate($rules);
-        $answers = $data['answers'];
 
-        $emailQuestion = $questions->first(
-            fn ($question): bool => strtolower($question->tipe_input) === 'email'
-        );
-        $nameQuestion = $questions->first(
-            fn ($question): bool => in_array(strtolower($question->tipe_input), ['text', 'teks'], true)
-                && str_contains(strtolower($question->label), 'nama')
-        ) ?? $questions->first(
-            fn ($question): bool => in_array(strtolower($question->tipe_input), ['text', 'teks'], true)
-        );
-        $email = $emailQuestion ? ($answers[$emailQuestion->id] ?? null) : null;
-        $nama = $nameQuestion ? ($answers[$nameQuestion->id] ?? null) : null;
-
-        if (! $emailQuestion || ! $email) {
-            throw ValidationException::withMessages([
-                'answers' => 'Form harus memiliki pertanyaan email yang diisi.',
-            ]);
-        }
-
-        if (! $nameQuestion || ! $nama) {
-            throw ValidationException::withMessages([
-                'answers' => 'Form harus memiliki pertanyaan nama yang diisi.',
-            ]);
-        }
-
-        DB::transaction(function () use ($data, $event, $questions, $request, $nama, $email): void {
-            $user = PenggunaEvent::query()->firstOrCreate(
-                ['email' => $email],
-                [
-                    'google_id' => 'web-'.Str::uuid(),
-                    'nama' => $nama,
-                ],
-            );
-
-            if ($user->nama !== $nama) {
-                $user->update(['nama' => $nama]);
-            }
-
-            $sudahDaftar = Peserta::where('event_id', $event->id)
-                ->where('user_id', $user->id)
-                ->exists();
-
-            if ($sudahDaftar) {
-                throw ValidationException::withMessages([
-                    'email' => 'Email ini sudah terdaftar untuk event ini.',
-                ]);
-            }
-
+        // 4. Simpan peserta + jawaban
+        DB::transaction(function () use ($request, $event, $questions, $user, $data) {
             $peserta = Peserta::create([
                 'event_id' => $event->id,
                 'user_id' => $user->id,
@@ -157,8 +131,10 @@ class PendaftaranController extends Controller
             }
         });
 
-        return redirect()->route('public.registration', $event)
-            ->with('success', 'Pendaftaran berhasil dikirim.');
+        // 5. Redirect dengan flash message
+        return redirect()
+            ->route('public.registration', $event)
+            ->with('success', 'Pendaftaran berhasil dikirim. Tunggu review dari admin ya!');
     }
 
     // =====================================================================
@@ -227,7 +203,7 @@ class PendaftaranController extends Controller
     {
         $peserta = Peserta::with([
             'user:id,nama,foto_url',
-            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif',
+            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
             'jawabans.pertanyaan:id,label,tag_tampilan',
         ])
             ->select('id', 'event_id', 'user_id', 'galeri_foto')
