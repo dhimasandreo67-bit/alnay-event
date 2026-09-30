@@ -30,9 +30,9 @@ class GoogleAuthController extends Controller
 
         if ($pengguna) {
             $pengguna->update([
-                'nama' => $googleUser->getName(),
                 'foto_url' => $googleUser->getAvatar(),
                 'login_terakhir' => now(),
+                // 'nama' sengaja tidak di-update — biar user bisa edit sendiri
             ]);
         } else {
             $pengguna = PenggunaEvent::create([

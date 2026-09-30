@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\PesertaController;
 use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\WebAuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfilUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,16 +31,24 @@ Route::get('/', function () {
 
 Route::get('/login', function () {
     return view('auth.login');
-});
+})->name('login');
 
 // Beranda = dashboard user (dari wijdan)
 Route::get('/beranda', [\App\Http\Controllers\BerandaController::class, 'index'])
     ->name('dashboard-user');
 
 // Placeholder route
-Route::get('/profil-user', function () {
-    return '<div style="padding:40px;font-family:sans-serif"><h1>Profil User</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
-})->name('profil-user');
+// Profil User (wajib login)
+Route::middleware('pelanggan')->group(function () {
+    Route::get('/profil-user', [ProfilUserController::class, 'index'])
+        ->name('profil-user');
+    Route::put('/profil-user', [ProfilUserController::class, 'update'])
+        ->name('profil-user.update');
+    Route::post('/profil-user/foto', [ProfilUserController::class, 'uploadFoto'])
+        ->name('profil-user.foto');
+    Route::delete('/profil-user/foto', [ProfilUserController::class, 'hapusFoto'])
+        ->name('profil-user.foto.hapus');
+});
 
 Route::get('/detail-event', function () {
     return '<div style="padding:40px;font-family:sans-serif"><h1>Detail Event</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
@@ -60,10 +69,23 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->
 Route::post('/auth/logout', [GoogleAuthController::class, 'logout'])->name('auth.logout');
 Route::get('/auth/me', [GoogleAuthController::class, 'me'])->name('auth.me');
 
-// Logout via GET (buat test doang — hapus nanti)
-Route::get('/logout-test', function () {
-    \Auth::guard('pelanggan')->logout();
-    return redirect('/beranda');
+Route::middleware('pelanggan')->group(function () {
+    Route::get('/profil-user', [ProfilUserController::class, 'index'])
+        ->name('profil-user');
+    Route::put('/profil-user', [ProfilUserController::class, 'update'])
+        ->name('profil-user.update');
+    Route::post('/profil-user/foto', [ProfilUserController::class, 'uploadFoto'])
+        ->name('profil-user.foto');
+    Route::delete('/profil-user/foto', [ProfilUserController::class, 'hapusFoto'])
+        ->name('profil-user.foto.hapus');
+
+    // ← TAMBAH INI
+    Route::post('/profil-user/logout', function () {
+        \Auth::guard('pelanggan')->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect()->route('dashboard-user');
+    })->name('profil-user.logout');
 });
 
 /*

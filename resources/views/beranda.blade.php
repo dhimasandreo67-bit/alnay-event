@@ -104,23 +104,26 @@
                 EVENTALNAY.ID
             </a>
 
-            <a href="{{ route('profil-user') }}" aria-label="Profil pengguna"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-[#d9d9d9] bg-white text-[#333] transition hover:bg-[#f7f7f7] overflow-hidden">
-                @auth('pelanggan')
-                    @php $u = auth('pelanggan')->user(); @endphp
-                    @if ($u->foto_url)
-                        <img src="{{ $u->foto_url }}" alt="{{ $u->nama }}" class="w-full h-full object-cover">
+                       @auth('pelanggan')
+                @php
+                    $u = auth('pelanggan')->user();
+                    $fotoHeader = $u->foto_custom ? asset('storage/' . $u->foto_custom) : $u->foto_url;
+                    $inisialHeader = strtoupper(substr(trim($u->nama_custom ?: $u->nama), 0, 1));
+                @endphp
+                <a href="{{ route('profil-user') }}" aria-label="Profil pengguna"
+                    class="flex h-9 w-9 items-center justify-center rounded-full border border-[#d9d9d9] bg-white text-[#333] transition hover:bg-[#f7f7f7] overflow-hidden">
+                    @if ($fotoHeader)
+                        <img src="{{ $fotoHeader }}" alt="{{ $u->nama_custom ?: $u->nama }}" class="w-full h-full object-cover">
                     @else
-                        <span class="text-[11px] font-bold">{{ strtoupper(substr($u->nama ?? 'U', 0, 2)) }}</span>
+                        <span class="text-[11px] font-bold">{{ $inisialHeader }}</span>
                     @endif
-                @else
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.7">
-                        <circle cx="12" cy="8" r="3.5"></circle>
-                        <path d="M5.5 20c.8-3.2 3-5 6.5-5s5.7 1.8 6.5 5"></path>
-                    </svg>
-                @endauth
-            </a>
+                </a>
+            @else
+                <a href="{{ route('auth.google') }}"
+                    class="rounded-full bg-[#cf9b32] px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-[#b88625]">
+                    Login
+                </a>
+            @endauth
         </div>
     </header>
 
@@ -336,7 +339,7 @@
                                 Peringkat Sementara
                             </h2>
                             <p class="mt-1 text-[13px] text-[#6b6b6b] md:text-[14px]">
-                                Tiga peserta dengan suara terbanyak
+                                Peserta dengan suara terbanyak
                             </p>
                         </div>
                         <a href="{{ route('public.registration', $eventBerlangsung) }}"
