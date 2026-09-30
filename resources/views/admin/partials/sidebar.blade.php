@@ -42,21 +42,21 @@
         {{-- Pengaturan Event & Voting --}}
         <a class="{{ ($active ?? '') === 'voting-settings' ? 'is-active' : '' }}"
         href="{{ isset($event) ? route('admin.voting.settings', $event->id) : '#' }}">
-            <span class="admin-sidebar__step">4</span>
+            <span class="admin-sidebar__step">1</span>
             <span>Pengaturan Event & Voting</span>
         </a>
 
         {{-- Daftar Voter --}}
         <a class="{{ ($active ?? '') === 'voters' ? 'is-active' : '' }}"
         href="{{ isset($event) ? route('admin.voters', $event->id) : '#' }}">
-            <span class="admin-sidebar__step">5</span>
+            <span class="admin-sidebar__step">2</span>
             <span>Daftar Voter</span>
         </a>
 
         {{-- Leaderboard Suara Voting --}}
         <a class="{{ ($active ?? '') === 'leaderboard' ? 'is-active' : '' }}"
         href="{{ isset($event) ? route('admin.leaderboard', $event->id) : '#' }}">
-            <span class="admin-sidebar__step">6</span>
+            <span class="admin-sidebar__step">3</span>
             <span>Leaderboard Suara Voting</span>
         </a>
     </nav>
