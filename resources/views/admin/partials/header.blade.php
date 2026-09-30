@@ -22,13 +22,12 @@
             <input type="checkbox" id="toggleFormStatus" class="sr-only peer" 
                 {{ (isset($event) && (bool)$event->is_active) ? 'checked' : '' }}
                 data-event-id="{{ $event?->id }}">
-            
-            {{-- Toggle Track & Knob --}}
-            <div class="relative w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
 
             {{-- Label Teks Status --}}
             <div class="flex flex-col min-w-0 pointer-events-none">
-                <span class="text-[8px] font-semibold uppercase tracking-wider text-[#91959a]">Status Formulir</span>
+                <span class="text-xs font-semibold tracking-wider text-[#91959a]">
+                    Status Pendaftaran
+                </span>
                 <strong id="statusText" class="text-[11px] font-bold truncate transition-colors duration-200 
                     {{ (isset($event) && (bool)$event->is_active) ? 'text-emerald-600' : 'text-rose-600' }}">
                     {{ (isset($event) && (bool)$event->is_active) ? 'BUKA' : 'DITUTUP' }}
