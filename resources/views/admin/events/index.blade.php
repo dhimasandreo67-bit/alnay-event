@@ -99,13 +99,22 @@
                                     </td>
 
                                     <td class="py-3 px-4 text-[11px]">
-                                        <div class="font-semibold text-ink">
-                                            {{ \Carbon\Carbon::parse($item->tanggal_mulai)->format('d M Y') }}
-                                        </div>
-                                        <div class="text-[#8a8984]">
-                                            {{ $item->waktu_mulai }} WIB
-                                        </div>
-                                    </td>
+                                    {{-- Tanggal & Waktu Mulai --}}
+                                    <div class="font-semibold text-ink flex items-center gap-1">
+                                        <span>{{ \Carbon\Carbon::parse($item->tanggal_mulai)->format('d M Y') }}</span>
+                                        @if ($item->waktu_mulai)
+                                            <span class="text-slate-500 font-normal"> - {{ \Carbon\Carbon::parse($item->waktu_mulai)->format('H:i') }} WIB </span>
+                                        @endif
+                                    </div>
+                                    
+                                    {{-- Tanggal & Waktu Selesai --}}
+                                    <div class="font-semibold text-ink flex items-center gap-1">
+                                        <span>{{ \Carbon\Carbon::parse($item->tanggal_selesai)->format('d M Y') }}</span>
+                                        @if ($item->waktu_selesai)
+                                            <span class="text-slate-500 font-normal"> - {{ \Carbon\Carbon::parse($item->waktu_selesai)->format('H:i') }} WIB</span>
+                                        @endif
+                                    </div>
+                                </td>
 
                                     <td class="py-3 px-4 text-[11px]">
                                         <div>Daftar: <strong class="text-ink">{{ $item->biaya_pendaftaran > 0 ? 'Rp ' . number_format($item->biaya_pendaftaran, 0, ',', '.') : 'Gratis' }}</strong></div>
