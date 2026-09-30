@@ -41,13 +41,31 @@ class VotingController extends Controller
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'jumlah_vote' => ['required', 'integer', 'min:1'],
+            'jumlah_vote' => ['required', 'integer', 'min:1', 'max:1000'],
             'pesan_dukungan' => ['nullable', 'string', 'max:1000'],
             'metode_pembayaran' => ['required', 'string', 'in:qris,bri_va'],
         ]);
 
+
         $durasiMenit = 60;
         $user = $request->user();
+        // ===== PAGAR 2: Rate limit — max 1 transaksi per 5 detik =====
+        if ($user){
+            $lastVote = Voting::where('event_id', $event->id)
+            ->where('user_id', $user?->id)
+            ->latest('tanggal_vote')
+            ->first();
+        }
+
+        if ($lastVote && $lastVote->tanggal_vote) {
+            $detikSejak = $lastVote->tanggal_vote->diffInSeconds(now());
+            if ($detikSejak < 5) {
+                $sisa = 5 - $detikSejak;
+                return response()->json([
+                    'message' => "Tunggu {$sisa} detik sebelum vote lagi."
+                ], 429);
+            }
+        }
         $namaTampilan = $data['nama'];
         $hargaPerVote = (float) $event->harga_per_vote;
         $totalBayar = (int) round($hargaPerVote * (int) $data['jumlah_vote']);
@@ -110,9 +128,18 @@ class VotingController extends Controller
 
         try {
             DB::transaction(function () use (
-                $event, $peserta, $user, $namaTampilan, $data,
-                $hargaPerVote, $totalBayar, $orderId, $vaNumber, $qrUrl,
-                $expiredAt, $sekarang
+                $event,
+                $peserta,
+                $user,
+                $namaTampilan,
+                $data,
+                $hargaPerVote,
+                $totalBayar,
+                $orderId,
+                $vaNumber,
+                $qrUrl,
+                $expiredAt,
+                $sekarang
             ) {
                 return Voting::create([
                     'event_id'          => $event->id,
@@ -263,16 +290,56 @@ class VotingController extends Controller
      */
     public function showPeserta(Peserta $peserta)
     {
-        $peserta->load(['user', 'event']);
+        $peserta->load(['user', 'event', 'jawabans.pertanyaan']);
+
+        // Helper: ambil jawaban berdasarkan tag_tampilan, fallback ke regex label
+        $cariJawaban = function (string $tag, string $pattern) use ($peserta) {
+            $j = $peserta->jawabans->firstWhere('pertanyaan.tag_tampilan', $tag);
+            if ($j && $j->jawaban) {
+                return $j->jawaban;
+            }
+            $j = $peserta->jawabans->first(function ($x) use ($pattern) {
+                return $x->pertanyaan
+                    && preg_match($pattern, $x->pertanyaan->label ?? '')
+                    && $x->jawaban;
+            });
+            return $j?->jawaban;
+        };
+
+        $nama = $cariJawaban('nama', '/nama/i')
+            ?? $peserta->user->nama
+            ?? 'Peserta';
+
+        $bio = $cariJawaban('bio', '/bio|profil|tentang|deskripsi/i');
+        $lokasi = $cariJawaban('lokasi', '/lokasi|domisili|kota|alamat/i');
+
+        $fotoRaw = $cariJawaban('foto', '/foto|gambar|upload/i');
+        $foto = $fotoRaw
+            ? (str_starts_with($fotoRaw, 'http') ? $fotoRaw : asset('storage/' . $fotoRaw))
+            : ($peserta->user->foto_url ?? null);
 
         return response()->json([
-            'id' => $peserta->id,
-            'nama' => $peserta->user->nama ?? $peserta->nama_panggung ?? 'Peserta',
-            'foto' => $peserta->foto ? asset('storage/' . $peserta->foto) : ($peserta->user->foto_url ?? null),
-            'kategori' => $peserta->kategori ?? $peserta->event->nama ?? '-',
-            'harga_per_vote' => (float) ($peserta->event->harga_per_vote ?? 0),
-            'total_vote' => (int) $peserta->total_vote,
-            'event' => $peserta->event ? $peserta->event->only(['id', 'nama', 'harga_per_vote', 'tampilkan_hasil_voting']) : null,
+            'id'              => $peserta->id,
+            'nama'            => $nama,
+            'foto'            => $foto,
+            'bio'             => $bio,
+            'lokasi'          => $lokasi,
+            'kategori'        => $peserta->event->nama ?? '-',
+            'harga_per_vote'  => (float) ($peserta->event->harga_per_vote ?? 0),
+            'total_vote'      => (int) $peserta->total_vote,
+            'galeri_foto'     => $peserta->galeri_foto ?? [],
+            'jawabans'        => $peserta->jawabans->map(fn($j) => [
+                'label'   => $j->pertanyaan->label ?? '-',
+                'tag'     => $j->pertanyaan->tag_tampilan ?? null,
+                'jawaban' => $j->jawaban,
+            ]),
+            'event'           => $peserta->event ? $peserta->event->only([
+                'id',
+                'nama',
+                'harga_per_vote',
+                'tampilkan_hasil_voting',
+                'format_hasil_voting'
+            ]) : null,
         ]);
     }
 
@@ -439,10 +506,10 @@ class VotingController extends Controller
         return view('admin.voters.index', [
             'event' => $event,
             'events' => Event::query()->latest('id')->get(['id', 'nama']),
-            'totalSuaraMasuk' => $totalSuaraMasuk,
+            'totalSuara' => $totalSuaraMasuk,
             'voterUnik' => $voterUnik,
-            'pesertaTerpopuler' => $pesertaTerpopuler,
-            'suaraTerakhir' => $suaraTerakhir ? ($suaraTerakhir->updated_at?->format('H.i.s') ?? '#' . $suaraTerakhir->id) : '-',
+            'terpopuler' => $pesertaTerpopuler,
+            'suaraTerakhir' => $suaraTerakhir,
             'votings' => $votings,
             'pesertaList' => $pesertaList,
         ]);
@@ -456,7 +523,7 @@ class VotingController extends Controller
         if ($event) {
             $eventData = Event::findOrFail($event);
         } else {
-            $eventData = Event::latest()->firstOrFail();
+            $eventData = Event::latest('id')->firstOrFail();
         }
 
         $rawPeserta = Peserta::where('event_id', $eventData->id)

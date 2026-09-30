@@ -18,7 +18,12 @@ use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\WebAuthController;
 use Illuminate\Support\Facades\Route;
 
-// Route Halaman Depan
+/*
+|--------------------------------------------------------------------------
+| HALAMAN DEPAN (PUBLIC)
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -27,38 +32,121 @@ Route::get('/login', function () {
     return view('auth.login');
 });
 
-Route::get('/beranda', function () {
-    return view('beranda');
+// Beranda = dashboard user (dari wijdan)
+Route::get('/beranda', [\App\Http\Controllers\BerandaController::class, 'index'])
+    ->name('dashboard-user');
+
+// Placeholder route
+Route::get('/profil-user', function () {
+    return '<div style="padding:40px;font-family:sans-serif"><h1>Profil User</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
+})->name('profil-user');
+
+Route::get('/detail-event', function () {
+    return '<div style="padding:40px;font-family:sans-serif"><h1>Detail Event</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
+})->name('detail-event');
+
+Route::get('/detail-event-selesai', function () {
+    return '<div style="padding:40px;font-family:sans-serif"><h1>Detail Event Selesai</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
+})->name('detail-event-selesai');
+
+/*
+|--------------------------------------------------------------------------
+| AUTH — Google OAuth (Pelanggan)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+Route::post('/auth/logout', [GoogleAuthController::class, 'logout'])->name('auth.logout');
+Route::get('/auth/me', [GoogleAuthController::class, 'me'])->name('auth.me');
+
+// Logout via GET (buat test doang — hapus nanti)
+Route::get('/logout-test', function () {
+    \Auth::guard('pelanggan')->logout();
+    return redirect('/beranda');
 });
 
-// Auth Routes
-Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
-Route::post('/auth/logout', [GoogleAuthController::class, 'logout']);
-Route::get('/auth/me', [GoogleAuthController::class, 'me']);
+/*
+|--------------------------------------------------------------------------
+| AUTH — Admin (API JSON)
+|--------------------------------------------------------------------------
+*/
 
 Route::post('/auth/admin/login', [AuthController::class, 'login']);
-Route::post('/auth/admin/logout', [AuthController::class, 'logout']);
+Route::post('/auth/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
-// Event & Peserta - Boleh diakses Publik (Tanpa Login)
+/*
+|--------------------------------------------------------------------------
+| EVENT & PESERTA (PUBLIC — tanpa login)
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/event', [EventController::class, 'index']);
 Route::get('/event/{id}', [EventController::class, 'show']);
 Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
 Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta']);
 
-// Halaman Detail Peserta Publik (Blade/View)
+// Detail peserta (Blade)
 Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
 
-// API JSON Detail Peserta Khusus Checkout
+// API JSON detail peserta (checkout)
 Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
 
-// Voting & Hasil Voting - Publik
+// Hasil voting & dukungan terkini
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
 Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
+
+/*
+|--------------------------------------------------------------------------
+| WEBHOOK MIDTRANS (PUBLIC — signature diverifikasi di controller)
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/voting/midtrans/webhook', [VotingController::class, 'webhook']);
 Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook']);
 
-// Event - Hanya Admin (API JSON, guard session akun_staf)
+/*
+|--------------------------------------------------------------------------
+| PENDAFTARAN PUBLIK (form pendaftaran user)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/daftar/{event}', [PendaftaranController::class, 'showPublicForm'])
+    ->name('public.registration');
+Route::post('/daftar/{event}', [PendaftaranController::class, 'storePublic'])
+    ->name('public.registration.store');
+
+/*
+|--------------------------------------------------------------------------
+| PELANGGAN (wajib login Google)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('pelanggan')->group(function () {
+    Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
+    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
+
+    // Voting
+    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
+    Route::get('/voting/{orderId}/status', [VotingController::class, 'cekStatus']);
+    Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
+
+    // Checkout vote
+    Route::get('/peserta/{id}/checkout', function ($id) {
+        return view('vote-checkout', [
+            'pesertaId' => $id,
+            'midtransClientKey' => config('services.midtrans.client_key'),
+            'midtransIsProduction' => config('services.midtrans.is_production'),
+        ]);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN API (JSON — guard 'admin')
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('admin')->group(function () {
     Route::post('/event', [EventController::class, 'store']);
     Route::put('/event/{id}', [EventController::class, 'update']);
@@ -73,40 +161,15 @@ Route::middleware('admin')->group(function () {
     Route::get('/peserta/{peserta}/voter', [VotingController::class, 'votersByPeserta']);
 });
 
-// Pelanggan - Hanya yang Login Google
-Route::middleware('pelanggan')->group(function () {
-    Route::post('/event/{id}/daftar', [PendaftaranController::class, 'store']);
-    Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
-    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
-    Route::get('/voting/{orderId}/status', [VotingController::class, 'cekStatus']);
+/*
+|--------------------------------------------------------------------------
+| ADMIN — Blade (Web Session)
+|--------------------------------------------------------------------------
+*/
 
-    // API Proses Transaksi Midtrans
-    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
-
-    // Halaman Form Checkout Vote
-    Route::get('/peserta/{id}/checkout', function ($id) {
-        return view('vote-checkout', [
-            'pesertaId' => $id,
-            'midtransClientKey' => config('services.midtrans.client_key'),
-            'midtransIsProduction' => config('services.midtrans.is_production'),
-        ]);
-    });
-
-    // Halaman Instruksi Pembayaran (Custom Invoice Page)
-    Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
-});
-
-// ===== Route Pendaftaran Publik (dari han) =====
-Route::get('/daftar/{event}', [PendaftaranController::class, 'showPublicForm'])
-    ->name('public.registration');
-Route::post('/daftar/{event}', [PendaftaranController::class, 'storePublic'])
-    ->name('public.registration.store');
-
-// ===== Route Auth Admin Blade (dari han) =====
 Route::get('/admin/login', [WebAuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.login.store');
 
-// ===== Group Admin Blade (dari han) =====
 Route::middleware('admin.session')->prefix('admin')->group(function () {
 
     // Dashboard
@@ -115,7 +178,6 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     // Event Management
     Route::resource('events', AdminEventController::class)->names('admin.events');
 
-    // Toggle voting & tampilkan hasil
     Route::patch('/events/{event}/voting', [AdminEventController::class, 'toggleVoting'])
         ->name('admin.events.toggle-voting');
     Route::patch('/events/{event}/tampilkan-hasil', [AdminEventController::class, 'toggleTampilkanHasil'])
@@ -123,7 +185,7 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::delete('/admin/events/{event}/questions/clear', [AdminPendaftaranController::class, 'clearQuestions'])
         ->name('admin.events.questions.clear');
 
-    // Export peserta ke CSV
+    // Export peserta
     Route::get('/admin/events/{event}/peserta/export', [PesertaController::class, 'export'])
         ->name('admin.peserta.export');
 
@@ -142,18 +204,26 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::get('/activation/{event?}', [AktivasiController::class, 'index'])->name('admin.activation');
     Route::post('/activation/{peserta}/verifikasi', [AktivasiController::class, 'verifikasi'])->name('admin.activation.verifikasi');
 
-    // Voting settings (dari han)
+    // Voting settings
     Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])->name('admin.voting.settings');
     Route::post('/voting/settings/{event}', [VotingController::class, 'update'])->name('admin.voting.settings.update');
 
-    // Voter (dari han)
+    // Voter
     Route::get('/voters/{event?}', [VotingController::class, 'voters'])->name('admin.voters');
 
-    // Leaderboard (dari han)
+    // Leaderboard
     Route::get('/leaderboard/{event?}', [VotingController::class, 'leaderboard'])->name('admin.leaderboard');
 
+    // File jawaban
     Route::get('/peserta/jawaban/{jawaban}/file', [AdminPendaftaranController::class, 'downloadJawabanFile'])->name('admin.jawaban.file');
+
+    // Logout
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('admin.logout.web');
+
+    // Profile admin
+    Route::get('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'edit'])->name('admin.profile');
+    Route::post('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::post('/profile/password', [\App\Http\Controllers\Admin\ProfileController::class, 'updatePassword'])->name('admin.profile.password');
 
     // Detail, status, hapus peserta
     Route::get('/peserta/{id}', [AdminPendaftaranController::class, 'show'])->name('admin.peserta.show');
@@ -161,29 +231,14 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::delete('/peserta/{id}', [AdminPendaftaranController::class, 'destroy'])->name('admin.peserta.destroy');
 });
 
-// Route API han (auth, admin, user) -> dibungkus middleware 'api'
+/*
+|--------------------------------------------------------------------------
+| ROUTE API HAN (auth, admin, user)
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('api')->group(function () {
     require __DIR__.'/auth.php';
     require __DIR__.'/admin.php';
     require __DIR__.'/user.php';
-});
-
-// ===== Kembalikan route main yang tertimpa route han (URI persis sama) =====
-Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
-Route::post('/auth/logout', [GoogleAuthController::class, 'logout'])->name('auth.logout');
-Route::get('/auth/me', [GoogleAuthController::class, 'me'])->name('auth.me');
-
-Route::post('/auth/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
-Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
-
-Route::middleware('admin')->group(function () {
-    Route::post('/event', [EventController::class, 'store']);
-    Route::get('/peserta/{peserta}/voter', [VotingController::class, 'votersByPeserta']);
-});
-
-Route::middleware('pelanggan')->group(function () {
-    Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
-    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
-    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
 });

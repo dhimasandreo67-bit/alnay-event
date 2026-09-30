@@ -257,7 +257,7 @@ class PendaftaranController extends Controller
         // Buat order ID yang unik
         $orderId = 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT);
 
-        PembayaranEvent::create([
+        Pembayaranevent::create([
             'peserta_id'        => $peserta->id,
             'jumlah'            => $nominalUnik,
             'tarif_dasar'       => $tarifDasar,
@@ -283,7 +283,7 @@ class PendaftaranController extends Controller
         return redirect()->back()->with('success', 'Data peserta dan jawabannya berhasil dihapus.');
     }
 
-    public function file(Jawaban $jawaban)
+    public function file(JawabanPeserta $jawaban)
     {
         $raw = is_array($jawaban->jawaban)
             ? ($jawaban->jawaban[0] ?? '')

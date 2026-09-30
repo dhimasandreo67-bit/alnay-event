@@ -33,7 +33,8 @@
     <header class="border-b border-[#CDC5BC]/30 bg-[#FBF9F4]/95 backdrop-blur">
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/beranda" class="font-display font-bold text-xl text-[#0A1526]">EVENT ALNAY.ID</a>
-            <span class="w-11 h-11 rounded-full border border-[#CDC5BC] flex items-center justify-center text-[#4B463F]">
+            <span
+                class="w-11 h-11 rounded-full border border-[#CDC5BC] flex items-center justify-center text-[#4B463F]">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                     stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="8" r="4" />
@@ -70,10 +71,14 @@
                         Menghadirkan mahakarya budaya dengan standar kualitas tailoring adibusana internasional.
                     </p>
                     <div class="flex gap-2 mt-5">
-                        <span class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">IG</span>
-                        <span class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">WA</span>
-                        <span class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">FB</span>
-                        <span class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">YT</span>
+                        <span
+                            class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">IG</span>
+                        <span
+                            class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">WA</span>
+                        <span
+                            class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">FB</span>
+                        <span
+                            class="w-9 h-9 rounded-full bg-[#1C1916] flex items-center justify-center text-[10px] font-bold">YT</span>
                     </div>
                 </div>
 
@@ -100,7 +105,8 @@
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-white mb-4">Layanan &amp; Informasi</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-white mb-4">Layanan &amp; Informasi
+                    </h4>
                     <ul class="space-y-2 text-sm text-[#A39B90]">
                         <li><a href="#" class="hover:text-white">Cara &amp; Syarat Sewa Busana</a></li>
                         <li><a href="#" class="hover:text-white">Aturan Deposit &amp; Asuransi</a></li>
@@ -134,7 +140,8 @@
                 </div>
             </div>
 
-            <div class="border-t border-[#2C2823] mt-8 pt-5 flex flex-col md:flex-row md:justify-between gap-3 text-xs text-[#8A8278]">
+            <div
+                class="border-t border-[#2C2823] mt-8 pt-5 flex flex-col md:flex-row md:justify-between gap-3 text-xs text-[#8A8278]">
                 <p>&copy; 2026 AL-NAY.ID (Jas &amp; Gown Berbudaya). All Rights Reserved.</p>
                 <div class="flex flex-wrap gap-x-6 gap-y-1">
                     <a href="#" class="hover:text-white">Kebijakan Privasi</a>
@@ -158,7 +165,7 @@
                 '>': '&gt;',
                 '"': '&quot;',
                 "'": '&#39;'
-            }[c]));
+            } [c]));
         }
 
         async function cekLogin() {
@@ -274,24 +281,46 @@
                 muatDukunganTerkini(p.event?.id),
             ]);
 
-            const nama = p.user?.nama ?? 'Peserta';
-            const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota/i);
-            const deskripsi = cariJawaban(p.jawabans, 'deskripsi', /deskripsi|profil|tentang|bio/i);
+            // Nama: prioritas tag_tampilan > regex label > user->nama
+            const nama = cariJawaban(p.jawabans, 'nama', /nama/i) ??
+                p.user?.nama ??
+                'Peserta';
 
-            // ===== Foto: galeri kalau ada, kalau tidak pakai foto akun =====
-            const galeri = (p.galeri_foto ?? []).map(fotoUrl).filter(Boolean);
-            const fotoAvatar = fotoUrl(p.user?.foto_url) ??
-                `https://ui-avatars.com/api/?size=512&background=0A1526&color=FFF8F1&name=${encodeURIComponent(nama)}`;
-            fotoList = galeri.length ? galeri : [fotoAvatar];
+            // Lokasi & bio: pakai tag / regex
+            const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota|alamat/i);
+            const deskripsi = cariJawaban(p.jawabans, 'bio', /bio|profil|tentang|deskripsi/i);
+
+            // ===== Foto: prioritas jawaban tag 'foto' > galeri_foto > foto Google =====
+            const galeri = [];
+
+            // 1. Jawaban peserta bertipe foto
+            const fotoJawaban = cariJawaban(p.jawabans, 'foto', /foto|gambar|upload/i);
+            if (fotoJawaban) {
+                galeri.push(fotoUrl(fotoJawaban));
+            }
+
+            // 2. Galeri foto tambahan (kolom JSON di peserta)
+            if (Array.isArray(p.galeri_foto)) {
+                p.galeri_foto.map(fotoUrl).filter(Boolean).forEach(u => galeri.push(u));
+            }
+
+            // 3. Fallback: foto Google / ui-avatar
+            if (galeri.length === 0) {
+                const fotoAvatar = fotoUrl(p.user?.foto_url) ??
+                    `https://ui-avatars.com/api/?size=512&background=0A1526&color=FFF8F1&name=${encodeURIComponent(nama)}`;
+                galeri.push(fotoAvatar);
+            }
+
+            fotoList = galeri;
 
             const blokThumbs = fotoList.length > 1 ? `
                 <div class="grid grid-cols-3 gap-3 mt-3">
                     ${fotoList.map((url, i) => `
-                        <button type="button" onclick="gantiFoto(${i})"
-                            class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
-                            <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
-                        </button>
-                    `).join('')}
+                                        <button type="button" onclick="gantiFoto(${i})"
+                                            class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
+                                            <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
+                                        </button>
+                                    `).join('')}
                 </div>` : '';
 
             const nomor = String(p.id).padStart(2, '0');
@@ -313,28 +342,45 @@
                     <p class="text-[#4B463F] leading-relaxed whitespace-pre-line">${esc(deskripsi)}</p>
                 </div>` : '';
 
-            // ===== Statistik =====
+            // // ===== Statistik (mengikuti format_hasil_voting dari admin) =====
+            const format = p.event?.format_hasil_voting ?? 'keduanya';
+
+            let blokTotalVote = '';
+            let blokPersentase = '';
+
+            if (format === 'angka' || format === 'keduanya') {
+                blokTotalVote = `
+        <div class="bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-[#4B463F] mb-1">Total Vote</p>
+            <p class="font-display font-bold text-3xl text-black">${formatAngka(statistik.totalVoteKu)}</p>
+            <p class="text-xs text-[#4B463F] mt-1">dari ${formatAngka(statistik.totalSemua)} total</p>
+        </div>`;
+            }
+
+            if (format === 'persentase' || format === 'keduanya') {
+                blokPersentase = `
+        <div class="bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4">
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-[#4B463F]">Persentase Suara</p>
+                <span class="text-xs font-bold text-[#7F5700]">${statistik.ranking ? '#' + statistik.ranking : ''}</span>
+            </div>
+            <p class="font-display font-bold text-3xl text-black">${statistik.persentase.toFixed(1)}%</p>
+            <div class="mt-2 h-2 bg-[#EFE7DC] rounded-full overflow-hidden">
+                <div class="h-full bg-[#7F5700] rounded-full" style="width: ${Math.min(100, statistik.persentase)}%"></div>
+            </div>
+        </div>`;
+            }
+
+            const gridCols = (format === 'keduanya') ? 'sm:grid-cols-2' : '';
+
             const blokStatistik = statistik ? `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                    <div class="bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4">
-                        <p class="text-[11px] font-semibold uppercase tracking-wide text-[#4B463F] mb-1">Total Vote</p>
-                        <p class="font-display font-bold text-3xl text-black">${formatAngka(statistik.totalVoteKu)}</p>
-                        <p class="text-xs text-[#4B463F] mt-1">dari ${formatAngka(statistik.totalSemua)} total</p>
-                    </div>
-                    <div class="bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4">
-                        <div class="flex items-center justify-between mb-1">
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-[#4B463F]">Persentase Suara</p>
-                            <span class="text-xs font-bold text-[#7F5700]">${statistik.ranking ? '#' + statistik.ranking : ''}</span>
-                        </div>
-                        <p class="font-display font-bold text-3xl text-black">${statistik.persentase.toFixed(1)}%</p>
-                        <div class="mt-2 h-2 bg-[#EFE7DC] rounded-full overflow-hidden">
-                            <div class="h-full bg-[#7F5700] rounded-full" style="width: ${Math.min(100, statistik.persentase)}%"></div>
-                        </div>
-                    </div>
-                </div>` : `
-                <div class="mb-5 bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4 text-sm text-[#4B463F]">
-                    Statistik suara belum tersedia.
-                </div>`;
+    <div class="grid grid-cols-1 ${gridCols} gap-3 mb-5">
+        ${blokTotalVote}
+        ${blokPersentase}
+    </div>` : `
+    <div class="mb-5 bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4 text-sm text-[#4B463F]">
+        Statistik suara belum tersedia.
+    </div>`;
 
             // ===== Pendukung terkini =====
             let isiDukungan;

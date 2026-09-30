@@ -68,7 +68,7 @@ class EventController extends Controller
 
         return redirect()
             ->route('admin.events.index')
-            ->with('success', 'Event "'.$event->nama.'" berhasil dipublikasikan!');
+            ->with('success', 'Event "' . $event->nama . '" berhasil dipublikasikan!');
     }
 
     /**
@@ -84,6 +84,7 @@ class EventController extends Controller
             'deskripsi'                 => 'nullable|string',
             'syarat_ketentuan'          => 'nullable|string',
             'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',  // ← TAMBAH INI
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
