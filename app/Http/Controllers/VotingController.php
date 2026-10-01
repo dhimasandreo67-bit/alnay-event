@@ -19,6 +19,7 @@ class VotingController extends Controller
      * jumlah_vote dan nama_tampilan dari body, user_id dari token,
      * total_bayar dihitung SERVER (bukan dari input client).
      */
+
     public function vote(Request $request, Peserta $peserta)
     {
         $data = $request->validate([
@@ -128,8 +129,14 @@ class VotingController extends Controller
 
     public function edit(?Event $event = null): View
     {
-        $event ??= Event::query()->latest('id')->first();
- 
+        // Logika yang sama: URL > Session > Terbaru
+        if (!$event) {
+            $eventId = session('active_event_id');
+            $event = $eventId ? Event::find($eventId) : Event::query()->latest('id')->first();
+        } else {
+            session(['active_event_id' => $event->id]);
+        }
+
         return view('admin.voting.settings', [
             'event' => $event,
             'events' => Event::query()->latest('id')->get(['id', 'nama']),
