@@ -14,12 +14,19 @@ class AktivasiController extends Controller
     /**
      * GET /admin/activation/:event?
      */
+
     public function index(?Event $event = null): View
     {
-        $event ??= Event::query()->latest('id')->first();
+        // Jika tidak ada event di URL, ambil dari session, atau fallback ke terbaru
+        if (!$event) {
+            $eventId = session('active_event_id');
+            $event = $eventId ? Event::find($eventId) : Event::query()->latest('id')->first();
+        } else {
+            // Jika ada di URL, simpan ke session agar konsisten
+            session(['active_event_id' => $event->id]);
+        }
 
         $finalis = collect();
-
         if ($event) {
             $finalis = Peserta::where('event_id', $event->id)
                 ->where('status', 'diterima')
