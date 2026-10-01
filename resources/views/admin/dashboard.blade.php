@@ -566,10 +566,74 @@
                 <!-- KODE BARU -->
 <div class="event-header">
     <div>
-        <span class="open" class="pt-4">Pendaftaran Dibuka</span>
-        <span class="event-meta"> &nbsp;01 Sep 2026, 00:00 – 20 Sep 2026, 23:59 WIB</span>
-        <h1 class="event-title">{{ $event?->nama ?? 'PEMBUKAAN PENDAFTARAN ALNAY OF THE YEAR 2026' }}</h1>
-        <span class="event-meta">Pendaftaran: 01 – 20 Sep 2026 &nbsp; · &nbsp; Kuota Maks: 12 orang</span>
+        {{-- 1. Status Pendaftaran (Dinamis berdasarkan status event) --}}
+        {{-- <td class="py-3 px-4 text-[11px]">
+            @php
+                $status = $event?->status;
+            @endphp
+
+            @switch($status)
+                @case('akan_datang')
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
+                        Akan Datang
+                    </span>
+                    @break
+
+                @case('berlangsung')
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                        Sedang Berlangsung
+                    </span>
+                    @break
+
+                @case('selesai')
+                    <span class="badge rounded-pill px-3 py-1" style="background:#fff1e6;color:#c2410c;border:1px solid #fed7aa;">
+                        Telah Berakhir
+                    </span>
+                    @break
+
+                @case('nonaktif')
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                        Nonaktif
+                    </span>
+                    @break
+
+                @default
+                    <span class="badge bg-light text-dark border rounded-pill px-3 py-1">
+                        {{ ucfirst(str_replace('_', ' ', $status ?? 'Tidak Diketahui')) }}
+                    </span>
+            @endswitch
+        </td> --}}
+
+        {{-- 2. Rentang Waktu Lengkap (Tanggal & Jam) --}}
+        <span class="event-meta">
+            @if($event?->tanggal_mulai && $event?->tanggal_selesai)
+                {{ \Carbon\Carbon::parse($event->tanggal_mulai)->format('d M Y') }}, 
+                {{ $event->waktu_mulai ? \Carbon\Carbon::parse($event->waktu_mulai)->format('H:i') : '00:00' }}
+                – 
+                {{ \Carbon\Carbon::parse($event->tanggal_selesai)->format('d M Y') }}, 
+                {{ $event->waktu_selesai ? \Carbon\Carbon::parse($event->waktu_selesai)->format('H:i') : '23:59' }} WIB
+            @else
+                Jadwal pendaftaran belum ditentukan
+            @endif
+        </span>
+
+        {{-- 3. Nama Event (Dinamis dengan fallback) --}}
+        <h1 class="event-title">
+            {{ $event?->nama ?? 'PEMBUKAAN PENDAFTARAN ALNAY OF THE YEAR' }}
+        </h1>
+
+        {{-- 4. Ringkasan Tanggal & Kuota --}}
+        <span class="event-meta">
+            Pendaftaran: 
+            @if($event?->pembukaan_pendaftaran_tanggal && $event?->batas_pendaftaran_tanggal)
+                {{ \Carbon\Carbon::parse($event->pembukaan_pendaftaran_tanggal)->format('d') }} – 
+                {{ \Carbon\Carbon::parse($event->batas_pendaftaran_tanggal)->format('d M Y') }}
+            @else
+                -
+            @endif
+            &nbsp; · &nbsp; 
+            Kuota Maks: {{ $event?->kuota_peserta ?? 'Tidak terbatas' }} orang
+        </span>
     </div>
 
                 <!-- Container tombol berjajar kesamping -->
@@ -620,8 +684,10 @@
                     </div>
                 </div>
                 <div class="panel" id="verification">
-                    <div class="panel-head"><strong>Daftar Peserta</strong><span class="event-meta">Update terakhir:
-                            baru saja</span></div>
+                    <div class="panel-head"><strong>Daftar Peserta</strong><span class="event-meta" id="lastUpdateText"
+                        data-updated-at="{{ $lastUpdate ? \Carbon\Carbon::parse($lastUpdate)->timestamp : '' }}">
+                        Update terakhir: -
+                    </span></div>
                     <div class="table-wrap">
                         <table class="w-full text-left border-collapse">
                         <thead>
@@ -761,6 +827,38 @@
                 location.href = adminLinks[this.getAttribute('href')]
             }
         }))
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('lastUpdateText');
+        if (!el) return;
+
+        const raw = el.dataset.updatedAt;
+        if (!raw || isNaN(parseInt(raw, 10))) {
+            el.textContent = 'Update terakhir: belum ada data';
+            return;
+        }
+
+        const updatedAt = parseInt(raw, 10) * 1000;
+
+        function formatRelatif(detik) {
+            if (detik < 10) return 'baru saja';
+            if (detik < 60) return `${detik} detik lalu`;
+            const menit = Math.floor(detik / 60);
+            if (menit < 60) return `${menit} menit lalu`;
+            const jam = Math.floor(menit / 60);
+            if (jam < 24) return `${jam} jam lalu`;
+            const hari = Math.floor(jam / 24);
+            return `${hari} hari lalu`;
+        }
+
+        function tick() {
+            const detik = Math.floor((Date.now() - updatedAt) / 1000);
+            el.textContent = 'Update terakhir: ' + formatRelatif(Math.max(detik, 0));
+        }
+
+        tick();
+        setInterval(tick, 5000);
+    });
     </script>
 </body>
 
