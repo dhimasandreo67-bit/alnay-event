@@ -19,16 +19,14 @@ class DashboardController extends Controller
             'totalPendaftar' => (clone $pesertaQuery)->count(),
             'menungguReview' => (clone $pesertaQuery)->where('status', 'menunggu_review')->count(),
             'diterima' => (clone $pesertaQuery)->where('status', 'diterima')->count(),
+            'perluRevisi' => (clone $pesertaQuery)->where('status', 'revisi')->count(),
             'ditolak' => (clone $pesertaQuery)->where('status', 'ditolak')->count(),
             'totalSuara' => Voting::where('status_midtrans', 'settlement')->sum('jumlah_vote'),
-            'pesertas' => Peserta::with([
-                'user',
-                'event',
-                'jawabans.pertanyaan' => fn ($query) => $query->withTrashed(),
-            ])
-            ->latest('id')
-            ->take(8)
-            ->get(),
+            'lastUpdate' => (clone $pesertaQuery)->max('updated_at'),
+            'pesertas' => Peserta::with(['user', 'event', 'jawabans.pertanyaan'])
+                ->latest('id')
+                ->take(8)
+                ->get(),
         ]);
     }
 }
