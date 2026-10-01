@@ -9,13 +9,38 @@ use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
-    // 1. Tampilkan Daftar Event
-    public function index()
+        /**
+     * GET /admin/events
+     * Tampilkan daftar event dengan fitur "Event Aktif" yang tersimpan di session
+     */
+    public function index(Request $request)
     {
-        $events = Event::orderBy('id', 'desc')->paginate(10);
-        $event = Event::query()->latest('id')->first(); // buat konteks sidebar
+        // 1. Jika admin memilih event dari dropdown (?event=X), simpan ke session
+        if ($request->has('event')) {
+            session(['active_event_id' => $request->event]);
+        }
 
-        return view('admin.events.index', compact('events', 'event'));
+        // 2. Ambil event aktif: prioritaskan dari session, fallback ke event terbaru
+        $activeEventId = session('active_event_id');
+        $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
+        $activeEvent ??= Event::query()->latest('id')->first();
+
+        // 3. Safety check: Jika event di session sudah dihapus dari database, reset
+        if (!$activeEvent) {
+            session()->forget('active_event_id');
+            $activeEvent = Event::query()->latest('id')->first();
+        }
+
+        $events = Event::orderBy('id', 'desc')->paginate(10);
+        $eventList = Event::orderBy('id', 'desc')->get(['id', 'nama']);
+
+        // 4. Kirim ke view (termasuk 'event' khusus untuk sidebar)
+        return view('admin.events.index', [
+            'events'      => $events,
+            'activeEvent' => $activeEvent,
+            'eventList'   => $eventList,
+            'event'       => $activeEvent, // ← Ini yang membuat sidebar tahu event mana yang aktif
+        ]);
     }
 
     // 2. Form Edit Event
