@@ -118,37 +118,45 @@
                         @error('syarat_ketentuan')<div class="text-red-600 text-[10px] -mt-3 mb-4">{{ $message }}</div>@enderror
 
                         {{-- Status Event --}}
-                        <div>
-                            <label class="block font-bold mb-2">Status Event</label>
+                        <div class="bg-white rounded-xl border border-[#e5e1db] p-5">
+                            <h3 class="font-bold text-slate-800 mb-3">Status Event</h3>
                             <div class="grid grid-cols-3 gap-3">
-                                {{-- Akan Datang (default checked) --}}
-                                <label class="cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', 'akan_datang') === 'akan_datang' ? 'border-blue-500 bg-blue-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                {{-- Akan Datang (Biru) --}}
+                                <label class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md"
+                                    data-color="blue"
+                                    onclick="selectStatus(this, 'akan_datang')">
                                     <input type="radio" name="status" value="akan_datang"
                                         {{ old('status', 'akan_datang') === 'akan_datang' ? 'checked' : '' }}
-                                        class="w-4 h-4 text-blue-600">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                        class="sr-only">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
                                     <span class="text-sm font-medium">Akan Datang</span>
                                 </label>
 
-                                {{-- Sedang Berlangsung --}}
-                                <label class="cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status') === 'sedang_berlangsung' ? 'border-emerald-500 bg-emerald-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                {{-- Sedang Berlangsung (Hijau) --}}
+                                <label class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md"
+                                    data-color="emerald"
+                                    onclick="selectStatus(this, 'sedang_berlangsung')">
                                     <input type="radio" name="status" value="sedang_berlangsung"
                                         {{ old('status') === 'sedang_berlangsung' ? 'checked' : '' }}
-                                        class="w-4 h-4 text-emerald-600">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                        class="sr-only">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
                                     <span class="text-sm font-medium">Sedang Berlangsung</span>
                                 </label>
 
-                                {{-- Telah Berakhir --}}
-                                <label class="cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status') === 'telah_berakhir' ? 'border-orange-500 bg-orange-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                {{-- Telah Berakhir (Oranye) --}}
+                                <label class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md"
+                                    data-color="orange"
+                                    onclick="selectStatus(this, 'telah_berakhir')">
                                     <input type="radio" name="status" value="telah_berakhir"
                                         {{ old('status') === 'telah_berakhir' ? 'checked' : '' }}
-                                        class="w-4 h-4 text-orange-600">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                        class="sr-only">
+                                    <span class="w-3 h-3 rounded-full bg-orange-500"></span>
                                     <span class="text-sm font-medium">Telah Berakhir</span>
                                 </label>
                             </div>
-                            @error('status') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                            @error('status')
+                                <p class="text-xs text-rose-500 mt-2">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -296,51 +304,66 @@
                 </div>
 
                 {{-- ===== PREVIEW ===== --}}
-                <aside class="md:sticky md:top-6 space-y-3">
-                    <p class="text-[10px] uppercase tracking-wide text-[#8a8984] font-bold">Pratinjau Halaman Event</p>
+                <div class="bg-white rounded-xl border border-[#e5e1db] p-5 sticky top-6">
+                    <h3 class="font-bold text-slate-800 mb-3">Pratinjau Halaman Event</h3>
 
-                    <div class="bg-white border border-[#e3ded6] rounded-xl overflow-hidden shadow-sm">
-                        <div id="previewBanner" class="relative bg-gradient-to-br from-[#c99a4a] to-[#ba8320] h-40 flex items-center justify-center">
-                            <span id="previewStatusBadge" class="absolute top-3 left-3 bg-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full">Akan Datang</span>
-                            <span id="previewBannerEmpty" class="text-white/80 text-[11px]">Belum ada banner diunggah</span>
-                            <img id="previewBannerImg" class="hidden absolute inset-0 w-full h-full object-cover" alt="">
-                        </div>
-                        <div class="p-4">
-                            <h3 id="previewNama" class="font-bold text-[15px] mb-2">Nama event akan muncul di sini</h3>
-                            <p id="previewDeskripsi" class="text-[11px] text-[#73716c] mb-3 line-clamp-3">Deskripsi event akan muncul di sini.</p>
+                    <div class="relative bg-gradient-to-br from-[#c99a4a] to-[#ba8320] rounded-lg overflow-hidden h-48">
 
-                            <div class="grid grid-cols-2 gap-2 mb-3">
-                                <div class="bg-[#f7f5f0] rounded-lg p-2.5">
-                                    <div class="text-[9px] uppercase text-[#98958f] font-bold mb-1">Hari &amp; Jam</div>
-                                    <div id="previewJadwal" class="text-[11px] font-semibold">—</div>
-                                </div>
-                                <div class="bg-[#f7f5f0] rounded-lg p-2.5">
-                                    <div class="text-[9px] uppercase text-[#98958f] font-bold mb-1">Tempat</div>
-                                    <div id="previewLokasi" class="text-[11px] font-semibold">—</div>
-                                </div>
+                        {{-- Layer 1: Gambar Banner (paling bawah) --}}
+                        <img id="previewBannerImg"
+                            src=""
+                            alt=""
+                            class="absolute inset-0 w-full h-full object-cover z-0 hidden">
+
+                        {{-- Layer 2: Teks placeholder (tengah) --}}
+                        <span id="previewBannerEmpty"
+                            class="absolute inset-0 flex items-center justify-center text-white/80 text-sm z-10">
+                            Belum ada banner diunggah
+                        </span>
+
+                        {{-- Layer 3: Badge Status (paling atas) --}}
+                        <span id="previewStatusBadge"
+                            class="absolute top-3 left-3 z-20 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                            Akan Datang
+                        </span>
+                    </div>
+
+                    {{-- Info Event --}}
+                    <div class="mt-4 space-y-2">
+                        <h4 id="previewNama" class="font-bold text-slate-800 text-lg">Nama event akan muncul di sini</h4>
+                        <p id="previewDeskripsi" class="text-sm text-slate-600">Deskripsi event akan muncul di sini.</p>
+
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <p class="text-xs text-slate-500 font-semibold">HARI & JAM</p>
+                                <p id="previewJadwal" class="text-sm font-medium text-slate-800">—</p>
                             </div>
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <p class="text-xs text-slate-500 font-semibold">TEMPAT</p>
+                                <p id="previewLokasi" class="text-sm font-medium text-slate-800">—</p>
+                            </div>
+                        </div>
 
-                            <div class="space-y-1.5 border-t border-[#e5e1db] pt-3 text-[11px]">
-                                <div class="flex justify-between">
-                                    <span class="text-[#73716c]">Biaya Daftar</span>
-                                    <strong id="previewBiaya">Gratis</strong>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-[#73716c]">Harga / Vote</span>
-                                    <strong id="previewHargaVote">—</strong>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-[#73716c]">Batas Pendaftaran</span>
-                                    <strong id="previewBatas">—</strong>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-[#73716c]">Kuota Peserta</span>
-                                    <strong id="previewKuota">—</strong>
-                                </div>
+                        <div class="space-y-1 text-sm mt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Biaya Daftar</span>
+                                <span id="previewBiaya" class="font-medium">Gratis</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Harga / Vote</span>
+                                <span id="previewHargaVote" class="font-medium">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Batas Pendaftaran</span>
+                                <span id="previewBatas" class="font-medium">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Kuota Peserta</span>
+                                <span id="previewKuota" class="font-medium">—</span>
                             </div>
                         </div>
                     </div>
-                </aside>
+                </div>
             </form>
         </main>
     </div>
@@ -643,6 +666,74 @@
 
         // Jalankan sekali saat pertama kali halaman dimuat
         updatePreviewBadge();
+    });
+
+    // ===== FUNGSI PILIH STATUS EVENT =====
+    function selectStatus(element, value) {
+        // 1. Reset semua label status
+        document.querySelectorAll('.status-option').forEach(opt => {
+            opt.classList.remove(
+                'border-blue-500', 'bg-blue-50',
+                'border-emerald-500', 'bg-emerald-50',
+                'border-orange-500', 'bg-orange-50'
+            );
+            opt.classList.add('border-[#e5e1db]');
+            opt.querySelector('input').checked = false;
+        });
+
+        // 2. Apply style ke label yang dipilih
+        const color = element.dataset.color;
+        element.classList.remove('border-[#e5e1db]');
+        element.classList.add(`border-${color}-500`, `bg-${color}-50`);
+        element.querySelector('input').checked = true;
+
+        // 3. Update preview badge
+        updatePreviewBadge(value);
+    }
+
+    // ===== FUNGSI UPDATE BADGE PREVIEW =====
+    function updatePreviewBadge(status) {
+        const badge = document.getElementById('previewStatusBadge');
+        if (!badge) return;
+
+        const badges = {
+            'akan_datang': {
+                text: 'Akan Datang',
+                bg: 'bg-blue-100',
+                text_color: 'text-blue-700',
+                border: 'border-blue-200'
+            },
+            'sedang_berlangsung': {
+                text: 'Sedang Berlangsung',
+                bg: 'bg-emerald-100',
+                text_color: 'text-emerald-700',
+                border: 'border-emerald-200'
+            },
+            'telah_berakhir': {
+                text: 'Telah Berakhir',
+                bg: 'bg-orange-100',
+                text_color: 'text-orange-700',
+                border: 'border-orange-200'
+            }
+        };
+
+        const config = badges[status] || badges['akan_datang'];
+        badge.textContent = config.text;
+        badge.className = `absolute top-3 left-3 z-20 px-3 py-1 rounded-full text-xs font-bold ${config.bg} ${config.text_color} ${config.border}`;
+    }
+
+    // ===== INISIALISASI SAAT HALAMAN LOAD =====
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkedRadio = document.querySelector('input[name="status"]:checked');
+        if (checkedRadio) {
+            const label = checkedRadio.closest('.status-option');
+            if (label) {
+                const color = label.dataset.color;
+                label.classList.remove('border-[#e5e1db]');
+                label.classList.add(`border-${color}-500`, `bg-${color}-50`);
+                updatePreviewBadge(checkedRadio.value);
+            }
+        }
     });
     </script>
 
