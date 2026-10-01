@@ -37,6 +37,83 @@
             </header>
 
             <div class="p-6">
+
+            {{-- ✅ DROPDOWN PEMILIHAN EVENT AKTIF --}}
+            <div class="mb-6 bg-white rounded-xl border border-slate-200 p-4">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <label for="select-event" class="text-sm font-semibold text-slate-700 whitespace-nowrap">
+                            Event Aktif:
+                        </label>
+                        <select id="select-event"
+                            onchange="window.location.href='{{ route('admin.events.index') }}?event=' + this.value"
+                            class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-amber-300 focus:border-amber-400">
+                        @foreach ($eventList as $e)
+                            <option value="{{ $e->id }}"
+                                    {{ ($activeEvent?->id ?? 0) === $e->id ? 'selected' : '' }}>
+                                {{ $e->nama }} (ID: {{ $e->id }})
+                            </option>
+                        @endforeach
+                    </select>
+                    </div>
+
+                    @if ($activeEvent)
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('admin.events.edit', $activeEvent->id) }}" 
+                            class="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium rounded-lg border border-amber-200 transition">
+                                Edit Event Ini
+                            </a>
+                            <a href="{{ route('admin.activation', $activeEvent->id) }}" 
+                            class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg border border-emerald-200 transition">
+                                Aktivasi Peserta
+                            </a>
+                            <a href="{{ route('admin.voting.settings', $activeEvent->id) }}" 
+                            class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg border border-blue-200 transition">
+                                Pengaturan Voting
+                            </a>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Info Event Aktif --}}
+                @if ($activeEvent)
+                    <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                            <span class="text-slate-500">Status:</span>
+                            @php
+                                $statusClass = match($activeEvent->status) {
+                                    'akan_datang' => 'bg-blue-100 text-blue-700 border-blue-200',
+                                    'berlangsung' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                    'selesai' => 'bg-orange-100 text-orange-700 border-orange-200',
+                                    default => 'bg-slate-100 text-slate-700 border-slate-200'
+                                };
+                            @endphp
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ml-1 {{ $statusClass }}">
+                                {{ $activeEvent->status_label }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Peserta:</span>
+                            <span class="font-semibold text-slate-800 ml-1">
+                                {{ $activeEvent->pesertas()->count() }} / {{ $activeEvent->kuota_peserta ?? '-' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Biaya Daftar:</span>
+                            <span class="font-semibold text-slate-800 ml-1">
+                                Rp {{ number_format($activeEvent->biaya_pendaftaran ?? 0, 0, ',', '.') }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Lokasi:</span>
+                            <span class="font-semibold text-slate-800 ml-1 truncate block">
+                                {{ $activeEvent->lokasi ?? '-' }}
+                            </span>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
                 @if (session('success'))
                     <div class="mb-4 rounded-lg bg-emerald-50 text-emerald-700 px-4 py-3 text-[12px] border border-emerald-200">
                         {{ session('success') }}
@@ -58,7 +135,7 @@
                         </thead>
                         <tbody class="divide-y divide-[#e3ded6]">
                             @forelse ($events as $item)
-                                <tr class="hover:bg-[#fcfbf9] transition-colors">
+                                <tr class="hover:bg-slate-50 transition {{ ($activeEvent?->id ?? 0) === $item->id ? 'bg-amber-50/50 border-l-4 border-l-amber-400' : '' }}">
                                     <td class="py-3 px-4">
                                         <div class="flex items-center gap-3">
                                             <img src="{{ $item->banner ? asset('storage/' . $item->banner) : 'https://via.placeholder.com/150' }}" 
