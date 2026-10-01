@@ -85,8 +85,9 @@ class PendaftaranController extends Controller
             }
 
             $peserta = $event->pesertas()->create([
-                'user_id' => $user->id,
-                'status' => 'diterima',
+                'user_id'    => $user->id,
+                'status'     => 'diterima',
+                'updated_at' => now(),
             ]);
 
             foreach ($questions as $question) {
@@ -192,7 +193,7 @@ class PendaftaranController extends Controller
         return Storage::disk('public')->download($filePath, $newFilename);
     }
 
-    public function index()
+   public function index()
     {
         // 1. Ambil data event
         $event = Event::first(); 
@@ -203,19 +204,21 @@ class PendaftaranController extends Controller
         // 3. Hitung jumlah statistik peserta berdasarkan status
         $totalPendaftar = $pesertas->count();
         $menungguReview = $pesertas->where('status', 'menunggu_review')->count();
-        // $perluRevisi    = $pesertas->where('status', 'revisi')->count();
         $diterima       = $pesertas->where('status', 'diterima')->count();
         $ditolak        = $pesertas->where('status', 'ditolak')->count();
 
-        // 4. Kirim semua variabel ke view dashboard
+        // 4. Ambil waktu update terakhir dari tabel peserta_event
+        $lastUpdate = Peserta::max('updated_at');      // <-- WAJIB ADA
+
+        // 5. Kirim semua variabel ke view dashboard
         return view('admin.dashboard', compact(
             'event', 
             'pesertas', 
             'totalPendaftar', 
             'menungguReview', 
-            // 'perluRevisi', 
             'diterima', 
-            'ditolak'
+            'ditolak',
+            'lastUpdate'
         ));
     }
 
