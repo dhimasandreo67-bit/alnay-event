@@ -26,6 +26,7 @@ class VotingController extends Controller
      * POST /peserta/{peserta}/vote
      * Proses checkout vote & generate Midtrans (QRIS / BRI VA)
      */
+
     public function vote(Request $request, Peserta $peserta)
     {
         $event = $peserta->event;
@@ -392,7 +393,17 @@ class VotingController extends Controller
      */
     public function edit(?Event $event = null): View
     {
+<<<<<<< HEAD
         $event ??= Event::query()->latest('id')->first();
+=======
+        // Logika yang sama: URL > Session > Terbaru
+        if (!$event) {
+            $eventId = session('active_event_id');
+            $event = $eventId ? Event::find($eventId) : Event::query()->latest('id')->first();
+        } else {
+            session(['active_event_id' => $event->id]);
+        }
+>>>>>>> 00fb307 (add function to handle active event data)
 
         return view('admin.voting.settings', [
             'event' => $event,
