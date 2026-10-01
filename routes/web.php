@@ -55,6 +55,7 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.events.toggle-hasil');
     Route::delete('/admin/events/{event}/questions/clear', [PendaftaranController::class, 'clearQuestions'])
     ->name('admin.events.questions.clear');
+    Route::resource('events', EventController::class)->names('admin.events');
 
     // Toggle buka dan tutup form
     Route::patch('/admin/events/{event}/toggle-status', [EventController::class, 'toggleStatus'])->name('admin.event.toggle-status');
