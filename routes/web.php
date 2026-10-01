@@ -43,7 +43,9 @@ Route::get('/pwa/admin-sw.js', function () {
 Route::middleware('admin.session')->prefix('admin')->group(function () {
 
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/{event?}', [DashboardController::class, 'index'])
+        ->where('event', '[0-9]+') // Memastikan parameter event hanya angka
+        ->name('admin.dashboard');
 
     // Event Management (admin.events.index, admin.events.create, admin.events.edit, dll.)
     Route::resource('events', EventController::class)->names('admin.events');
