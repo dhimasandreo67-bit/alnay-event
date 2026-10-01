@@ -11,6 +11,7 @@ use App\Models\PembayaranEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -81,11 +82,19 @@ class PendaftaranController extends Controller
                 ]);
             }
 
-            $peserta = $event->pesertas()->create([
+            // Simpan peserta + nama_pendaftaran (untuk data lama)
+            $pesertaData = [
                 'user_id'          => $user->id,
                 'nama_pendaftaran' => $data['nama'],
                 'status'           => 'diterima',
-            ]);
+            ];
+
+            // Tambah updated_at kalau kolomnya ada
+            if (Schema::hasColumn('peserta_event', 'updated_at')) {
+                $pesertaData['updated_at'] = now();
+            }
+
+            $peserta = $event->pesertas()->create($pesertaData);
 
             foreach ($questions as $question) {
                 if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
@@ -181,6 +190,11 @@ class PendaftaranController extends Controller
         $diterima       = (clone $baseQuery)->where('status', 'diterima')->count();
         $ditolak        = (clone $baseQuery)->where('status', 'ditolak')->count();
 
+        // lastUpdate — cek kolom dulu
+        $lastUpdate = Schema::hasColumn('peserta_event', 'updated_at')
+            ? (clone $baseQuery)->max('updated_at')
+            : null;
+
         $pesertas = (clone $baseQuery)
             ->with(['user', 'event', 'jawaban.pertanyaan', 'pembayaran'])
             ->orderBy('id', 'desc')
@@ -195,7 +209,8 @@ class PendaftaranController extends Controller
             'totalPendaftar',
             'menungguReview',
             'diterima',
-            'ditolak'
+            'ditolak',
+            'lastUpdate'
         ));
     }
 
