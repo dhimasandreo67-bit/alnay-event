@@ -6,36 +6,18 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Auth Pelanggan (Google OAuth)
+| Auth Staff / Admin (API only)
 |--------------------------------------------------------------------------
+|
+| Route /auth/google dan /auth/google/callback SUDAH ADA di routes/web.php
+| Jangan didaftarkan ulang di sini — biar gak kena middleware 'api'
+| (middleware 'api' gak punya session, bikin Socialite InvalidStateException).
+|
 */
-Route::prefix('auth')->group(function () {
 
-    // Public
-    Route::get('/google', [GoogleAuthController::class, 'redirect'])
-        ->name('auth.google');
-
-    Route::get('/google/callback', [GoogleAuthController::class, 'callback'])
-        ->name('auth.google.callback');
-
-    // Butuh login (pelanggan)
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/logout', [GoogleAuthController::class, 'logout'])
-            ->name('auth.logout');
-
-        Route::get('/me', [GoogleAuthController::class, 'me'])
-            ->name('auth.me');
-    });
-});
-
-/*
-|--------------------------------------------------------------------------
-| Auth Staff / Admin
-|--------------------------------------------------------------------------
-*/
 Route::prefix('auth/admin')->group(function () {
 
-    // Public (justru ini endpoint buat login-nya)
+    // Public — login admin via API
     Route::post('/login', [AdminAuthController::class, 'login'])
         ->name('admin.api.login');
 

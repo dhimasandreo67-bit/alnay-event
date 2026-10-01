@@ -104,7 +104,7 @@
                 EVENTALNAY.ID
             </a>
 
-                       @auth('pelanggan')
+            @auth('pelanggan')
                 @php
                     $u = auth('pelanggan')->user();
                     $fotoHeader = $u->foto_custom ? asset('storage/' . $u->foto_custom) : $u->foto_url;
@@ -113,7 +113,8 @@
                 <a href="{{ route('profil-user') }}" aria-label="Profil pengguna"
                     class="flex h-9 w-9 items-center justify-center rounded-full border border-[#d9d9d9] bg-white text-[#333] transition hover:bg-[#f7f7f7] overflow-hidden">
                     @if ($fotoHeader)
-                        <img src="{{ $fotoHeader }}" alt="{{ $u->nama_custom ?: $u->nama }}" class="w-full h-full object-cover">
+                        <img src="{{ $fotoHeader }}" alt="{{ $u->nama_custom ?: $u->nama }}"
+                            class="w-full h-full object-cover">
                     @else
                         <span class="text-[11px] font-bold">{{ $inisialHeader }}</span>
                     @endif
@@ -330,27 +331,75 @@
                 </div>
             </section>
 
-            {{-- PERINGKAT SEMENTARA --}}
-            @if ($eventBerlangsung && $peringkatTerkini->count() > 0)
+            {{-- PERINGKAT: Prioritas event berlangsung, fallback ke event baru selesai --}}
+            @php
+                $tampilPeringkat = false;
+                $judulPeringkat = 'Peringkat Sementara';
+                $subjudulPeringkat = 'Peserta dengan suara terbanyak';
+                $namaEventPeringkat = null;
+                $badgePeringkat = null;
+                $peringkatData = collect();
+                $totalSuaraPeringkat = 0;
+                $routeAllPeserta = null;
+
+                // Prioritas 1: event berlangsung
+                if ($eventBerlangsung && $peringkatTerkini->count() > 0) {
+                    $tampilPeringkat = true;
+                    $namaEventPeringkat = $eventBerlangsung->nama;
+                    $peringkatData = $peringkatTerkini;
+                    $totalSuaraPeringkat = $totalSuara;
+                    $routeAllPeserta = route('public.registration', $eventBerlangsung);
+                }
+                // Prioritas 2: event baru selesai (≤ 3 hari)
+                elseif (!$eventBerlangsung && $eventPeringkatAkhir && $peringkatAkhir->count() > 0) {
+                    $tampilPeringkat = true;
+                    $judulPeringkat = 'Peringkat Akhir';
+                    $subjudulPeringkat = 'Hasil akhir suara peserta';
+                    $namaEventPeringkat = $eventPeringkatAkhir->nama;
+                    $badgePeringkat = 'Telah Berakhir';
+                    $peringkatData = $peringkatAkhir;
+                    $totalSuaraPeringkat = $totalSuaraAkhir;
+                    $routeAllPeserta = route('public.registration', $eventPeringkatAkhir);
+                }
+            @endphp
+
+            @if ($tampilPeringkat)
                 <section class="mt-14">
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">
-                                Peringkat Sementara
-                            </h2>
-                            <p class="mt-1 text-[13px] text-[#6b6b6b] md:text-[14px]">
-                                Peserta dengan suara terbanyak
+                            <div class="flex items-center gap-2 mb-1">
+                                <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">
+                                    {{ $judulPeringkat }}
+                                </h2>
+                                @if ($badgePeringkat)
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full bg-black px-2.5 py-1 text-[10px] font-semibold text-white">
+                                        ● {{ $badgePeringkat }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Info nama event --}}
+                            <p class="text-[13px] text-[#c99a32] font-semibold mb-1">
+                                {{ $namaEventPeringkat }}
+                            </p>
+
+                            <p class="text-[12px] text-[#6b6b6b] md:text-[13px]">
+                                {{ $subjudulPeringkat }}
                             </p>
                         </div>
-                        <a href="{{ route('public.registration', $eventBerlangsung) }}"
-                            class="whitespace-nowrap text-[13px] font-semibold text-[#c99a32] hover:underline">
-                            Lihat semua peserta →
-                        </a>
+
+                        @if ($routeAllPeserta)
+                            <a href="{{ $routeAllPeserta }}"
+                                class="whitespace-nowrap text-[13px] font-semibold text-[#c99a32] hover:underline">
+                                Lihat semua peserta →
+                            </a>
+                        @endif
                     </div>
 
                     <div
                         class="card-shadow mt-5 divide-y divide-gray-100 rounded-[10px] border border-gray-100 bg-white">
-                        @foreach ($peringkatTerkini as $i => $p)
+                        @foreach ($peringkatData as $i => $p)
                             @php
                                 $namaP = $p->user->nama ?? 'Peserta';
                                 $kata = explode(' ', trim($namaP));
@@ -358,7 +407,10 @@
                                 if (count($kata) > 1) {
                                     $inisial .= strtoupper(substr(end($kata), 0, 1));
                                 }
-                                $persen = $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 1) : 0;
+                                $persen =
+                                    $totalSuaraPeringkat > 0
+                                        ? round(($p->total_vote / $totalSuaraPeringkat) * 100, 1)
+                                        : 0;
                             @endphp
                             <div class="flex items-center gap-4 px-5 py-4">
                                 <span class="display-font w-6 text-[16px] font-bold text-[#c99a32]">

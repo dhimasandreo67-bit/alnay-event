@@ -16,8 +16,8 @@ use App\Http\Controllers\Admin\PendaftaranController as AdminPendaftaranControll
 use App\Http\Controllers\Admin\PesertaController;
 use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\WebAuthController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfilUserController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,30 +25,12 @@ use App\Http\Controllers\ProfilUserController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', fn() => view('welcome'));
 
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+Route::get('/login', fn() => view('auth.login'))->name('login');
 
-// Beranda = dashboard user (dari wijdan)
 Route::get('/beranda', [\App\Http\Controllers\BerandaController::class, 'index'])
     ->name('dashboard-user');
-
-// Placeholder route
-// Profil User (wajib login)
-Route::middleware('pelanggan')->group(function () {
-    Route::get('/profil-user', [ProfilUserController::class, 'index'])
-        ->name('profil-user');
-    Route::put('/profil-user', [ProfilUserController::class, 'update'])
-        ->name('profil-user.update');
-    Route::post('/profil-user/foto', [ProfilUserController::class, 'uploadFoto'])
-        ->name('profil-user.foto');
-    Route::delete('/profil-user/foto', [ProfilUserController::class, 'hapusFoto'])
-        ->name('profil-user.foto.hapus');
-});
 
 Route::get('/detail-event', function () {
     return '<div style="padding:40px;font-family:sans-serif"><h1>Detail Event</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
@@ -60,7 +42,7 @@ Route::get('/detail-event-selesai', function () {
 
 /*
 |--------------------------------------------------------------------------
-| AUTH — Google OAuth (Pelanggan)
+| AUTH — Google OAuth (Pelanggan) — WAJIB tanpa middleware 'api'
 |--------------------------------------------------------------------------
 */
 
@@ -68,25 +50,6 @@ Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('aut
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 Route::post('/auth/logout', [GoogleAuthController::class, 'logout'])->name('auth.logout');
 Route::get('/auth/me', [GoogleAuthController::class, 'me'])->name('auth.me');
-
-Route::middleware('pelanggan')->group(function () {
-    Route::get('/profil-user', [ProfilUserController::class, 'index'])
-        ->name('profil-user');
-    Route::put('/profil-user', [ProfilUserController::class, 'update'])
-        ->name('profil-user.update');
-    Route::post('/profil-user/foto', [ProfilUserController::class, 'uploadFoto'])
-        ->name('profil-user.foto');
-    Route::delete('/profil-user/foto', [ProfilUserController::class, 'hapusFoto'])
-        ->name('profil-user.foto.hapus');
-
-    // ← TAMBAH INI
-    Route::post('/profil-user/logout', function () {
-        \Auth::guard('pelanggan')->logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-        return redirect()->route('dashboard-user');
-    })->name('profil-user.logout');
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -99,7 +62,7 @@ Route::post('/auth/admin/logout', [AuthController::class, 'logout'])->name('admi
 
 /*
 |--------------------------------------------------------------------------
-| EVENT & PESERTA (PUBLIC — tanpa login)
+| EVENT & PESERTA (PUBLIC)
 |--------------------------------------------------------------------------
 */
 
@@ -107,20 +70,14 @@ Route::get('/event', [EventController::class, 'index']);
 Route::get('/event/{id}', [EventController::class, 'show']);
 Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
 Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta']);
-
-// Detail peserta (Blade)
 Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
-
-// API JSON detail peserta (checkout)
 Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
-
-// Hasil voting & dukungan terkini
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
 Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
 
 /*
 |--------------------------------------------------------------------------
-| WEBHOOK MIDTRANS (PUBLIC — signature diverifikasi di controller)
+| WEBHOOK MIDTRANS (PUBLIC)
 |--------------------------------------------------------------------------
 */
 
@@ -129,7 +86,7 @@ Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook'
 
 /*
 |--------------------------------------------------------------------------
-| PENDAFTARAN PUBLIK (form pendaftaran user)
+| PENDAFTARAN PUBLIK
 |--------------------------------------------------------------------------
 */
 
@@ -145,7 +102,25 @@ Route::post('/daftar/{event}', [PendaftaranController::class, 'storePublic'])
 */
 
 Route::middleware('pelanggan')->group(function () {
+
+    // Profil user
+    Route::get('/profil-user', [ProfilUserController::class, 'index'])->name('profil-user');
+    Route::put('/profil-user', [ProfilUserController::class, 'update'])->name('profil-user.update');
+    Route::post('/profil-user/foto', [ProfilUserController::class, 'uploadFoto'])->name('profil-user.foto');
+    Route::delete('/profil-user/foto', [ProfilUserController::class, 'hapusFoto'])->name('profil-user.foto.hapus');
+
+    // Logout khusus pelanggan
+    Route::post('/profil-user/logout', function () {
+        \Auth::guard('pelanggan')->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect()->route('dashboard-user');
+    })->name('profil-user.logout');
+
+    // Pendaftaran
     Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
+
+    // Pembayaran pendaftaran
     Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
 
     // Voting
@@ -161,11 +136,29 @@ Route::middleware('pelanggan')->group(function () {
             'midtransIsProduction' => config('services.midtrans.is_production'),
         ]);
     });
+    // Halaman pembayaran pendaftaran
+    Route::get('/peserta/{peserta}/pembayaran', [PembayaranController::class, 'show'])
+        ->name('peserta.pembayaran');
+
+    Route::get('/peserta/{peserta}/pembayaran', [PembayaranController::class, 'show'])
+        ->name('peserta.pembayaran');
+
+    // Request charge ke Midtrans
+    Route::post('/peserta/{peserta}/charge', [PembayaranController::class, 'charge'])
+        ->name('peserta.pembayaran.charge');
+
+    // Halaman instruksi (QR/VA)
+    Route::get('/peserta/{peserta}/pembayaran/instruksi', [PembayaranController::class, 'instruksi'])
+        ->name('peserta.pembayaran.instruksi');
+
+    // Cek status (polling)
+    Route::get('/peserta/{peserta}/pembayaran/status', [PembayaranController::class, 'statusPembayaran'])
+        ->name('peserta.pembayaran.status');
 });
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN API (JSON — guard 'admin')
+| ADMIN API (guard 'admin')
 |--------------------------------------------------------------------------
 */
 
@@ -194,10 +187,8 @@ Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.lo
 
 Route::middleware('admin.session')->prefix('admin')->group(function () {
 
-    // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    // Event Management
     Route::resource('events', AdminEventController::class)->names('admin.events');
 
     Route::patch('/events/{event}/voting', [AdminEventController::class, 'toggleVoting'])
@@ -207,14 +198,13 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::delete('/admin/events/{event}/questions/clear', [AdminPendaftaranController::class, 'clearQuestions'])
         ->name('admin.events.questions.clear');
 
-    // Export peserta
     Route::get('/admin/events/{event}/peserta/export', [PesertaController::class, 'export'])
         ->name('admin.peserta.export');
 
     Route::get('/api/event/{event}/pending-payments', [EventController::class, 'getPendingPayments'])
         ->name('admin.events.pending-payments');
 
-    // Form Builder
+    // Form builder
     Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])->name('admin.form-builder');
     Route::post('/form-builder/{event}/save', [FormBuilderController::class, 'save'])->name('admin.form-builder.save');
 
@@ -230,19 +220,14 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
     Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])->name('admin.voting.settings');
     Route::post('/voting/settings/{event}', [VotingController::class, 'update'])->name('admin.voting.settings.update');
 
-    // Voter
     Route::get('/voters/{event?}', [VotingController::class, 'voters'])->name('admin.voters');
-
-    // Leaderboard
     Route::get('/leaderboard/{event?}', [VotingController::class, 'leaderboard'])->name('admin.leaderboard');
 
-    // File jawaban
     Route::get('/peserta/jawaban/{jawaban}/file', [AdminPendaftaranController::class, 'downloadJawabanFile'])->name('admin.jawaban.file');
 
-    // Logout
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('admin.logout.web');
 
-    // Profile admin
+    // Profil admin
     Route::get('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'edit'])->name('admin.profile');
     Route::post('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('admin.profile.update');
     Route::post('/profile/password', [\App\Http\Controllers\Admin\ProfileController::class, 'updatePassword'])->name('admin.profile.password');
@@ -255,12 +240,29 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ROUTE API HAN (auth, admin, user)
+| ROUTE API HAN (admin, user) — TANPA auth.php (biar gak dobel)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('api')->group(function () {
-    require __DIR__.'/auth.php';
     require __DIR__.'/admin.php';
     require __DIR__.'/user.php';
+    // auth.php TIDAK dimuat di sini — biar /auth/google gak kena middleware 'api'
+});
+
+/*
+|--------------------------------------------------------------------------
+| DEBUG (hapus kalau production)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/test-session', function () {
+    session(['test_key' => 'test_value_' . time()]);
+    return [
+        'session_id' => session()->getId(),
+        'driver'     => config('session.driver'),
+        'test_key'   => session('test_key'),
+        'user_id'    => optional(auth('pelanggan')->user())->id,
+        'user_nama'  => optional(auth('pelanggan')->user())->nama,
+    ];
 });

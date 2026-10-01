@@ -45,52 +45,58 @@ class AktivasiController extends Controller
 
     /**
      * POST /admin/activation/:peserta/verifikasi
-     *
-     * Cek ulang status pembayaran ke Midtrans (untuk kasus webhook telat/
-     * gagal), lalu simpan hasilnya. Kalau statusnya 'settlement', akun
-     * otomatis kelihatan "Aktif & Lunas" (itu cuma tampilan turunan dari
-     * status_midtrans, bukan kolom baru).
      */
     public function verifikasi(Peserta $peserta): RedirectResponse
     {
-                // pembayaran() adalah hasMany di model Peserta (untuk dukung kode main).
-        $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
-            ? $peserta->pembayaran->sortByDesc('id')->first()
-            : $peserta->pembayaran;
+        $pembayaran = $this->pembayaranTerbaik($peserta);
 
         if (! $pembayaran) {
             return back()->with('error', 'Peserta ini belum punya transaksi pembayaran.');
         }
 
-        // TODO: panggil Midtrans Status API di sini, contoh:
+        // TODO: panggil Midtrans Status API di sini kalau perlu
         // \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
         // $status = \Midtrans\Transaction::status($pembayaran->midtrans_order_id);
-        // $pembayaran->update([
-        //     'status_midtrans' => $status->transaction_status,
-        //     'midtrans_transaction_id' => $status->transaction_id,
-        //     'tanggal_bayar' => $status->transaction_status === 'settlement' ? now() : $pembayaran->tanggal_bayar,
-        // ]);
+        // $pembayaran->update([...]);
 
         return redirect()
             ->route('admin.activation', $peserta->event_id)
-            ->with('success', "Status pembayaran {$peserta->user->nama} berhasil disinkronkan.");
+            ->with('success', "Status pembayaran " . ($peserta->nama_pendaftaran ?: $peserta->user->nama) . " berhasil disinkronkan.");
+    }
+
+    /**
+     * Ambil pembayaran terbaik:
+     * 1. Kalau ada yang 'settlement' → pakai itu (yang terbaru)
+     * 2. Kalau gak ada → pakai yang terbaru (pending, dll)
+     */
+    private function pembayaranTerbaik(Peserta $peserta)
+    {
+        $semua = $peserta->pembayaran instanceof \Illuminate\Support\Collection
+            ? $peserta->pembayaran
+            : collect([$peserta->pembayaran])->filter();
+
+        if ($semua->isEmpty()) {
+            return null;
+        }
+
+        return $semua->where('status_midtrans', 'settlement')->sortByDesc('id')->first()
+            ?? $semua->sortByDesc('id')->first();
     }
 
     private function transform(Peserta $peserta): array
     {
         $kategoriJawaban = $peserta->jawabans->first(
-            fn ($jawaban) => $jawaban->pertanyaan && str_contains(strtolower($jawaban->pertanyaan->label), 'kategori')
+            fn ($jawaban) => $jawaban->pertanyaan
+                && str_contains(strtolower($jawaban->pertanyaan->label), 'kategori')
         );
 
-        $pembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
-            ? $peserta->pembayaran->sortByDesc('id')->first()
-            : $peserta->pembayaran;
+        $pembayaran = $this->pembayaranTerbaik($peserta);
         $lunas = $pembayaran?->status_midtrans === 'settlement';
 
         return [
             'id' => $peserta->id,
             'no_registrasi' => 'PPA-' . now()->year . '-' . str_pad($peserta->id, 3, '0', STR_PAD_LEFT),
-            'nama' => $peserta->user->nama ?? '-',
+            'nama' => $peserta->nama_pendaftaran ?: ($peserta->user->nama_custom ?: $peserta->user->nama ?? '-'),
             'email' => $peserta->user->email ?? '-',
             'kategori' => $kategoriJawaban?->jawaban ?? '-',
             'pembayaran' => $pembayaran,

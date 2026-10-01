@@ -20,13 +20,14 @@ class Peserta extends Model
     protected $fillable = [
         'event_id',
         'user_id',
-        'status',       // menunggu_pembayaran | diterima | ditolak
+        'nama_pendaftaran',
+        'status',
         'hasil_akhir',
         'skor_akhir',
         'catatan_admin',
         'galeri_foto',
         'total_vote',
-        'answers',      // dari han: JSON jawaban peserta
+        'answers',
     ];
 
     protected $casts = [
@@ -56,18 +57,11 @@ class Peserta extends Model
         return $this->hasMany(PembayaranEvent::class, 'peserta_id');
     }
 
-    /**
-     * Voting yang MASUK ke peserta ini (dia yang divote)
-     * Nama asli di mainv2
-     */
     public function votingMasuk(): HasMany
     {
         return $this->hasMany(Voting::class, 'peserta_id');
     }
 
-    /**
-     * Alias dari han — supaya kompatibel dengan kode yang pakai voting()
-     */
     public function voting(): HasMany
     {
         return $this->hasMany(Voting::class, 'peserta_id');
@@ -78,9 +72,65 @@ class Peserta extends Model
         return $user !== null && $this->user_id === $user->id;
     }
 
-    // Dari han: dipakai halaman admin Blade
     public function jawaban()
     {
         return $this->hasMany(Jawaban::class, 'peserta_id');
+    }
+
+    /**
+     * Ambil nama tampil peserta — prioritas dari jawaban pertanyaan "nama",
+     * fallback ke nama_pendaftaran, lalu ke nama akun.
+     */
+    public function namaTampil(): string
+    {
+        // Pastikan relasi jawaban + pertanyaan sudah dimuat
+        $jawabanList = $this->relationLoaded('jawaban')
+            ? $this->jawaban
+            : $this->jawaban()->with('pertanyaan')->get();
+
+        $jawabanNama = $jawabanList->first(function ($j) {
+            return $j->pertanyaan
+                && str_contains(strtolower($j->pertanyaan->label), 'nama');
+        });
+
+        if ($jawabanNama && $jawabanNama->jawaban) {
+            $val = $jawabanNama->jawaban;
+
+            return is_array($val) ? ($val[0] ?? '') : (string) $val;
+        }
+
+        // Fallback ke nama_pendaftaran (data lama)
+        if ($this->nama_pendaftaran) {
+            return $this->nama_pendaftaran;
+        }
+
+        // Fallback ke nama akun
+        return $this->user?->nama_custom
+            ?: $this->user?->nama
+            ?: 'Peserta';
+    }
+
+    /**
+     * Ambil email peserta — prioritas dari jawaban pertanyaan "email",
+     * fallback ke email akun.
+     */
+    public function emailTampil(): string
+    {
+        $jawabanList = $this->relationLoaded('jawaban')
+            ? $this->jawaban
+            : $this->jawaban()->with('pertanyaan')->get();
+
+        $jawabanEmail = $jawabanList->first(function ($j) {
+            return $j->pertanyaan
+                && str_contains(strtolower($j->pertanyaan->label), 'email');
+        });
+
+        if ($jawabanEmail && $jawabanEmail->jawaban) {
+            $val = $jawabanEmail->jawaban;
+
+            return is_array($val) ? ($val[0] ?? '') : (string) $val;
+        }
+
+        return $this->user?->email ?? '-';
     }
 }

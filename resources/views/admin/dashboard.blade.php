@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --ink: #18202c;
@@ -23,8 +24,7 @@
         }
 
         * {
-            box-sizing: border-box
-            font-family: 'Inter', sans-serif
+            box-sizing: border-box font-family: 'Inter', sans-serif
         }
 
         body {
@@ -562,55 +562,77 @@
         {{-- <div class="hidden"></div> --}}
         <main class="main">
             <section class="content">
-                <!-- KODE BARU -->
-<div class="event-header">
-    <div>
-        <span class="open" class="pt-4">Pendaftaran Dibuka</span>
-        <span class="event-meta"> &nbsp;01 Sep 2026, 00:00 – 20 Sep 2026, 23:59 WIB</span>
-        <h1 class="event-title">{{ $event?->nama ?? 'PEMBUKAAN PENDAFTARAN ALNAY OF THE YEAR 2026' }}</h1>
-        <span class="event-meta">Pendaftaran: 01 – 20 Sep 2026 &nbsp; · &nbsp; Kuota Maks: 12 orang</span>
-    </div>
+                {{-- EVENT HEADER --}}
+                <div class="event-header">
+                    <div>
+                        @if (isset($events) && $events->count() > 1)
+                            <form method="GET" action="{{ route('admin.registrations') }}" class="mb-2">
+                                <select name="event_id" onchange="this.form.submit()"
+                                    class="border border-[var(--line)] rounded-md px-2 py-1 text-xs bg-white">
+                                    @foreach ($events as $ev)
+                                        <option value="{{ $ev->id }}" @selected($event && $event->id === $ev->id)>
+                                            {{ $ev->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        @endif
 
-                <!-- Container tombol berjajar kesamping -->
-                <div class="flex items-center gap-2">
-                    <!-- Tombol Download Data Peserta -->
-                    <a href="{{ route('admin.peserta.export', $event->id) }}"
-                        class="inline-flex items-center gap-1.5 px-4 py-4
-                                bg-emerald-600 hover:bg-emerald-700 
-                                text-white font-bold text-[12px] 
-                                rounded-md transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        Download Data Peserta
-                    </a>
+                        <span class="open">Pendaftaran Dibuka</span>
+                        <h1 class="event-title mt-2">{{ $event?->nama ?? 'Belum ada event' }}</h1>
+                        <span class="event-meta">Pendaftaran peserta event</span>
+                    </div>
 
-                    <!-- Tombol Tambah Peserta Manual -->
-                    <a href="{{ route('public.registration', $event->id) }}"
-                        class="inline-flex items-center px-4 py-4
-                                bg-[#ba8320] hover:bg-[#a06f1a] 
-                                text-white font-bold text-[12px] 
-                                rounded-md transition-colors shadow-sm">
-                        + Tambah Peserta Manual
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('admin.peserta.export', $event->id) }}"
+                            class="inline-flex items-center gap-1.5 px-4 py-3
+                            bg-emerald-600 hover:bg-emerald-700 
+                            text-white font-bold text-[12px] 
+                            rounded-md transition-colors shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Data
+                        </a>
+
+                        <a href="{{ route('public.registration', $event->id) }}"
+                            class="inline-flex items-center px-4 py-3
+                            bg-[#ba8320] hover:bg-[#a06f1a] 
+                            text-white font-bold text-[12px] 
+                            rounded-md transition-colors shadow-sm">
+                            + Tambah Manual
+                        </a>
+                    </div>
                 </div>
-            </div>
+
+                {{-- STATS --}}
                 <div class="stats">
-                    <div class="card"><span class="card-label">Total Pendaftar</span>
-                        <div class="number">{{ $totalPendaftar }}</div><span class="card-note">Peserta tercatat</span>
+                    <div class="card">
+                        <span class="card-label">Total Pendaftar</span>
+                        <div class="number">{{ $totalPendaftar }}</div>
+                        <span class="card-note">Peserta tercatat</span>
                     </div>
-                    <div class="card"><span class="card-label">Menunggu Review</span>
-                        <div class="number">{{ $menungguReview }}</div><span class="card-note">Prioritas Kurasi</span>
+                    <div class="card">
+                        <span class="card-label">Menunggu Review</span>
+                        <div class="number">{{ $menungguReview }}</div>
+                        <span class="card-note">Prioritas Kurasi</span>
                     </div>
-                    {{-- <div class="card"><span class="card-label">Perlu Revisi Data</span>
-                        <div class="number">{{ $perluRevisi }}</div><span class="card-note">Dokumen kurang</span>
-                    </div> --}}
-                    <div class="card"><span class="card-label">Diterima</span>
-                        <div class="number">{{ $diterima }}</div><span class="card-note">Lolos Final Lineup</span>
+                    <div class="card">
+                        <span class="card-label">Diterima</span>
+                        <div class="number">{{ $diterima }}</div>
+                        <span class="card-note">Lolos Final Lineup</span>
+                    </div>
+                    <div class="card">
+                        <span class="card-label">Ditolak</span>
+                        <div class="number">{{ $ditolak }}</div>
+                        <span class="card-note">Tidak lolos</span>
                     </div>
                 </div>
-                <div class="toolbar"><input class="search" id="search"
-                        placeholder="⌕  Cari nama atau nomor HP peserta...">
+
+                {{-- TOOLBAR --}}
+                <div class="toolbar">
+                    <input class="search" id="search" placeholder="⌕  Cari nama atau email peserta...">
                     <div class="filters">
                         <button class="filter active" data-filter="semua">Semua {{ $totalPendaftar }}</button>
                         <button class="filter" data-filter="menunggu">Menunggu {{ $menungguReview }}</button>
@@ -618,85 +640,95 @@
                         <button class="filter" data-filter="ditolak">Ditolak {{ $ditolak }}</button>
                     </div>
                 </div>
+
+                {{-- PANEL DAFTAR PESERTA --}}
                 <div class="panel" id="verification">
-                    <div class="panel-head"><strong>Daftar Peserta</strong><span class="event-meta">Update terakhir:
-                            baru saja</span></div>
+                    <div class="panel-head">
+                        <strong>Daftar Peserta</strong>
+                        <span class="event-meta">Update terakhir: baru saja</span>
+                    </div>
                     <div class="table-wrap">
                         <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b">
-                                <th class="p-3">No</th>
-                                <th class="p-3">Jawaban Form / Detail Peserta</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="participantRows">
-                            @forelse($pesertas ?? [] as $index => $peserta)
-                            @php $status = strtolower($peserta->status ?? 'menunggu_review'); @endphp
-                                <tr class="border-b" data-status="{{ $status }}">
-                                    <td class="p-3">{{ $index + 1 }}</td>
-                                    <td class="p-3">
-                                        <ul class="text-xs space-y-1">
-                                            <li><strong>Nama:</strong> {{ $peserta->user?->nama ?? '-' }}</li>
-                                            <li><strong>Email:</strong> {{ $peserta->user?->email ?? '-' }}</li>
-                                            @foreach($peserta->jawabans as $jawaban)
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3">No</th>
+                                    <th class="p-3">Peserta</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="participantRows">
+                                @forelse($pesertas ?? [] as $index => $peserta)
+                                    @php $status = strtolower($peserta->status ?? 'menunggu_review'); @endphp
+                                    <tr class="border-b" data-status="{{ $status }}">
+                                        <td class="p-3">{{ $index + 1 }}</td>
+                                        <td class="p-3">
+                                            <ul class="text-xs space-y-1">
                                                 <li>
-                                                    <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
-                                                    @if($jawaban->pertanyaan?->tipe_input === 'file')
-                                                        <a href="{{ route('admin.jawaban.file', $jawaban) }}" target="_blank">Lihat file</a>
-                                                    @else
-                                                        {{ is_array($jawaban->jawaban) ? implode(', ', $jawaban->jawaban) : $jawaban->jawaban }}
+                                                    <strong>Nama:</strong> {{ $peserta->namaTampil() }}
+                                                    @if ($peserta->user && $peserta->namaTampil() !== ($peserta->user->nama_custom ?: $peserta->user->nama))
+                                                        <span class="text-gray-400 text-[10px]">(akun:
+                                                            {{ $peserta->user->nama_custom ?: $peserta->user->nama }})</span>
                                                     @endif
                                                 </li>
-                                            @endforeach
-                                        </ul>
-                                    </td>
-                                    <!-- Status Peserta -->
-                                    <td class="p-3">
+                                                <li><strong>Email:</strong> {{ $peserta->emailTampil() }}</li>
+                                                <li><strong>Email:</strong> {{ $peserta->user?->email ?? '-' }}</li>
+                                                @foreach ($peserta->jawabans as $jawaban)
+                                                    @continue(in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true))
+                                                    <li>
+                                                        <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
+                                                        @if ($jawaban->pertanyaan?->tipe_input === 'file')
+                                                            <a href="{{ route('admin.jawaban.file', $jawaban) }}"
+                                                                target="_blank">Lihat file</a>
+                                                        @else
+                                                            {{ is_array($jawaban->jawaban) ? implode(', ', $jawaban->jawaban) : $jawaban->jawaban }}
+                                                        @endif
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </td>
+                                        <td class="p-3">
+                                            @if ($status === 'diterima')
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
+                                            @elseif($status === 'ditolak')
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
+                                            @else
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu
+                                                    Review</span>
+                                            @endif
+                                        </td>
+                                        <td class="p-3">
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ route('admin.peserta.show', $peserta->id) }}"
+                                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium">
+                                                    Lihat
+                                                </a>
 
-                                        @if($status === 'diterima')
-                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
-                                        @elseif($status === 'ditolak')
-                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
-                                        {{-- @elseif($status === 'revisi')
-                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">Perlu Revisi</span> --}}
-                                        @else
-                                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu Review</span>
-                                        @endif
-                                    </td>
-                                    <!-- Tombol Aksi Cepat -->
-                                    <td class="p-3">
-                                        <div class="flex items-center gap-2">
-                                            <!-- Tombol Lihat -->
-                                            <a href="{{ route('admin.peserta.show', $peserta->id) }}" 
-                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
-                                                Lihat
-                                            </a>
-
-                                            <!-- Tombol Hapus -->
-                                            <form action="{{ route('admin.peserta.destroy', $peserta->id) }}" 
-                                                method="POST" 
-                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data peserta ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" 
-                                                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
-                                                    🗑️ Hapus
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="p-4 text-center text-gray-500">
-                                        Belum ada peserta tercatat.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                                <form action="{{ route('admin.peserta.destroy', $peserta->id) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Yakin hapus peserta ini?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium">
+                                                        Hapus
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="p-4 text-center text-gray-500">
+                                            Belum ada peserta tercatat.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                     <div class="footer-note">Menampilkan {{ $pesertas->count() }} peserta terdaftar</div>
                 </div>
@@ -738,7 +770,7 @@
         searchInput.addEventListener('input', applyFilters);
 
         filterButtons.forEach(btn => {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', function() {
                 filterButtons.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 activeFilter = this.dataset.filter;

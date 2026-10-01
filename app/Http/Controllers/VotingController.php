@@ -50,11 +50,11 @@ class VotingController extends Controller
         $durasiMenit = 60;
         $user = $request->user();
         // ===== PAGAR 2: Rate limit — max 1 transaksi per 5 detik =====
-        if ($user){
+        if ($user) {
             $lastVote = Voting::where('event_id', $event->id)
-            ->where('user_id', $user?->id)
-            ->latest('tanggal_vote')
-            ->first();
+                ->where('user_id', $user?->id)
+                ->latest('tanggal_vote')
+                ->first();
         }
 
         if ($lastVote && $lastVote->tanggal_vote) {
@@ -458,7 +458,7 @@ class VotingController extends Controller
 
         $votingQuery = Voting::where('event_id', $event?->id ?? 0)
             ->where('status_midtrans', 'settlement')
-            ->with(['peserta.user', 'user']);
+            ->with(['peserta.user', 'voter']);
 
         $totalSuaraMasuk = (clone $votingQuery)->sum('jumlah_vote');
         $voterUnik = (clone $votingQuery)->distinct('user_id')->count('user_id');
@@ -489,8 +489,8 @@ class VotingController extends Controller
                 return [
                     'id' => $voting->id,
                     'waktu' => $waktu,
-                    'nama_voter' => $voting->nama_tampilan ?? $voting->user?->nama ?? 'Anonim',
-                    'no_hp' => $voting->user?->no_hp ?? $voting->user?->email ?? '-',
+                    'nama_voter' => $voting->nama_tampilan ?? $voting->voter?->nama ?? 'Anonim',
+                    'no_hp' => $voting->voter?->no_hp ?? $voting->voter?->email ?? '-',
                     'peserta_id' => $voting->peserta_id,
                     'peserta_nama' => $voting->peserta?->user?->nama ?? 'Peserta dihapus',
                     'peserta_inisial' => strtoupper(substr($voting->peserta?->user?->nama ?? 'P', 0, 2)),

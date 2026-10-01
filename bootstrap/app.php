@@ -34,14 +34,22 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, Request $request) {
-            // Halaman Blade admin (han): arahkan ke login admin, bukan JSON
+
+            // 1. Admin → redirect ke admin login
             if ($request->is('admin/*')) {
                 return redirect()->route('admin.login');
             }
 
-            // API main: tetap JSON 401
-            return response()->json([
-                'message' => 'Anda harus login terlebih dahulu.'
-            ], 401);
+            // 2. AJAX / API / expectsJson → JSON 401
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Anda harus login terlebih dahulu.',
+                ], 401);
+            }
+
+            // 3. Halaman biasa → redirect ke Google OAuth
+            return redirect()->route('auth.google', [
+                'redirect_to' => url()->current(),
+            ]);
         });
     })->create();

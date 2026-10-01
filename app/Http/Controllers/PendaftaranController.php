@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class PendaftaranController extends Controller
 {
@@ -28,114 +29,133 @@ class PendaftaranController extends Controller
     }
 
     public function storePublic(Request $request, Event $event)
-    {
-        // 1. User WAJIB login (dari Google)
-        $user = Auth::guard('pelanggan')->user();
+{
+    // 1. User WAJIB login (dari Google)
+    $user = \Illuminate\Support\Facades\Auth::guard('pelanggan')->user();
 
-        if (! $user) {
-            return redirect()
-                ->route('auth.google', ['redirect_to' => url()->current()]);
+    if (! $user) {
+        return redirect()
+            ->route('auth.google', ['redirect_to' => url()->current()]);
+    }
+
+    // 2. Cek sudah pernah daftar event ini?
+    $sudahDaftar = Peserta::where('event_id', $event->id)
+    ->where('user_id', $user->id)
+    ->whereIn('status', ['menunggu_review', 'diterima'])
+    ->exists();
+
+    if ($sudahDaftar) {
+        return redirect()
+            ->route('public.registration', $event)
+            ->with('error', 'Kamu sudah pernah mendaftar di event ini.');
+    }
+
+    // 3. Validasi nama pendaftaran
+    $namaDefault = $user->nama_custom ?: $user->nama;
+
+    $request->validate([
+        'nama_pendaftaran' => [
+            'required',
+            'string',
+            'min:2',
+            'max:100',
+            'regex:/^[A-Za-z\s\.\'\-,]+$/u',
+        ],
+    ], [
+        'nama_pendaftaran.required' => 'Nama lengkap wajib diisi.',
+        'nama_pendaftaran.regex'    => 'Nama hanya boleh berisi huruf, spasi, titik, apostrof, koma, dan strip.',
+        'nama_pendaftaran.max'      => 'Nama maksimal 100 karakter.',
+    ]);
+
+    // 4. Bangun aturan validasi dari pertanyaan dinamis
+    $questions = $event->pertanyaans()->get();
+    $rules = [
+        'answers' => ['required', 'array'],
+    ];
+
+    foreach ($questions as $question) {
+        $type = strtolower($question->tipe_input);
+
+        if (in_array($type, ['heading', 'subheading'], true)) {
+            continue;
         }
 
-        // 2. Cek sudah pernah daftar event ini?
-        $sudahDaftar = Peserta::where('event_id', $event->id)
-            ->where('user_id', $user->id)
-            ->exists();
+        $field = "answers.{$question->id}";
+        $fieldRules = [$question->wajib ? 'required' : 'nullable'];
 
-        if ($sudahDaftar) {
-            return redirect()
-                ->route('public.registration', $event)
-                ->with('error', 'Kamu sudah pernah mendaftar di event ini.');
+        $rawOptions = $question->pilihan_jawaban ?? [];
+        if (is_string($rawOptions)) {
+            $rawOptions = json_decode($rawOptions, true) ?? [];
         }
 
-        // 3. Bangun aturan validasi dari pertanyaan
-        $questions = $event->pertanyaans()->get();
-        $rules = [
-            'answers' => ['required', 'array'],
-        ];
+        $cleanOptions = array_map(function ($opt) {
+            return trim(str_replace(["\r", "\n"], '', (string) $opt));
+        }, (array) $rawOptions);
+
+        if ($type === 'file') {
+            $fieldRules[] = 'file';
+            $fieldRules[] = 'max:5120';
+        } elseif (in_array($type, ['number', 'angka'], true)) {
+            $fieldRules[] = 'regex:/^\d+$/';
+        } elseif ($type === 'checkbox') {
+            $fieldRules[] = 'array';
+            if (! empty($cleanOptions)) {
+                $rules["{$field}. *"] = ['string', Rule::in($cleanOptions)];
+            }
+        } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
+            if (! empty($cleanOptions)) {
+                $fieldRules[] = Rule::in($cleanOptions);
+            }
+        } elseif ($type === 'email') {
+            $fieldRules[] = 'email';
+        } else {
+            $fieldRules[] = 'string';
+            $fieldRules[] = 'max:5000';
+        }
+
+        $rules[$field] = $fieldRules;
+    }
+
+    $data = $request->validate($rules);
+
+    // 5. Simpan peserta + jawaban
+    DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
+        $peserta = Peserta::create([
+            'event_id'         => $event->id,
+            'user_id'          => $user->id,
+            'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
+            'status'           => 'menunggu_review',
+        ]);
 
         foreach ($questions as $question) {
-            $type = strtolower($question->tipe_input);
-
-            if (in_array($type, ['heading', 'subheading'], true)) {
+            if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
                 continue;
             }
 
-            $field = "answers.{$question->id}";
-            $fieldRules = [$question->wajib ? 'required' : 'nullable'];
+            $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
+            $answer ??= $data['answers'][$question->id] ?? null;
 
-            $rawOptions = $question->pilihan_jawaban ?? [];
-            if (is_string($rawOptions)) {
-                $rawOptions = json_decode($rawOptions, true) ?? [];
+            if ($answer === null || $answer === '') {
+                continue;
             }
 
-            $cleanOptions = array_map(function ($opt) {
-                return trim(str_replace(["\r", "\n"], '', (string) $opt));
-            }, (array) $rawOptions);
-
-            if ($type === 'file') {
-                $fieldRules[] = 'file';
-                $fieldRules[] = 'max:5120';
-            } elseif (in_array($type, ['number', 'angka'], true)) {
-                $fieldRules[] = 'regex:/^\d+$/';
-            } elseif ($type === 'checkbox') {
-                $fieldRules[] = 'array';
-                if (! empty($cleanOptions)) {
-                    $rules["{$field}. *"] = ['string', Rule::in($cleanOptions)];
-                }
-            } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
-                if (! empty($cleanOptions)) {
-                    $fieldRules[] = Rule::in($cleanOptions);
-                }
-            } elseif ($type === 'email') {
-                $fieldRules[] = 'email';
-            } else {
-                $fieldRules[] = 'string';
-                $fieldRules[] = 'max:5000';
+            if (is_array($answer)) {
+                $answer = json_encode($answer, JSON_THROW_ON_ERROR);
             }
 
-            $rules[$field] = $fieldRules;
-        }
-
-        $data = $request->validate($rules);
-
-        // 4. Simpan peserta + jawaban
-        DB::transaction(function () use ($request, $event, $questions, $user, $data) {
-            $peserta = Peserta::create([
-                'event_id' => $event->id,
-                'user_id' => $user->id,
-                'status' => 'menunggu_review',
+            JawabanPeserta::create([
+                'peserta_id'    => $peserta->id,
+                'pertanyaan_id' => $question->id,
+                'jawaban'       => $answer,
             ]);
+        }
+    });
 
-            foreach ($questions as $question) {
-                if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
-                    continue;
-                }
-
-                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
-                $answer ??= $data['answers'][$question->id] ?? null;
-
-                if ($answer === null || $answer === '') {
-                    continue;
-                }
-
-                if (is_array($answer)) {
-                    $answer = json_encode($answer, JSON_THROW_ON_ERROR);
-                }
-
-                JawabanPeserta::create([
-                    'peserta_id' => $peserta->id,
-                    'pertanyaan_id' => $question->id,
-                    'jawaban' => $answer,
-                ]);
-            }
-        });
-
-        // 5. Redirect dengan flash message
-        return redirect()
-            ->route('public.registration', $event)
-            ->with('success', 'Pendaftaran berhasil dikirim. Tunggu review dari admin ya!');
-    }
+    // 6. Redirect dengan flash message
+    return redirect()
+        ->route('public.registration', $event)
+        ->with('success', 'Pendaftaran berhasil dikirim. Tunggu review dari admin ya!');
+}
 
     // =====================================================================
     // DARI MAIN: API JSON

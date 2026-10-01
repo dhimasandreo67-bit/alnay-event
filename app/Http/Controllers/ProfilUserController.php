@@ -22,17 +22,16 @@ class ProfilUserController extends Controller
             ->distinct('event_id')
             ->count('event_id');
 
-        $peserta = Peserta::with('event')
+        $pendaftarans = Peserta::with(['event', 'pembayaran', 'jawaban.pertanyaan', 'user'])
             ->where('user_id', $user->id)
-            ->where('status', 'diterima')
             ->latest('id')
-            ->first();
+            ->get();
 
         return view('profil-user', [
-            'user' => $user,
-            'totalVote' => $totalVote,
-            'totalEvent' => $totalEvent,
-            'peserta' => $peserta,
+            'user'         => $user,
+            'totalVote'    => $totalVote,
+            'totalEvent'   => $totalEvent,
+            'pendaftarans' => $pendaftarans,
         ]);
     }
 

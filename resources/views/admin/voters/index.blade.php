@@ -41,12 +41,16 @@
                     <div class="text-[11px] text-[#73716c] mt-1">Voter Unik (Akun Berbeda)</div>
                 </div>
                 <div class="bg-white rounded-xl border border-[#e3ded6] p-4">
-                    <div class="text-lg font-bold text-emerald-600 truncate">{{ $terpopuler?->peserta?->user?->nama ?? '-' }}</div>
+                    <div class="text-lg font-bold text-emerald-600 truncate">
+                        {{ $pesertaTerpopuler?->user?->nama ?? '-' }}
+                    </div>
                     <div class="text-[11px] text-[#73716c] mt-1">Sementara Terpopuler</div>
-                    <div class="text-[10px] text-[#98958f]">{{ $terpopuler->total ?? 0 }} suara</div>
+                    <div class="text-[10px] text-[#98958f]">{{ $pesertaTerpopuler?->total_vote ?? 0 }} suara</div>
                 </div>
                 <div class="bg-white rounded-xl border border-[#e3ded6] p-4">
-                    <div class="text-2xl font-bold font-mono">{{ $suaraTerakhir ? \Carbon\Carbon::parse($suaraTerakhir->tanggal_vote)->format('H.i.s') : '-' }}</div>
+                    <div class="text-2xl font-bold font-mono">
+                        {{ $suaraTerakhir ? \Carbon\Carbon::parse($suaraTerakhir->updated_at ?? $suaraTerakhir->created_at)->format('H.i.s') : '-' }}
+                    </div>
                     <div class="text-[11px] text-[#73716c] mt-1">Suara Terakhir Masuk</div>
                 </div>
             </div>
@@ -70,35 +74,37 @@
                         <tr class="border-b border-[#e3ded6] text-left text-[10px] uppercase text-[#98958f]">
                             <th class="p-3 font-bold">Waktu Vote</th>
                             <th class="p-3 font-bold">Nama Voter</th>
-                            <th class="p-3 font-bold">Email</th>
+                            <th class="p-3 font-bold">Kontak</th>
                             <th class="p-3 font-bold">Peserta yang Dipilih</th>
                             <th class="p-3 font-bold text-right">Jumlah Vote</th>
                         </tr>
                     </thead>
                     <tbody id="voterRows">
                         @forelse ($votings as $v)
-                            @php
-                                $namaPeserta = $v->peserta?->user?->nama ?? '-';
-                                $inisial = collect(explode(' ', $namaPeserta))->map(fn($w) => strtoupper($w[0] ?? ''))->take(2)->implode('');
-                            @endphp
                             <tr class="border-b border-[#f0ede6]"
-                                data-peserta-id="{{ $v->peserta_id }}"
-                                data-search="{{ strtolower(($v->voter->nama ?? '').' '.($v->voter->email ?? '')) }}">
-                                <td class="p-3 font-mono text-[#73716c]">{{ \Carbon\Carbon::parse($v->tanggal_vote)->format('H.i.s') }}</td>
-                                <td class="p-3 font-semibold">{{ $v->voter->nama ?? '-' }}</td>
-                                <td class="p-3 text-[#73716c]">{{ $v->voter->email ?? '-' }}</td>
+                                data-peserta-id="{{ $v['peserta_id'] }}"
+                                data-search="{{ strtolower(($v['nama_voter'] ?? '').' '.($v['no_hp'] ?? '')) }}">
+                                <td class="p-3 font-mono text-[#73716c]">{{ $v['waktu'] }}</td>
+                                <td class="p-3 font-semibold">{{ $v['nama_voter'] }}</td>
+                                <td class="p-3 text-[#73716c]">{{ $v['no_hp'] }}</td>
                                 <td class="p-3">
                                     <span class="inline-flex items-center gap-2">
-                                        <span class="w-6 h-6 rounded-full bg-[#f0e6cf] text-[#8a6d1f] text-[10px] font-bold grid place-items-center">{{ $inisial }}</span>
-                                        {{ $namaPeserta }}
+                                        <span class="w-6 h-6 rounded-full bg-[#f0e6cf] text-[#8a6d1f] text-[10px] font-bold grid place-items-center">
+                                            {{ $v['peserta_inisial'] }}
+                                        </span>
+                                        {{ $v['peserta_nama'] }}
                                     </span>
                                 </td>
                                 <td class="p-3 text-right">
-                                    <span class="bg-[#f7f2e4] text-[#8a6d1f] text-[11px] font-semibold px-2.5 py-1 rounded-full">{{ $v->jumlah_vote }} suara</span>
+                                    <span class="bg-[#f7f2e4] text-[#8a6d1f] text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                                        {{ $v['jumlah_vote'] }} suara
+                                    </span>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="p-6 text-center text-[#98958f]">Belum ada suara masuk.</td></tr>
+                            <tr>
+                                <td colspan="5" class="p-6 text-center text-[#98958f]">Belum ada suara masuk.</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -126,8 +132,7 @@
     filterPeserta?.addEventListener('change', applyFilters);
     searchVoter?.addEventListener('input', applyFilters);
 
-    // "Live" - refresh data berkala. Ini reload halaman penuh (paling
-    // sederhana); kalau butuh update tanpa flicker, bisa diganti fetch AJAX.
+    // Live refresh tiap 20 detik
     setTimeout(() => location.reload(), 20000);
 </script>
 </body>

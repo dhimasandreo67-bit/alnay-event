@@ -24,11 +24,11 @@ class DashboardController extends Controller
             'pesertas' => Peserta::with([
                 'user',
                 'event',
-                'jawabans.pertanyaan' => fn ($query) => $query->withTrashed(),
+                'jawabans.pertanyaan',
             ])
-            ->latest('id')
-            ->take(8)
-            ->get(),
+                ->latest('id')
+                ->take(8)
+                ->get(),
         ]);
     }
 }

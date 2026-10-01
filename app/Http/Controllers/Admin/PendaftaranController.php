@@ -7,10 +7,9 @@ use App\Models\Event;
 use App\Models\JawabanPeserta;
 use App\Models\PenggunaEvent;
 use App\Models\Peserta;
-use App\Models\Pembayaranevent;
+use App\Models\PembayaranEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,8 +21,9 @@ class PendaftaranController extends Controller
     public function storeManual(Request $request, Event $event): JsonResponse
     {
         $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
+
         $rules = [
-            'nama' => ['required', 'string', 'max:255'],
+            'nama' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z\s\.\'\-,]+$/u'],
             'email' => ['required', 'email', 'max:255'],
         ];
 
@@ -46,8 +46,6 @@ class PendaftaranController extends Controller
             } elseif (in_array($question->tipe_input, ['select', 'radio'], true)) {
                 $fieldRules[] = Rule::in($question->pilihan_jawaban ?? []);
             } elseif ($question->tipe_input === 'email') {
-                // BUG LAMA: cabang ini sebelumnya gak ada, jadi pertanyaan
-                // bertipe email gak pernah divalidasi format-nya.
                 $fieldRules[] = 'email';
             } else {
                 $fieldRules[] = 'string';
@@ -63,7 +61,7 @@ class PendaftaranController extends Controller
             $user = PenggunaEvent::query()->firstOrCreate(
                 ['email' => $data['email']],
                 [
-                    'google_id' => 'manual-'.Str::uuid(),
+                    'google_id' => 'manual-' . Str::uuid(),
                     'nama' => $data['nama'],
                 ],
             );
@@ -72,9 +70,9 @@ class PendaftaranController extends Controller
                 $user->update(['nama' => $data['nama']]);
             }
 
-            // Cegah 1 orang ke-input 2x ke event yang sama.
             $sudahDaftar = Peserta::where('event_id', $event->id)
                 ->where('user_id', $user->id)
+                ->whereIn('status', ['menunggu_review', 'diterima'])
                 ->exists();
 
             if ($sudahDaftar) {
@@ -84,8 +82,9 @@ class PendaftaranController extends Controller
             }
 
             $peserta = $event->pesertas()->create([
-                'user_id' => $user->id,
-                'status' => 'diterima',
+                'user_id'          => $user->id,
+                'nama_pendaftaran' => $data['nama'],
+                'status'           => 'diterima',
             ]);
 
             foreach ($questions as $question) {
@@ -93,7 +92,7 @@ class PendaftaranController extends Controller
                     continue;
                 }
 
-                $answer = $request->file("answers.{$question->id}")?->store('peserta' , 'public');
+                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
                 $answer ??= $data['answers'][$question->id] ?? null;
 
                 if ($answer === null || $answer === '') {
@@ -105,9 +104,9 @@ class PendaftaranController extends Controller
                 }
 
                 JawabanPeserta::create([
-                    'peserta_id' => $peserta->id,
+                    'peserta_id'    => $peserta->id,
                     'pertanyaan_id' => $question->id,
-                    'jawaban' => $answer,
+                    'jawaban'       => $answer,
                 ]);
             }
 
@@ -115,16 +114,11 @@ class PendaftaranController extends Controller
         });
 
         return response()->json([
-            'message' => 'Data peserta berhasil disimpan.',
+            'message'    => 'Data peserta berhasil disimpan.',
             'peserta_id' => $peserta->id,
         ], 201);
     }
 
-
-    /**
-     * GET /event/:id/pendaftar (admin)
-     * Daftar semua pendaftar event.
-     */
     public function indexPendaftar(Event $event)
     {
         $pesertas = $event->pesertas()
@@ -135,44 +129,28 @@ class PendaftaranController extends Controller
         return response()->json($pesertas);
     }
 
-    /**
-     * GET /admin/peserta/jawaban/:id/file
-     *
-     * Serve file upload peserta HANYA untuk admin yang login (session).
-     * File disimpan di disk 'local' (private, BUKAN 'public'), jadi
-     * satu-satunya cara mengaksesnya memang lewat route ini — tidak ada
-     * URL publik langsung ke file-nya. Route ini WAJIB didaftarkan di
-     * dalam grup middleware 'admin.session'.
-     */
     public function downloadJawabanFile(JawabanPeserta $jawaban)
     {
-        // 1. Ambil path file dari jawaban
         $filePath = $jawaban->jawaban;
 
-        // Jika jawaban berupa array, ambil elemen pertama
         if (is_array($filePath)) {
             $filePath = $filePath[0] ?? null;
         }
 
-        // Bersihkan query string jika ada (misal ?v=123)
         if ($filePath && str_contains($filePath, '?')) {
             $filePath = parse_url($filePath, PHP_URL_PATH);
         }
 
-        // Validasi path tidak kosong
-        if (!$filePath) {
+        if (! $filePath) {
             abort(404, 'File tidak ditemukan');
         }
 
-        // Cek keberadaan file di disk 'public'
-        if (!Storage::disk('public')->exists($filePath)) {
+        if (! Storage::disk('public')->exists($filePath)) {
             abort(404, 'File tidak ditemukan di server');
         }
 
-        // 2. Ambil ekstensi file asli (misal: pdf, jpg, png)
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
 
-        // 3. Ambil data peserta untuk kustomisasi nama file
         $peserta = $jawaban->peserta;
         $user = $peserta?->user;
 
@@ -180,104 +158,94 @@ class PendaftaranController extends Controller
         $emailPeserta  = $user?->email ?? 'tanpa-email';
         $tanggalDaftar = $peserta?->created_at?->format('Y-m-d') ?? date('Y-m-d');
 
-        // 4. Sanitasi nama file (ganti spasi & karakter aneh dengan underscore)
-        // Agar aman dan tidak error saat didownload di berbagai OS
         $namaSanitized  = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $namaPeserta);
         $emailSanitized = preg_replace('/[^a-zA-Z0-9_\-.@]/', '_', $emailPeserta);
 
-        // 5. Format nama file baru: Nama_Email_Tanggal.ext
         $newFilename = "{$namaSanitized}_{$emailSanitized}_{$tanggalDaftar}.{$extension}";
 
-        // 6. Return file sebagai response download dengan nama baru
         return Storage::disk('public')->download($filePath, $newFilename);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Ambil data event
-        $event = Event::first(); 
+        $eventId = $request->query('event_id');
+        $event = $eventId
+            ? Event::find($eventId)
+            : Event::query()->latest('id')->first();
 
-        // 2. Ambil seluruh data peserta
-        $pesertas = Peserta::orderBy('id', 'desc')->get();
+        $baseQuery = Peserta::query()
+            ->when($event, fn ($q) => $q->where('event_id', $event->id));
 
-        // 3. Hitung jumlah statistik peserta berdasarkan status
-        $totalPendaftar = $pesertas->count();
-        $menungguReview = $pesertas->where('status', 'menunggu_review')->count();
-        // $perluRevisi    = $pesertas->where('status', 'revisi')->count();
-        $diterima       = $pesertas->where('status', 'diterima')->count();
-        $ditolak        = $pesertas->where('status', 'ditolak')->count();
+        $totalPendaftar = (clone $baseQuery)->count();
+        $menungguReview = (clone $baseQuery)->where('status', 'menunggu_review')->count();
+        $diterima       = (clone $baseQuery)->where('status', 'diterima')->count();
+        $ditolak        = (clone $baseQuery)->where('status', 'ditolak')->count();
 
-        // 4. Kirim semua variabel ke view dashboard
+        $pesertas = (clone $baseQuery)
+            ->with(['user', 'event', 'jawaban.pertanyaan', 'pembayaran'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $events = Event::query()->latest('id')->get(['id', 'nama']);
+
         return view('admin.dashboard', compact(
-            'event', 
-            'pesertas', 
-            'totalPendaftar', 
-            'menungguReview', 
-            // 'perluRevisi', 
-            'diterima', 
+            'event',
+            'events',
+            'pesertas',
+            'totalPendaftar',
+            'menungguReview',
+            'diterima',
             'ditolak'
         ));
     }
 
-    // Menampilkan Detail Peserta
     public function show($id)
     {
-        $peserta = Peserta::findOrFail($id);
+        $peserta = Peserta::with(['user', 'event', 'jawaban.pertanyaan', 'pembayaran'])
+            ->findOrFail($id);
+
         return view('admin.peserta.show', compact('peserta'));
     }
 
-    // Mengubah Status Peserta (Terima/Tolak/Revisi)
     public function updateStatus(Request $request, $id)
     {
         $peserta = Peserta::findOrFail($id);
-        $peserta->status = $request->status; // 'diterima', 'ditolak', atau 'revisi'
+
+        $validStatus = ['diterima', 'ditolak', 'menunggu_review'];
+
+        if (! in_array($request->status, $validStatus, true)) {
+            return redirect()->back()->with('error', 'Status tidak valid.');
+        }
+
+        if ($request->status === 'ditolak') {
+            $request->validate([
+                'catatan_admin' => ['required', 'string', 'max:1000'],
+            ], [
+                'catatan_admin.required' => 'Alasan penolakan wajib diisi.',
+            ]);
+        }
+
+        $peserta->status = $request->status;
+
+        if ($request->filled('catatan_admin')) {
+            $peserta->catatan_admin = $request->catatan_admin;
+        }
+
+        if ($request->status === 'diterima') {
+            $peserta->catatan_admin = null;
+        }
+
         $peserta->save();
 
         return redirect()->back()->with('success', 'Status peserta berhasil diperbarui.');
     }
 
-    private function buatPembayaranOtomatis(Peserta $peserta): void
-    {
-        // Cek apakah sudah ada pembayaran (hindari duplikasi)
-        if ($peserta->pembayaran) {
-            return;
-        }
-
-        $event = $peserta->event;
-        $tarifDasar = (int) ($event->tarif_pendaftaran ?? 0);
-
-        // Generate kode unik 3 digit dari ID peserta
-        // ID 19 → "019", ID 127 → "127", ID 5 → "005"
-        $kodeUnik = str_pad($peserta->id, 3, '0', STR_PAD_LEFT);
-
-        // Nominal unik = tarif dasar + kode unik
-        // Contoh: 90000 + 19 = 90019
-        $nominalUnik = $tarifDasar + (int) $kodeUnik;
-
-        // Buat order ID yang unik
-        $orderId = 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT);
-
-        Pembayaranevent::create([
-            'peserta_id'        => $peserta->id,
-            'jumlah'            => $nominalUnik,
-            'tarif_dasar'       => $tarifDasar,
-            'kode_unik'         => $kodeUnik,
-            'midtrans_order_id' => $orderId,
-            'status_midtrans'   => 'pending',
-            'metode'            => 'transfer_bank',
-            'tanggal_bayar'     => null,
-        ]);
-    }
-
-    // Menghapus Peserta
     public function destroy($id)
     {
         $peserta = Peserta::findOrFail($id);
 
-        // 1. Hapus semua jawaban yang dimiliki oleh peserta ini
         JawabanPeserta::where('peserta_id', $peserta->id)->delete();
 
-        // 2. Hapus data peserta
         $peserta->delete();
 
         return redirect()->back()->with('success', 'Data peserta dan jawabannya berhasil dihapus.');
@@ -293,28 +261,25 @@ class PendaftaranController extends Controller
             abort(404, 'Kolom jawaban kosong (tidak ada path file).');
         }
 
-        // Normalisasi path dari DB
         $clean = parse_url($raw, PHP_URL_PATH) ?? $raw;
         $clean = ltrim($clean, '/');
         $clean = preg_replace('#^(public/|private/|storage/)+#', '', $clean);
         $basename = basename($clean);
 
-        // --- Tahap 1: lokasi-lokasi kandidat ---
         $candidates = [
-            storage_path('app/private/' . $clean),  // disk local Laravel 11+
-            storage_path('app/public/' . $clean),   // disk public
-            storage_path('app/' . $clean),          // disk local Laravel <= 10
-            public_path('storage/' . $clean),       // hasil storage:link
-            public_path($clean),                    // kalau sempat masuk public/
+            storage_path('app/private/' . $clean),
+            storage_path('app/public/' . $clean),
+            storage_path('app/' . $clean),
+            public_path('storage/' . $clean),
+            public_path($clean),
         ];
 
         foreach ($candidates as $c) {
             if (is_file($c)) {
-                return response()->file($c); // Content-Type otomatis → gambar tampil
+                return response()->file($c);
             }
         }
 
-        // --- Tahap 2: pencarian rekursif berdasarkan nama file ---
         foreach ([storage_path(), public_path()] as $root) {
             if (! is_dir($root)) {
                 continue;
@@ -329,13 +294,9 @@ class PendaftaranController extends Controller
             }
         }
 
-        // --- Tidak ketemu: laporkan semua lokasi yang sudah dicari ---
-        abort(404, 'File fisik tidak ditemukan. Path di DB: ' . $raw .
-            ' | Sudah dicari di: ' . implode(', ', $candidates) .
-            ' + pencarian rekursif di storage/ dan public/');
+        abort(404, 'File fisik tidak ditemukan. Path di DB: ' . $raw);
     }
 
-        // Hapus semua pertanyaan milik event (dipanggil dari halaman form builder)
     public function clearQuestions(Request $request, Event $event)
     {
         $event->pertanyaans()->delete();

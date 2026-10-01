@@ -18,13 +18,19 @@ class GoogleAuthController extends Controller
             session(['redirect_after_login' => $request->get('redirect_to')]);
         }
 
-        return Socialite::driver('google')->redirect();
+        // Pakai stateless() biar gak butuh state di session
+        // (workaround: cookie cross-site dari accounts.google.com sering diblokir)
+        return Socialite::driver('google')
+            ->stateless()
+            ->redirect();
     }
 
     // GET /auth/google/callback
     public function callback()
     {
-        $googleUser = Socialite::driver('google')->user();
+        $googleUser = Socialite::driver('google')
+            ->stateless()
+            ->user();
 
         $pengguna = PenggunaEvent::where('google_id', $googleUser->getId())->first();
 
