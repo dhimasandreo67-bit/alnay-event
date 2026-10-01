@@ -64,8 +64,13 @@
             @endif
 
             @if ($errors->any())
-                <div class="mx-6 mt-4 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-[12px]">
-                    Ada isian yang belum sesuai, cek lagi di bawah.
+                <div class="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <p class="text-sm font-semibold text-rose-700 mb-2">Ada isian yang belum sesuai:</p>
+                    <ul class="list-disc list-inside text-sm text-rose-600 space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
@@ -113,32 +118,40 @@
                                   class="w-full border border-[#e5e1db] rounded-lg px-3 py-2.5 text-[12px] mb-4" placeholder="Masukkan syarat dan ketentuan event (pisahkan tiap baris dengan enter)...">{{ old('syarat_ketentuan') }}</textarea>
                         @error('syarat_ketentuan')<div class="text-red-600 text-[10px] -mt-3 mb-4">{{ $message }}</div>@enderror
 
+                        {{-- Status Event --}}
                         <div>
-                        <label class="block text-[12px] font-bold mb-2">Status Event</label>
-                            <div class="grid grid-cols-3 gap-3" id="statusIndicator">
-                            <!-- 1. Akan Datang -->
-                            <label class="status-btn cursor-pointer border rounded-lg px-3 py-2.5 text-[12px] flex items-center gap-2 border-[#e5e1db] has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all">
-                                <input type="radio" name="event_status" value="akan_datang" class="hidden" checked>
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span> 
-                                Akan Datang
-                            </label>
+                            <label class="block font-bold mb-2">Status Event</label>
+                            <div class="grid grid-cols-3 gap-3">
+                                {{-- Akan Datang (default checked) --}}
+                                <label class="cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', 'akan_datang') === 'akan_datang' ? 'border-blue-500 bg-blue-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                    <input type="radio" name="status" value="akan_datang"
+                                        {{ old('status', 'akan_datang') === 'akan_datang' ? 'checked' : '' }}
+                                        class="w-4 h-4 text-blue-600">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                    <span class="text-sm font-medium">Akan Datang</span>
+                                </label>
 
-        <!-- 2. Sedang Berlangsung -->
-        <label class="status-btn cursor-pointer border rounded-lg px-3 py-2.5 text-[12px] flex items-center gap-2 border-[#e5e1db] has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 transition-all">
-            <input type="radio" name="event_status" value="berlangsung" class="hidden">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 
-            Sedang Berlangsung
-        </label>
+                                {{-- Sedang Berlangsung --}}
+                                <label class="cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status') === 'sedang_berlangsung' ? 'border-emerald-500 bg-emerald-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                    <input type="radio" name="status" value="sedang_berlangsung"
+                                        {{ old('status') === 'sedang_berlangsung' ? 'checked' : '' }}
+                                        class="w-4 h-4 text-emerald-600">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <span class="text-sm font-medium">Sedang Berlangsung</span>
+                                </label>
 
-        <!-- 3. Telah Berakhir -->
-        <label class="status-btn cursor-pointer border rounded-lg px-3 py-2.5 text-[12px] flex items-center gap-2 border-[#e5e1db] has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 transition-all">
-            <!-- PASTIKAN value="selesai" -->
-            <input type="radio" name="event_status" value="selesai" class="hidden">
-            <span class="w-2 h-2 rounded-full bg-orange-500"></span> 
-            Telah Berakhir
-        </label>
-    </div>
-</div>
+                                {{-- Telah Berakhir --}}
+                                <label class="cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status') === 'telah_berakhir' ? 'border-orange-500 bg-orange-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                    <input type="radio" name="status" value="telah_berakhir"
+                                        {{ old('status') === 'telah_berakhir' ? 'checked' : '' }}
+                                        class="w-4 h-4 text-orange-600">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                    <span class="text-sm font-medium">Telah Berakhir</span>
+                                </label>
+                            </div>
+                            @error('status') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
 
                     {{-- Jadwal & Lokasi Event --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
@@ -240,6 +253,7 @@
                             <div>
                                 <label class="block font-bold mb-1">Batas Pendaftaran (Tanggal)</label>
                                 <input type="date" name="batas_pendaftaran_tanggal" 
+                                    id="inputBatasTanggal"
                                     value="{{ old('batas_pendaftaran_tanggal') }}" 
                                     required
                                     class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
@@ -250,6 +264,7 @@
                             <div>
                                 <label class="block font-bold mb-1">Batas Pendaftaran (Waktu)</label>
                                 <input type="time" name="batas_pendaftaran_waktu" 
+                                    id="inputBatasWaktu"
                                     value="{{ old('batas_pendaftaran_waktu') }}" 
                                     required
                                     class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
@@ -263,6 +278,7 @@
                             <label class="block font-bold mb-1">Kuota Peserta</label>
                             <div class="relative">
                                 <input type="number" name="kuota_peserta" 
+                                    id="inputKuota"
                                     value="{{ old('kuota_peserta') }}" 
                                     min="1"
                                     placeholder="Contoh: 100"
