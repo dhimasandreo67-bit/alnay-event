@@ -51,7 +51,7 @@ class EventController extends Controller
             'batas_pendaftaran_tanggal' => 'nullable|date',
             'batas_pendaftaran_waktu'   => 'nullable',
             'kuota_peserta'             => 'nullable|integer',
-            'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',
         ]);
 
