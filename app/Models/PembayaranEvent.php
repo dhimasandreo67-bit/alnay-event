@@ -19,10 +19,14 @@ class PembayaranEvent extends Model
         'jumlah',
         'tarif_dasar',
         'kode_unik',
+        'metode',
+        'payment_method',      // ← tambah
+        'qr_string',           // ← tambah
+        'qr_url',              // ← tambah
+        'va_number',           // ← tambah
         'midtrans_order_id',
         'midtrans_transaction_id',
         'status_midtrans',
-        'metode',
         'tanggal_bayar',
     ];
 
@@ -47,8 +51,8 @@ class PembayaranEvent extends Model
         if (!$this->pembayaran) {
             return 'Belum ada tagihan';
         }
-        
-        return 'Rp ' . number_format($this->pembayaran->jumlah, 0, ',', '.') 
-             . ' (kode unik: ' . $this->pembayaran->kode_unik . ')';
+
+        return 'Rp ' . number_format($this->pembayaran->jumlah, 0, ',', '.')
+            . ' (kode unik: ' . $this->pembayaran->kode_unik . ')';
     }
 }
