@@ -140,9 +140,6 @@ Route::middleware('pelanggan')->group(function () {
     Route::get('/peserta/{peserta}/pembayaran', [PembayaranController::class, 'show'])
         ->name('peserta.pembayaran');
 
-    Route::get('/peserta/{peserta}/pembayaran', [PembayaranController::class, 'show'])
-        ->name('peserta.pembayaran');
-
     // Request charge ke Midtrans
     Route::post('/peserta/{peserta}/charge', [PembayaranController::class, 'charge'])
         ->name('peserta.pembayaran.charge');
