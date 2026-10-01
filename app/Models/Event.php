@@ -64,6 +64,8 @@ class Event extends Model
         'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
         'form_fields' => 'array',
+        'tanggal_mulai_pendaftaran' => 'datetime',
+        'tanggal_selesai_pendaftaran' => 'datetime',
         'is_active' => 'boolean',
     ];
 
@@ -89,25 +91,23 @@ class Event extends Model
      * Menggabungkan tanggal_mulai (date) + waktu_mulai (time, opsional)
      * supaya perhitungan tetap akurat sampai ke jam.
      */
-    // public function getStatusAttribute(): string
+
+    // public function getStatusAttribute()
     // {
-    //     $mulai = $this->combineDateTime($this->tanggal_mulai, $this->waktu_mulai, '00:00');
-    //     $selesai = $this->tanggal_selesai
-    //         ? $this->combineDateTime($this->tanggal_selesai, $this->waktu_selesai, '23:59')
-    //         : null;
+    //     // Jika event di-nonaktifkan secara manual
+    //     if (isset($this->is_active) && !$this->is_active) {
+    //         return 'nonaktif';
+    //     }
 
-    //     $sekarang = Carbon::now();
+    //     $now = Carbon::now();
+    //     $mulai = $this->tanggal_mulai_pendaftaran ? Carbon::parse($this->tanggal_mulai_pendaftaran) : null;
+    //     $selesai = $this->tanggal_selesai_pendaftaran ? Carbon::parse($this->tanggal_selesai_pendaftaran) : null;
 
-    //     if ($sekarang->lt($mulai)) {
+    //     if ($mulai && $now->lt($mulai)) {
     //         return 'akan_datang';
     //     }
 
-    //     if ($selesai && $sekarang->gt($selesai)) {
-    //         return 'selesai';
-    //     }
-
-    //     if (! $selesai && $sekarang->gt($mulai->copy()->endOfDay())) {
-    //         // Tidak ada tanggal_selesai -> anggap event 1 hari, selesai di akhir hari mulai.
+    //     if ($selesai && $now->gt($selesai)) {
     //         return 'selesai';
     //     }
 
@@ -120,7 +120,6 @@ class Event extends Model
             'akan_datang' => 'Akan Datang',
             'sedang_berlangsung' => 'Sedang Berlangsung',
             'telah_berakhir' => 'Telah Berakhir',
-            default => 'Tidak Diketahui',
         };
     }
 
