@@ -24,7 +24,8 @@
         }
 
         * {
-            box-sizing: border-box font-family: 'Inter', sans-serif
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif
         }
 
         body {
@@ -559,12 +560,13 @@
             'menungguReview' => $menungguReview,
         ])
         @include('admin.partials.header', ['variant' => 'dashboard', 'event' => $event])
-        {{-- <div class="hidden"></div> --}}
+
         <main class="main">
             <section class="content">
                 {{-- EVENT HEADER --}}
                 <div class="event-header">
                     <div>
+                        {{-- Dropdown pilih event --}}
                         @if (isset($events) && $events->count() > 1)
                             <form method="GET" action="{{ route('admin.registrations') }}" class="mb-2">
                                 <select name="event_id" onchange="this.form.submit()"
@@ -578,17 +580,39 @@
                             </form>
                         @endif
 
-                        <span class="open">Pendaftaran Dibuka</span>
+                        {{-- Rentang waktu event --}}
+                        <span class="event-meta">
+                            @if ($event?->tanggal_mulai && $event?->tanggal_selesai)
+                                {{ \Carbon\Carbon::parse($event->tanggal_mulai)->format('d M Y') }},
+                                {{ $event->waktu_mulai ? \Carbon\Carbon::parse($event->waktu_mulai)->format('H:i') : '00:00' }}
+                                –
+                                {{ \Carbon\Carbon::parse($event->tanggal_selesai)->format('d M Y') }},
+                                {{ $event->waktu_selesai ? \Carbon\Carbon::parse($event->waktu_selesai)->format('H:i') : '23:59' }} WIB
+                            @else
+                                Jadwal event belum ditentukan
+                            @endif
+                        </span>
+
+                        {{-- Nama event --}}
                         <h1 class="event-title mt-2">{{ $event?->nama ?? 'Belum ada event' }}</h1>
-                        <span class="event-meta">Pendaftaran peserta event</span>
+
+                        {{-- Ringkasan tanggal pendaftaran --}}
+                        <span class="event-meta">
+                            Pendaftaran:
+                            @if ($event?->pembukaan_pendaftaran_tanggal && $event?->batas_pendaftaran_tanggal)
+                                {{ \Carbon\Carbon::parse($event->pembukaan_pendaftaran_tanggal)->format('d') }} –
+                                {{ \Carbon\Carbon::parse($event->batas_pendaftaran_tanggal)->format('d M Y') }}
+                            @else
+                                -
+                            @endif
+                            &nbsp; · &nbsp;
+                            Kuota Maks: {{ $event?->kuota_peserta ?? 'Tidak terbatas' }} orang
+                        </span>
                     </div>
 
                     <div class="flex items-center gap-2">
                         <a href="{{ route('admin.peserta.export', $event->id) }}"
-                            class="inline-flex items-center gap-1.5 px-4 py-3
-                            bg-emerald-600 hover:bg-emerald-700 
-                            text-white font-bold text-[12px] 
-                            rounded-md transition-colors shadow-sm">
+                            class="inline-flex items-center gap-1.5 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] rounded-md transition-colors shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -597,10 +621,7 @@
                         </a>
 
                         <a href="{{ route('public.registration', $event->id) }}"
-                            class="inline-flex items-center px-4 py-3
-                            bg-[#ba8320] hover:bg-[#a06f1a] 
-                            text-white font-bold text-[12px] 
-                            rounded-md transition-colors shadow-sm">
+                            class="inline-flex items-center px-4 py-3 bg-[#ba8320] hover:bg-[#a06f1a] text-white font-bold text-[12px] rounded-md transition-colors shadow-sm">
                             + Tambah Manual
                         </a>
                     </div>
@@ -645,7 +666,10 @@
                 <div class="panel" id="verification">
                     <div class="panel-head">
                         <strong>Daftar Peserta</strong>
-                        <span class="event-meta">Update terakhir: baru saja</span>
+                        <span class="event-meta" id="lastUpdateText"
+                            data-updated-at="{{ $lastUpdate ? \Carbon\Carbon::parse($lastUpdate)->timestamp : '' }}">
+                            Update terakhir: -
+                        </span>
                     </div>
                     <div class="table-wrap">
                         <table class="w-full text-left border-collapse">
@@ -672,14 +696,12 @@
                                                     @endif
                                                 </li>
                                                 <li><strong>Email:</strong> {{ $peserta->emailTampil() }}</li>
-                                                <li><strong>Email:</strong> {{ $peserta->user?->email ?? '-' }}</li>
                                                 @foreach ($peserta->jawabans as $jawaban)
                                                     @continue(in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true))
                                                     <li>
                                                         <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
                                                         @if ($jawaban->pertanyaan?->tipe_input === 'file')
-                                                            <a href="{{ route('admin.jawaban.file', $jawaban) }}"
-                                                                target="_blank">Lihat file</a>
+                                                            <a href="{{ route('admin.jawaban.file', $jawaban) }}" target="_blank">Lihat file</a>
                                                         @else
                                                             {{ is_array($jawaban->jawaban) ? implode(', ', $jawaban->jawaban) : $jawaban->jawaban }}
                                                         @endif
@@ -689,15 +711,11 @@
                                         </td>
                                         <td class="p-3">
                                             @if ($status === 'diterima')
-                                                <span
-                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
+                                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
                                             @elseif($status === 'ditolak')
-                                                <span
-                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
+                                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
                                             @else
-                                                <span
-                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu
-                                                    Review</span>
+                                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu Review</span>
                                             @endif
                                         </td>
                                         <td class="p-3">
@@ -735,7 +753,9 @@
             </section>
         </main>
     </div>
+
     <script>
+        // === Filter & Search ===
         const searchInput = document.getElementById('search');
         const filterButtons = document.querySelectorAll('.filter');
         const rows = document.querySelectorAll('#participantRows tr[data-status]');
@@ -777,6 +797,8 @@
                 applyFilters();
             });
         });
+
+        // === Admin Links ===
         const adminLinks = {
             '#form': '{{ route('admin.form-builder', $event?->id) }}',
             '#verification': '{{ route('admin.registrations', $event?->id) }}',
@@ -791,7 +813,40 @@
                 e.preventDefault();
                 location.href = adminLinks[this.getAttribute('href')]
             }
-        }))
+        }));
+
+        // === Last Update (relatif) ===
+        document.addEventListener('DOMContentLoaded', function () {
+            const el = document.getElementById('lastUpdateText');
+            if (!el) return;
+
+            const raw = el.dataset.updatedAt;
+            if (!raw || isNaN(parseInt(raw, 10))) {
+                el.textContent = 'Update terakhir: belum ada data';
+                return;
+            }
+
+            const updatedAt = parseInt(raw, 10) * 1000;
+
+            function formatRelatif(detik) {
+                if (detik < 10) return 'baru saja';
+                if (detik < 60) return `${detik} detik lalu`;
+                const menit = Math.floor(detik / 60);
+                if (menit < 60) return `${menit} menit lalu`;
+                const jam = Math.floor(menit / 60);
+                if (jam < 24) return `${jam} jam lalu`;
+                const hari = Math.floor(jam / 24);
+                return `${hari} hari lalu`;
+            }
+
+            function tick() {
+                const detik = Math.floor((Date.now() - updatedAt) / 1000);
+                el.textContent = 'Update terakhir: ' + formatRelatif(Math.max(detik, 0));
+            }
+
+            tick();
+            setInterval(tick, 5000);
+        });
     </script>
 </body>
 
