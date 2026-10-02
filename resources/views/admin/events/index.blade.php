@@ -216,7 +216,7 @@
                                                 @method('DELETE')
                                                 <button type="button" 
                                                         onclick="handleDelete(this)" 
-                                                        class="px-3 py-1.5 bg-red-600 hover:bg-red-50 text-white text-xs font-medium rounded-lg border border-red-700 transition">
+                                                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg border border-red-500 transition">
                                                     Hapus
                                                 </button>
                                             </form>
