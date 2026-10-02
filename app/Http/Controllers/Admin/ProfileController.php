@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -19,8 +18,11 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $admin = AkunStaf::findOrFail($request->session()->get('admin_id'));
+        $eventId = session('active_event_id');
+        $event = $eventId ? Event::find($eventId) : null;
+        $event ??= Event::query()->latest('id')->first();
 
-        return view('admin.profile.edit', compact('admin'));
+        return view('admin.profile.edit', compact('admin', 'event'));
     }
 
     /**
@@ -29,18 +31,16 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $admin = AkunStaf::findOrFail($request->session()->get('admin_id'));
-
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('akun_staf', 'email')->ignore($admin->id)],
         ]);
-
         $admin->update($data);
-
-        // Ikutan update nama yang tampil di session (dipakai partial sidebar)
+        
+        // Update session admin
         $request->session()->put('admin_name', $admin->nama);
         $request->session()->put('admin_email', $admin->email);
-
+        
         return redirect()->route('admin.profile')->with('success', 'Profil berhasil diperbarui.');
     }
 
@@ -50,20 +50,19 @@ class ProfileController extends Controller
     public function updatePassword(Request $request): RedirectResponse
     {
         $admin = AkunStaf::findOrFail($request->session()->get('admin_id'));
-
         $data = $request->validate([
             'current_password' => ['required'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
-
+        
         if (! Hash::check($data['current_password'], $admin->password_hash)) {
             throw ValidationException::withMessages([
                 'current_password' => 'Password lama yang kamu masukkan salah.',
             ]);
         }
-
+        
         $admin->update(['password_hash' => Hash::make($data['password'])]);
-
+        
         return redirect()->route('admin.profile')->with('success', 'Password berhasil diubah.');
     }
 }
