@@ -1,0 +1,20 @@
+{
+    "id": "/admin/",
+    "name": "ALNAY.ID Admin",
+    "short_name": "ALNAY Admin",
+    "description": "Portal administrasi event ALNAY.ID",
+    "start_url": "/admin/",
+    "scope": "/admin/",
+    "display": "standalone",
+    "background_color": "#171512",
+    "theme_color": "#ba8320",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icons/admin-app.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
