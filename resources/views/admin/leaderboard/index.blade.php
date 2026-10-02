@@ -76,7 +76,7 @@
             {{-- STAT CARDS --}}
             {{-- ===================================================== --}}
 
-            <div class="grid grid-cols-4 gap-4 mb-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
 
                 {{-- Total suara --}}
                 <div class="bg-white rounded-xl border border-[#e3ded6] p-4">
@@ -194,10 +194,11 @@
                     {{-- Peringkat 1 --}}
                     @if ($peringkat1)
 
-                        <div class="bg-[#fbf6e9] rounded-xl border border-[#d9bd79] p-5 text-center">
+                    <div class="flex justify-center">
+                        <div class="w-full max-w-sm bg-[#fbf6e9] rounded-xl border border-[#d9bd79] p-5 text-center">
 
                             <div class="text-[10px] uppercase font-bold text-[#ba8320] mb-3">
-                                🏆 Peringkat 1
+                                Peringkat 1
                             </div>
 
                             <div class="w-20 h-20 mx-auto rounded-full bg-[#f0e6cf] text-[#8a6d1f] flex items-center justify-center text-2xl font-bold border-2 border-[#d9bd79]">
@@ -217,6 +218,7 @@
                             </div>
 
                         </div>
+                    </div>
 
                     @else
 
