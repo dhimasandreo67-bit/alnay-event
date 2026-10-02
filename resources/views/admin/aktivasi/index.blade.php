@@ -33,7 +33,7 @@
         @endif
 
         {{-- Stat cards --}}
-        <div class="grid grid-cols-3 gap-4 mb-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
             <div class="bg-white rounded-xl border border-[#e3ded6] p-4">
                 <div class="text-[10px] uppercase text-[#98958f] font-bold">Total Finalis Diterima</div>
                 <div class="text-3xl font-bold mt-1">{{ $totalFinalis }} <span class="text-sm text-[#98958f] font-normal">/ {{ $event?->kuota_peserta ?? '-' }} Kuota</span></div>
@@ -49,15 +49,29 @@
         </div>
 
         {{-- Tabs + search --}}
-        <div class="flex items-center gap-2 mb-4">
-            <button data-tab="semua" class="tab-btn active px-4 py-2 rounded-lg text-[12px] font-semibold bg-gold text-white">Semua ({{ $totalFinalis }})</button>
-            <button data-tab="perlu" class="tab-btn px-4 py-2 rounded-lg text-[12px] font-semibold bg-white border border-[#e3ded6]">Perlu Verifikasi ({{ $menungguVerifikasi }})</button>
-            <button data-tab="aktif" class="tab-btn px-4 py-2 rounded-lg text-[12px] font-semibold bg-white border border-[#e3ded6]">Sudah Aktif / Lunas ({{ $lunas }})</button>
-            <input id="cariFinalis" type="text" placeholder="Cari nama, no. registrasi, email..."
-                   class="ml-auto border border-[#e3ded6] rounded-lg px-3 py-2 text-[12px] w-72">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+            <button data-tab="semua"
+                    class="tab-btn active px-4 py-2 rounded-lg text-[12px] font-semibold bg-gold text-white">
+                Semua ({{ $totalFinalis }})
+            </button>
+
+            <button data-tab="perlu"
+                    class="tab-btn px-4 py-2 rounded-lg text-[12px] font-semibold bg-white border border-[#e3ded6]">
+                Perlu Verifikasi ({{ $menungguVerifikasi }})
+            </button>
+
+            <button data-tab="aktif"
+                    class="tab-btn px-4 py-2 rounded-lg text-[12px] font-semibold bg-white border border-[#e3ded6]">
+                Sudah Aktif / Lunas ({{ $lunas }})
+            </button>
+
+            <input id="cariFinalis"
+                type="text"
+                placeholder="Cari nama, no. registrasi, email..."
+                class="md:col-span-3 w-full border border-[#e3ded6] rounded-lg px-3 py-2 text-[12px]">
         </div>
 
-        <div class="grid grid-cols-[1fr_1.3fr] gap-5 items-start">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-5">
 
             {{-- ===== Kolom kiri: antrean ===== --}}
         <div class="space-y-3">
