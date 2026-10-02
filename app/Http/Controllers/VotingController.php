@@ -267,26 +267,55 @@ class VotingController extends Controller
 
     public function leaderboard($event = null)
     {
-        // 1. Ambil data Event berdasarkan ID
+        // 1. Ambil data Event berdasarkan ID (Aman dari error string)
         if ($event) {
-            $eventData = Event::findOrFail($event);
+            $eventData = \App\Models\Event::findOrFail($event);
         } else {
-            $eventData = Event::latest()->firstOrFail();
+            $eventData = \App\Models\Event::latest()->first();
         }
 
-        // 2. Query peserta aktif (status diterima & pembayaran settlement) + eager load user
-        $rawPeserta = Peserta::where('event_id', $eventData->id)
+        // Jika tidak ada event sama sekali, kembalikan view kosong
+        if (!$eventData) {
+            return view('admin.leaderboard.index', [
+                'event'            => null,
+                'pesertas'         => collect(),
+                'totalSuara'       => 0,
+                'pesertaCount'     => 0,
+                'peringkat1'       => null,
+                'peringkat2'       => null,
+                'peringkat3'       => null,
+                'persenPeringkat1' => 0,
+            ]);
+        }
+
+        // 2. Query peserta aktif (status diterima & pembayaran settlement)
+        $rawPeserta = \App\Models\Peserta::where('event_id', $eventData->id)
             ->where('status', 'diterima')
             ->whereHas('pembayaran', function ($query) {
                 $query->where('status_midtrans', 'settlement');
             })
             ->with(['user'])
-            ->withCount('votingMasuk')
-            ->orderByDesc('voting_masuk_count')
             ->get();
 
-        // 3. Ringkasan Total Suara & Jumlah Peserta
-        $totalSuara = $rawPeserta->sum('voting_masuk_count');
+        // 3. Hitung total suara langsung dari tabel voting untuk setiap peserta
+        $rawPeserta = $rawPeserta->map(function ($peserta) use ($eventData) {
+            $totalVote = \App\Models\Voting::where('peserta_id', $peserta->id)
+                ->where('event_id', $eventData->id)
+                ->where('status_midtrans', 'settlement')
+                ->sum('jumlah_vote');
+            
+            $peserta->total_vote = $totalVote;
+            return $peserta;
+        });
+
+        // Sortir berdasarkan total vote (descending) dan reset index
+        $rawPeserta = $rawPeserta->sortByDesc('total_vote')->values();
+
+        // 4. Ringkasan Total Suara & Jumlah Peserta
+        $totalSuara = \App\Models\Voting::where('event_id', $eventData->id)
+            ->where('status_midtrans', 'settlement')
+            ->sum('jumlah_vote');
+            
         $pesertaCount = $rawPeserta->count();
 
         // Variasi style avatar
@@ -297,16 +326,14 @@ class VotingController extends Controller
             'bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]',
         ];
 
-        // 4. Format data array (Ambil nama dari $p->user->nama)
+        // 5. Format data array untuk view
         $pesertas = $rawPeserta->map(function ($p, $index) use ($totalSuara, $warnaList) {
-            // Ambil nama dari relasi User
             $nama = $p->user->nama ?? $p->nama ?? 'Tanpa Nama';
-            $totalVote = $p->voting_masuk_count ?? 0;
+            $totalVote = $p->total_vote ?? 0;
             
-            // Persentase Suara
             $persentase = $totalSuara > 0 ? round(($totalVote / $totalSuara) * 100, 1) : 0;
 
-            // Buat Inisial Nama (contoh: "Tono Subagyo" -> "TS")
+            // Buat Inisial Nama
             $words = explode(' ', trim($nama));
             $inisial = strtoupper(substr($words[0], 0, 1));
             if (count($words) > 1) {
@@ -323,14 +350,14 @@ class VotingController extends Controller
             ];
         });
 
-        // 5. Ambil Top 3 untuk Podium
+        // 6. Ambil Top 3 untuk Podium
         $peringkat1 = $pesertas->get(0);
         $peringkat2 = $pesertas->get(1);
         $peringkat3 = $pesertas->get(2);
 
         $persenPeringkat1 = $peringkat1['persentase'] ?? 0;
 
-        // 6. Return ke View
+        // 7. Return ke View
         return view('admin.leaderboard.index', [
             'event'            => $eventData,
             'pesertas'         => $pesertas,
@@ -341,7 +368,7 @@ class VotingController extends Controller
             'peringkat3'       => $peringkat3,
             'persenPeringkat1' => $persenPeringkat1,
         ]);
-    }
+}
 
     /**
      * Helper untuk warna berdasarkan jumlah vote
