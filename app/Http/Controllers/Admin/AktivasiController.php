@@ -58,26 +58,28 @@ class AktivasiController extends Controller
      * otomatis kelihatan "Aktif & Lunas" (itu cuma tampilan turunan dari
      * status_midtrans, bukan kolom baru).
      */
-    public function verifikasi(Peserta $peserta): RedirectResponse
+    public function verifikasi(Peserta $peserta)
     {
+        $peserta->load(['user', 'pembayaran', 'event']);
         $pembayaran = $peserta->pembayaran;
 
-        if (! $pembayaran) {
-            return back()->with('error', 'Peserta ini belum punya transaksi pembayaran.');
+        if (!$pembayaran) {
+            return redirect()->back()->with('error', 'Peserta belum memiliki transaksi pembayaran.');
         }
 
-        // TODO: panggil Midtrans Status API di sini, contoh:
-        // \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-        // $status = \Midtrans\Transaction::status($pembayaran->midtrans_order_id);
-        // $pembayaran->update([
-        //     'status_midtrans' => $status->transaction_status,
-        //     'midtrans_transaction_id' => $status->transaction_id,
-        //     'tanggal_bayar' => $status->transaction_status === 'settlement' ? now() : $pembayaran->tanggal_bayar,
-        // ]);
+        // Jika status sudah settlement (atau logika cek Midtrans Anda menandakan lunas)
+        if ($pembayaran->status_midtrans === 'settlement') {
 
-        return redirect()
-            ->route('admin.activation', $peserta->event_id)
-            ->with('success', "Status pembayaran {$peserta->user->nama} berhasil disinkronkan.");
+            // 1. Aktifkan akun peserta (sesuaikan field di tabel Anda)
+            $peserta->update(['status_akun' => 'aktif']);
+
+            // 2. ✅ BARU: masukkan data ke tabel voting
+            $this->sinkronkanKeVoting($peserta, $pembayaran);
+
+            return redirect()->back()->with('success', 'Pembayaran lunas. Akun aktif & data tersinkron ke voting.');
+        }
+
+        return redirect()->back()->with('error', 'Status pembayaran belum settlement.');
     }
 
     private function transform(Peserta $peserta): array
@@ -102,5 +104,25 @@ class AktivasiController extends Controller
             'statusAkun' => $lunas ? 'aktif' : 'terkunci',
             'peserta' => $peserta,
         ];
+    }
+
+    private function sinkronkanKeVoting(Peserta $peserta, $pembayaran): void
+    {
+        \App\Models\Voting::firstOrCreate(
+            // Kunci unik: order id pembayaran (cegah duplikat)
+            ['midtrans_order_id' => $pembayaran->midtrans_order_id],
+            // Data yang diisi saat record belum ada
+            [
+                'event_id'        => $peserta->event_id,
+                'peserta_id'      => $peserta->id,
+                'user_id'         => $peserta->user_id,
+                'nama_tampilan'   => $peserta->user?->nama ?? 'Peserta',
+                'jumlah_vote'     => 0,
+                'harga_per_vote'  => $peserta->event?->harga_per_vote ?? 0,
+                'total_bayar'     => $pembayaran->jumlah,
+                'status_midtrans' => 'settlement',
+                'tanggal_vote'    => $pembayaran->tanggal_bayar ?? now(),
+            ]
+        );
     }
 }
