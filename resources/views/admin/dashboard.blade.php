@@ -727,7 +727,7 @@
 
                                                 <form action="{{ route('admin.peserta.destroy', $peserta->id) }}"
                                                     method="POST"
-                                                    onsubmit="return confirm('Yakin hapus peserta ini?')">
+                                                    onsubmit="event.preventDefault(); konfirmasi('Yakin hapus peserta ini?', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
@@ -848,6 +848,8 @@
             setInterval(tick, 5000);
         });
     </script>
+
+    @include('partials.swal')
 </body>
 
 </html>

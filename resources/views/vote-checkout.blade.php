@@ -209,7 +209,7 @@
                 hitungTotal();
             } catch (err) {
                 console.error(err);
-                alert('Gagal memuat detail peserta.');
+                swalAlert('Gagal memuat detail peserta.', 'error'); 
             }
         }
 
@@ -275,6 +275,9 @@
 
         muatPeserta();
     </script>
+    
+    @include('partials.swal')
+
 </body>
 
 </html>

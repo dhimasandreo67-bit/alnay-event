@@ -1101,10 +1101,10 @@
             allSaveButtons.forEach(btn => {
                 btn.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    if (!eventId) return alert('Pilih event terlebih dahulu.');
+                    if (!eventId) return toast('Pilih event terlebih dahulu.', 'warning');
 
                     const fields = getFieldsFromCanvas();
-                    if (!fields.length) return alert('Tambahkan minimal satu field.');
+                    if (!fields.length) return toast('Tambahkan minimal satu field.', 'warning');
 
                     allSaveButtons.forEach(b => {
                         b.disabled = true;
@@ -1126,9 +1126,9 @@
                         if (!response.ok) throw new Error(data.message || 'Gagal menyimpan.');
 
                         clearDraft();
-                        alert(data.message || 'Formulir berhasil disimpan.');
+                        toast(data.message || 'Formulir berhasil disimpan.', 'success');
                     } catch (error) {
-                        alert(error.message);
+                        swalAlert(error.message, 'error');
                     } finally {
                         allSaveButtons.forEach(b => {
                             b.disabled = false;
@@ -1172,6 +1172,7 @@ function collectFormData() {
     </script>
 
     @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
+    @include('partials.swal')
 </body>
 
 </html>

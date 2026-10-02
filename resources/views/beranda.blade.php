@@ -234,8 +234,8 @@
                         @endif
                     </div>
 
-                    {{-- INFO BAWAH --}}
-                    <div class="flex flex-col gap-6 p-6 sm:p-7 md:flex-row md:items-start md:justify-between">
+                    {{-- INFO BAWAH — langsung di bawah banner, tanpa overlap --}}
+<div class="bg-white flex flex-col gap-6 p-6 sm:p-7 md:flex-row md:items-start md:justify-between">
 
                         {{-- KIRI: Nama + Deskripsi + Tanggal --}}
                         <div class="max-w-[560px] flex-1">

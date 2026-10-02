@@ -202,7 +202,7 @@
                                             </a>
 
                                             <form action="{{ route('admin.events.destroy', $item->id) }}" method="POST" 
-                                                  onsubmit="return confirm('Yakin ingin menghapus event ini?')" class="inline">
+                                                  onsubmit="event.preventDefault(); konfirmasi('Yakin ingin menghapus event ini?', () => this.submit(), { title: 'Hapus Event', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });" class="inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" 
@@ -232,7 +232,7 @@
             </div>
         </main>
     </div>
-
+    @include('partials.swal')
     @include('admin.partials.sidebar', ['active' => 'events-index'])
 </body>
 </html>

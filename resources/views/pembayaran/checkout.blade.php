@@ -219,7 +219,7 @@
     const metode = document.querySelector('input[name="metode"]:checked')?.value;
 
     if (!metode) {
-        alert('Pilih metode pembayaran dulu.');
+        toast('Pilih metode pembayaran dulu.', 'warning');
         btn.disabled = false;
         btn.textContent = originalText;
         return;
@@ -240,7 +240,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-            alert(data.message || 'Gagal memproses pembayaran.');
+            swalAlert(data.message || 'Gagal memproses pembayaran.', 'error');
             btn.disabled = false;
             btn.textContent = originalText;
             return;
@@ -250,12 +250,14 @@
         window.location.href = data.redirect_url;
 
     } catch (err) {
-        alert('Terjadi kesalahan: ' + err.message);
+        swalAlert('Terjadi kesalahan: ' + err.message, 'error');
         btn.disabled = false;
         btn.textContent = originalText;
     }
 }
     </script>
+
+    @include('partials.swal')
 
 </body>
 </html>

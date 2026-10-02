@@ -956,11 +956,22 @@
                             const catatan = document.getElementById('catatan_admin').value.trim();
                             if (!catatan) {
                                 e.preventDefault();
-                                alert('Alasan penolakan wajib diisi sebelum menolak pendaftaran.');
+                                toast('Alasan penolakan wajib diisi sebelum menolak pendaftaran.', 'warning');
                                 document.getElementById('catatan_admin').focus();
                                 return false;
                             }
-                            return confirm('Yakin menolak pendaftaran ini?');
+
+                            e.preventDefault();
+                            const form = e.target;
+                            konfirmasi(
+                                'Yakin menolak pendaftaran ini?',
+                                () => form.submit(), {
+                                    title: 'Tolak Pendaftaran',
+                                    confirmText: 'Ya, Tolak',
+                                    confirmColor: '#dc2626',
+                                }
+                            );
+                            return false;
                         }
                     </script>
 
@@ -969,7 +980,7 @@
                     <div class="px-5 pb-5">
 
                         <form action="{{ route('admin.peserta.destroy', $peserta->id) }}" method="POST"
-                            onsubmit="return confirm('Yakin ingin menghapus data peserta ini? Tindakan ini tidak bisa dibatalkan.')">
+                            onsubmit="event.preventDefault(); konfirmasi('Yakin ingin menghapus data peserta ini? Tindakan ini tidak bisa dibatalkan.', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });">
 
                             @csrf
                             @method('DELETE')
@@ -1278,6 +1289,8 @@
             passive: false
         });
     </script>
+
+    @include('partials.swal')
 
 </body>
 

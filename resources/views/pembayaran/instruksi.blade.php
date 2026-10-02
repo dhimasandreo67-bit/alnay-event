@@ -160,7 +160,7 @@
         // Copy VA
         function copyVA(va) {
             navigator.clipboard.writeText(va).then(() => {
-                alert('Nomor VA berhasil dicopy!');
+                toast('Nomor VA berhasil dicopy!', 'success');
             });
         }
 
@@ -180,6 +180,8 @@
             } catch (e) {}
         }, 5000);
     </script>
+
+    @include('partials.swal')
 
 </body>
 </html>
