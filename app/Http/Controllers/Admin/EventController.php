@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\Peserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,7 +16,7 @@ class EventController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. Jika admin memilih event dari dropdown (?event=X), simpan ke session
+        // 1. Jika ada parameter ?event=X di URL, simpan ID-nya ke session
         if ($request->has('event')) {
             session(['active_event_id' => $request->event]);
         }
@@ -25,21 +26,15 @@ class EventController extends Controller
         $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
         $activeEvent ??= Event::query()->latest('id')->first();
 
-        // 3. Safety check: Jika event di session sudah dihapus dari database, reset
-        if (!$activeEvent) {
-            session()->forget('active_event_id');
-            $activeEvent = Event::query()->latest('id')->first();
-        }
-
         $events = Event::orderBy('id', 'desc')->paginate(10);
         $eventList = Event::orderBy('id', 'desc')->get(['id', 'nama']);
 
-        // 4. Kirim ke view (termasuk 'event' khusus untuk sidebar)
+        // 3. Kirim ke view (variabel 'event' ini yang akan dibaca oleh Sidebar)
         return view('admin.events.index', [
             'events'      => $events,
             'activeEvent' => $activeEvent,
             'eventList'   => $eventList,
-            'event'       => $activeEvent, // ← Ini yang membuat sidebar tahu event mana yang aktif
+            'event'       => $activeEvent, 
         ]);
     }
 
