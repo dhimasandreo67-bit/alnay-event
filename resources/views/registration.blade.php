@@ -11,7 +11,7 @@
 <body class="bg-[#FFF8F1] text-[#1D1B17] min-h-screen">
 
     @php
-        $isPreview = session()->has('admin_id');
+        $isPreview = session()->has('admin_id') && ! auth('pelanggan')->check();
     @endphp
 
     <header class="border-b border-[#CDC5BC]/30 bg-[#FBF9F4]/95 backdrop-blur">
