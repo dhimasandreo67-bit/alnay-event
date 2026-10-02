@@ -32,8 +32,12 @@
     {{-- HEADER --}}
     <header class="sticky top-0 z-50 border-b border-[#e9e9e9] bg-white/95 backdrop-blur">
         <div class="mx-auto flex h-[56px] max-w-[1200px] items-center justify-between px-5 md:px-8">
-            <a href="{{ route('dashboard-user') }}" class="font-display text-[16px] font-bold tracking-tight text-[#13223a]">
-                EVENTALNAY.ID
+            <a href="{{ route('dashboard-user') }}" class="flex items-center gap-2.5">
+                <img src="{{ asset('images/alnaylogo.png') }}" alt="ALNAY.ID"
+                    class="h-9 w-9 object-contain">
+                <span class="brand-font text-[16px] font-bold tracking-tight text-[#13223a]">
+                    EVENT ALNAY.ID
+                </span>
             </a>
 
             <a href="{{ route('profil-user') }}" aria-label="Profil pengguna"

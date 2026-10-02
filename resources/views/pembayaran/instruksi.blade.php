@@ -16,7 +16,7 @@
     <header class="sticky top-0 z-40 border-b border-[#e9e9e9] bg-white/95 backdrop-blur">
         <div class="mx-auto flex h-[56px] max-w-[1200px] items-center justify-between px-5 md:px-8">
             <a href="{{ route('dashboard-user') }}" class="font-display text-[16px] font-bold tracking-tight text-[#13223a]">
-                EVENTALNAY.ID
+                EVENT ALNAY.ID
             </a>
         </div>
     </header>

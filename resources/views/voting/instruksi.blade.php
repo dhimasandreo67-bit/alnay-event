@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembayaran Voting - EVENTALNAY.ID</title>
+    <title>Pembayaran Voting - EVENT ALNAY.ID</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +29,7 @@
 
     <header class="border-b border-[#CDC5BC]/30 bg-white">
         <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-            <span class="font-display font-bold text-xl tracking-wider text-black">EVENTALNAY.ID</span>
+            <span class="font-display font-bold text-xl tracking-wider text-black">EVENT ALNAY.ID</span>
             <div
                 class="w-8 h-8 rounded-full border border-[#CDC5BC] flex items-center justify-center text-xs font-bold">
                 {{ strtoupper(substr($voting->nama_tampilan ?? 'U', 0, 1)) }}

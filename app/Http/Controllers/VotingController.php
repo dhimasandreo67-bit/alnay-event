@@ -393,17 +393,13 @@ class VotingController extends Controller
      */
     public function edit(?Event $event = null): View
     {
-<<<<<<< HEAD
-        $event ??= Event::query()->latest('id')->first();
-=======
-        // Logika yang sama: URL > Session > Terbaru
-        if (!$event) {
+        // Logika active event: URL > Session > Terbaru
+        if (! $event) {
             $eventId = session('active_event_id');
             $event = $eventId ? Event::find($eventId) : Event::query()->latest('id')->first();
         } else {
             session(['active_event_id' => $event->id]);
         }
->>>>>>> 00fb307 (add function to handle active event data)
 
         return view('admin.voting.settings', [
             'event' => $event,
