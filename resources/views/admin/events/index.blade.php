@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('public/css/admin-sidebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -39,9 +39,9 @@
             <div class="p-6">
 
             {{-- ✅ DROPDOWN PEMILIHAN EVENT AKTIF --}}
-            <div class="mb-6 bg-white rounded-xl border border-slate-200 p-4">
-                <div class="flex items-center justify-between gap-4 flex-wrap">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="mb-6 bg-white rounded-xl border border-slate-200 p-4 overflow-x-auto">
+                <div class="flex items-center justify-between gap-4 flex-wrap overflow-x-auto">
+                    <div class="flex items-center gap-3 flex-1 min-w-0 overflow-x-auto">
                         <label for="select-event" class="text-sm font-semibold text-slate-700 whitespace-nowrap">
                             Event Aktif:
                         </label>
@@ -121,7 +121,7 @@
                 @endif
 
                 {{-- TABEL --}}
-                <div class="bg-white border border-[#e3ded6] rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-white border border-[#e3ded6] rounded-xl overflow-hidden shadow-sm overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-[#fcfbf9] border-b border-[#e3ded6] text-[11px] text-[#8a8984] uppercase tracking-wider">
@@ -211,12 +211,12 @@
                                                 Edit
                                             </a>
 
-                                            <form action="{{ route('admin.events.destroy', $item->id) }}" method="POST" 
-                                                  onsubmit="return confirm('Yakin ingin menghapus event ini?')" class="inline">
+                                            <form method="POST" action="{{ route('admin.events.destroy', $item->id) }}" class="delete-form" data-name="{{ $item->nama }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" 
-                                                        class="px-2.5 py-1.5 rounded-md border border-red-200 bg-red-50 text-red-600 text-[11px] font-bold hover:bg-red-100">
+                                                <button type="button" 
+                                                        onclick="handleDelete(this)" 
+                                                        class="px-3 py-1.5 bg-red-600 hover:bg-red-50 text-white text-xs font-medium rounded-lg border border-red-700 transition">
                                                     Hapus
                                                 </button>
                                             </form>
@@ -242,6 +242,27 @@
             </div>
         </main>
     </div>
+
+<script>
+    // Fungsi global untuk handle delete dengan custom modal
+    window.handleDelete = async function(btn) {
+        const form = btn.closest('.delete-form');
+        const itemName = form.dataset.name || 'data ini';
+        
+        try {
+            const isConfirmed = await window.confirm(
+                `Apakah Anda yakin ingin menghapus "${itemName}"? Tindakan ini tidak dapat dibatalkan.`,
+                'Konfirmasi Hapus'
+            );
+            
+            if (isConfirmed) {
+                form.submit();
+            }
+        } catch (error) {
+            console.error('Error saat konfirmasi hapus:', error);
+        }
+    };
+</script>
 
     @include('admin.partials.sidebar', ['active' => 'events-index'])
 </body>
