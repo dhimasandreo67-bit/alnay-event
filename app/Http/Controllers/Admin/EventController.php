@@ -26,6 +26,12 @@ class EventController extends Controller
         $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
         $activeEvent ??= Event::query()->latest('id')->first();
 
+        // Safety check: Jika event di session sudah dihapus dari database, reset
+        if (! $activeEvent) {
+            session()->forget('active_event_id');
+            $activeEvent = Event::query()->latest('id')->first();
+        }
+
         $events = Event::orderBy('id', 'desc')->paginate(10);
         $eventList = Event::orderBy('id', 'desc')->get(['id', 'nama']);
 
