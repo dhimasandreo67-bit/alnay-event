@@ -557,7 +557,7 @@
         @include('admin.partials.sidebar', [
             'active' => 'dashboard',
             'event' => $event ?? null,
-            'menungguReview' => $menungguReview,
+            'menungguReview' => $menungguReview ?? 0,
         ])
         @include('admin.partials.header', ['variant' => 'dashboard', 'event' => $event])
         {{-- <div class="hidden"></div> --}}
@@ -667,11 +667,11 @@
                     <div class="card"><span class="card-label">Menunggu Review</span>
                         <div class="number">{{ $menungguReview }}</div><span class="card-note">Prioritas Kurasi</span>
                     </div>
-                    {{-- <div class="card"><span class="card-label">Perlu Revisi Data</span>
-                        <div class="number">{{ $perluRevisi }}</div><span class="card-note">Dokumen kurang</span>
-                    </div> --}}
                     <div class="card"><span class="card-label">Diterima</span>
                         <div class="number">{{ $diterima }}</div><span class="card-note">Lolos Final Lineup</span>
+                    </div>
+                    <div class="card"><span class="card-label">Ditolak</span>
+                        <div class="number">{{ $ditolak }}</div><span class="card-note">Ditolak</span>
                     </div>
                 </div>
                 <div class="toolbar"><input class="search" id="search"
@@ -737,18 +737,17 @@
                                         <div class="flex items-center gap-2">
                                             <!-- Tombol Lihat -->
                                             <a href="{{ route('admin.peserta.show', $peserta->id) }}" 
-                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
+                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0.6)] hover:shadow-[0_0_18px_rgba(59,130,246,0.9)]">
                                                 Lihat
                                             </a>
 
                                             <!-- Tombol Hapus -->
-                                            <form action="{{ route('admin.peserta.destroy', $peserta->id) }}" 
-                                                method="POST" 
-                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data peserta ini?')">
+                                            <form method="POST" action="{{ route('admin.peserta.destroy', $peserta->id) }}" class="delete-form" data-name="{{ $peserta->user?->nama ?? 'peserta ini' }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" 
-                                                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors">
+                                                <button type="button" 
+                                                        onclick="handleDelete(this)" 
+                                                        class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg border border-red-600 transition shadow-[0_0_10px_rgba(239,68,68,0.6)] hover:shadow-[0_0_18px_rgba(239,68,68,0.9)]">
                                                     🗑️ Hapus
                                                 </button>
                                             </form>
@@ -813,6 +812,7 @@
             });
         });
         const adminLinks = {
+            '#dashboard': '{{ route('admin.dashboard', $event?->id) }}',
             '#form': '{{ route('admin.form-builder', $event?->id) }}',
             '#verification': '{{ route('admin.registrations', $event?->id) }}',
             '#activation': '{{ route('admin.activation', $event?->id) }}',
@@ -859,6 +859,25 @@
         tick();
         setInterval(tick, 5000);
     });
+
+    // Fungsi global untuk handle delete dengan custom modal
+    window.handleDelete = async function(btn) {
+        const form = btn.closest('.delete-form');
+        const itemName = form.dataset.name || 'data ini';
+        
+        try {
+            const isConfirmed = await window.confirm(
+                `Apakah Anda yakin ingin menghapus "${itemName}"? Tindakan ini tidak dapat dibatalkan.`,
+                'Konfirmasi Hapus'
+            );
+            
+            if (isConfirmed) {
+                form.submit();
+            }
+        } catch (error) {
+            console.error('Error saat konfirmasi hapus:', error);
+        }
+    };
     </script>
 </body>
 
