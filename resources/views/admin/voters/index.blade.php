@@ -32,7 +32,7 @@
             </div>
         @else
             {{-- Stat cards --}}
-            <div class="grid grid-cols-4 gap-4 mb-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
                 <div class="bg-white rounded-xl border border-[#e3ded6] p-4">
                     <div class="text-3xl font-bold">{{ number_format($totalSuara, 0, ',', '.') }}</div>
                     <div class="text-[11px] text-[#73716c] mt-1">Total Suara Masuk</div>
@@ -65,7 +65,7 @@
             </div>
 
             {{-- Table --}}
-            <div class="bg-white rounded-xl border border-[#e3ded6] overflow-hidden">
+            <div class="bg-white rounded-xl border border-[#e3ded6] overflow-hidden overflow-x-auto">
                 <table class="w-full text-[12px]">
                     <thead>
                         <tr class="border-b border-[#e3ded6] text-left text-[10px] uppercase text-[#98958f]">
