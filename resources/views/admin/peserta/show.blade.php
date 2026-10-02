@@ -1112,34 +1112,20 @@
                     {{-- Delete --}}
                     <div class="px-5 pb-5">
 
-                        <form action="{{ route('admin.peserta.destroy', $peserta->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus data peserta ini? Tindakan ini tidak bisa dibatalkan.')">
-
+                        {{-- Delete --}}
+                        <form method="POST" action="{{ route('admin.peserta.destroy', $peserta->id) }}" 
+                            class="delete-form" 
+                            data-name="{{ $peserta->user->nama ?? 'peserta ini' }}">
                             @csrf
                             @method('DELETE')
-
-                            <button
-                                type="submit"
-                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition"
-                            >
-
-                                <svg
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="1.8"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h14"
-                                    />
+                            <button type="button" 
+                                    onclick="handleDelete(this)" 
+                                    class="w-full px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg border border-rose-200 transition flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
-
                                 Hapus Data Peserta
-
                             </button>
-
                         </form>
 
                     </div>
@@ -1490,6 +1476,26 @@
         }, {
             passive: false
         });
+
+        {{-- Custom Modal Delete Handler --}}
+
+    window.handleDelete = async function(btn) {
+        const form = btn.closest('.delete-form');
+        const itemName = form.dataset.name || 'peserta ini';
+        
+        try {
+            const isConfirmed = await window.confirm(
+                `Apakah Anda yakin ingin menghapus data "${itemName}"? Tindakan ini tidak dapat dibatalkan.`,
+                'Konfirmasi Hapus Peserta'
+            );
+            
+            if (isConfirmed) {
+                form.submit();
+            }
+        } catch (error) {
+            console.error('Error saat konfirmasi hapus:', error);
+        }
+    };
 
     </script>
 
