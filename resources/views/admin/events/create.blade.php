@@ -209,8 +209,9 @@
                                 <label class="block text-[12px] font-bold mb-2">Biaya Pendaftaran</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-[#98958f] font-bold">Rp</span>
-                                    <input type="number" name="biaya_pendaftaran" id="inputBiayaPendaftaran" min="0" value="{{ old('biaya_pendaftaran', 0) }}"
-                                           class="w-full border border-[#e5e1db] rounded-lg pl-9 pr-3 py-2.5 text-[12px]" placeholder="0">
+                                    <input
+                                        type="text" name="biaya_pendaftaran" id="inputBiayaPendaftaran" value="{{ old('biaya_pendaftaran') }}" inputmode="numeric"
+                                        autocomplete="off" class="w-full border border-[#e5e1db] rounded-lg pl-9 pr-3 py-2.5 text-[12px]" placeholder="0">
                                 </div>
                                 <p class="text-[10px] text-[#98958f] mt-1">Isi 0 jika pendaftaran gratis.</p>
                                 @error('biaya_pendaftaran')<div class="text-red-600 text-[10px] mt-1">{{ $message }}</div>@enderror
@@ -220,9 +221,9 @@
                                 <label class="block text-[12px] font-bold mb-2">Harga Per Vote</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-[#98958f] font-bold">Rp</span>
-                                    <input type="number" name="harga_per_vote" id="inputHargaPerVote" min="0" value="{{ old('harga_per_vote', 0) }}"
-                                           class="w-full border border-[#e5e1db] rounded-lg pl-9 pr-3 py-2.5 text-[12px]" placeholder="0">
-                                </div>
+                                    <input
+                                        type="text" name="harga_per_vote" id="inputHargaPerVote" value="{{ old('harga_per_vote') }}" inputmode="numeric" autocomplete="off" class="w-full border border-[#e5e1db] rounded-lg pl-9 pr-3 py-2.5 text-[12px]" placeholder="0">
+                                    </div>
                                 <p class="text-[10px] text-[#98958f] mt-1">Tarif nominal yang ditagih per 1 kali vote.</p>
                                 @error('harga_per_vote')<div class="text-red-600 text-[10px] mt-1">{{ $message }}</div>@enderror
                             </div>
@@ -734,6 +735,120 @@
                 label.classList.add(`border-${color}-500`, `bg-${color}-50`);
                 updatePreviewBadge(checkedRadio.value);
             }
+        }
+    });
+
+    function getNumericValue(value) {
+        return String(value || '').replace(/\D/g, '');
+    }
+
+    function formatRupiah(value) {
+        const numericValue = getNumericValue(value);
+
+        if (!numericValue || Number(numericValue) === 0) {
+            return 'Gratis';
+        }
+
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(numericValue));
+    }
+
+    function formatRupiahInput(input) {
+        const numericValue = getNumericValue(input.value);
+
+        if (numericValue === '') {
+            input.value = '';
+            return;
+        }
+
+        input.value = new Intl.NumberFormat('id-ID').format(
+            Number(numericValue)
+        );
+    }
+
+    function updateNominalPreview() {
+        const inputBiaya = document.getElementById('inputBiayaPendaftaran');
+        const inputHargaVote = document.getElementById('inputHargaPerVote');
+
+        const previewBiaya = document.getElementById('previewBiaya');
+        const previewHargaVote = document.getElementById('previewHargaVote');
+
+        if (!inputBiaya || !inputHargaVote) return;
+
+        const biaya = getNumericValue(inputBiaya.value);
+        const hargaVote = getNumericValue(inputHargaVote.value);
+
+        if (previewBiaya) {
+            previewBiaya.textContent = biaya
+                ? formatRupiah(biaya)
+                : 'Gratis';
+        }
+
+        if (previewHargaVote) {
+            previewHargaVote.textContent = hargaVote
+                ? formatRupiah(hargaVote)
+                : '—';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const inputBiaya = document.getElementById('inputBiayaPendaftaran');
+        const inputHargaVote = document.getElementById('inputHargaPerVote');
+        const form = document.getElementById('formEvent');
+
+        // Format saat mengetik
+        [inputBiaya, inputHargaVote].forEach(input => {
+
+            if (!input) return;
+
+            input.addEventListener('input', function () {
+                formatRupiahInput(this);
+                updateNominalPreview();
+            });
+
+        });
+
+        // ======================================================
+        // LOAD NILAI AWAL
+        // ======================================================
+
+        [inputBiaya, inputHargaVote].forEach(input => {
+
+            if (!input || !input.value) return;
+
+            // Bersihkan jika sebelumnya ada format
+            const numericValue = getNumericValue(input.value);
+
+            if (numericValue) {
+                input.value = new Intl.NumberFormat('id-ID').format(
+                    Number(numericValue)
+                );
+            }
+
+        });
+
+        updateNominalPreview();
+
+        // ======================================================
+        // SEBELUM SUBMIT
+        // Ubah:
+        // 1.500.000
+        // menjadi:
+        // 1500000
+        // ======================================================
+
+        if (form) {
+            form.addEventListener('submit', function () {
+
+                if (inputBiaya) {
+                    inputBiaya.value = getNumericValue(inputBiaya.value);
+                }
+
+                if (inputHargaVote) {
+                    inputHargaVote.value = getNumericValue(inputHargaVote.value);
+                }
+
+            });
         }
     });
     </script>
