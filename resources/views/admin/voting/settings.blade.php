@@ -25,6 +25,8 @@
             <div class="mb-4 rounded-lg bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">{{ session('success') }}</div>
         @endif
 
+        {{-- HANYA SATU blok @if/@else/@endif di sini. Sebelumnya ada 2 @if
+             bertumpuk tapi cuma 1 @endif, bikin ParseError "unexpected end of file". --}}
         @if (!$event)
             <div class="bg-white border border-dashed border-[#e3ded6] rounded-xl p-8 text-center text-[#98958f]">
                 Belum ada event. Buat event dulu di halaman "Buat Event Baru".
@@ -33,7 +35,7 @@
             <form method="POST" action="{{ route('admin.voting.settings.update', $event) }}">
                 @csrf
 
-                <div class="grid grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                     {{-- Visibilitas & Status Publikasi --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-5">
@@ -158,9 +160,15 @@
                     </div> --}}
                 </div>
 
-                <div class="fixed bottom-0 right-0 left-[230px] bg-white border-t border-[#e3ded6] p-4 flex justify-end gap-3">
-                    <a href="{{ route('admin.voting.settings', $event) }}" class="px-4 py-2.5 text-[12px] font-semibold border border-[#e3ded6] rounded-lg">Batalkan Perubahan</a>
-                    <button type="submit" class="px-5 py-2.5 text-[12px] font-bold bg-gold text-white rounded-lg">✓ Simpan &amp; Terapkan Pengaturan</button>
+                <div class="mt-8 pt-4 border-t border-[#e3ded6] flex flex-wrap items-center justify-end gap-3">
+                    <a href="{{ route('admin.voting.settings', $event) }}"
+                       class="w-full sm:w-auto px-4 py-2.5 text-[12px] font-semibold text-[#73716c] border border-[#e3ded6] hover:bg-gray-50 rounded-lg text-center transition">
+                        Batalkan Perubahan
+                    </a>
+                    <button type="submit"
+                            class="w-full sm:w-auto px-5 py-2.5 text-[12px] font-bold bg-gold hover:bg-[#a3721a] text-white rounded-lg shadow-sm transition whitespace-nowrap text-center">
+                        ✓ Simpan &amp; Terapkan Pengaturan
+                    </button>
                 </div>
             </form>
         @endif
