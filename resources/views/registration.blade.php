@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    @include('admin.partials.pwa-head')
     <title>Daftar — {{ $event->nama }} | ALNAY.ID</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -167,13 +168,22 @@
 <body>
     <div class="wrap">
 
-        <button type="button" onclick="goToPreviousPage()"
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Kembali</span>
-        </button>
+        <button type="button"
+        onclick="history.back()"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all cursor-pointer">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="w-5 h-5"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor">
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    <span>Kembali</span>
+</button>
+
 
         {{-- KONDISI 1: JIKA FORM SUDAH DITUTUP / NONAKTIF --}}
         @if (isset($event) && !$event->is_active)
@@ -186,9 +196,6 @@
             </div>
         @else
         {{-- KONDISI 2: JIKA FORM MASIH AKTIF (TAMPILKAN FORMULIR) --}}
-        @if (session('success'))
-            <div class="banner success">{{ session('success') }}</div>
-        @endif
 
         @if ($errors->any())
             <div class="banner error">
@@ -324,9 +331,18 @@
                     @endswitch
 
                     {{-- ERROR HANDLING DARI BACKEND (LARAVEL) --}}
+                    {{-- ERROR HANDLING DARI BACKEND (LARAVEL) --}}
                     @error($fieldName)
-                        <div class="error" style="color: red; font-size: 0.85rem; margin-top: 4px;">
-                            {{ $message }}
+                        <div class="error" style="color: #c1442f; font-size: 0.85rem; margin-top: 4px; font-weight: 500;">
+                            @if (str_contains($message, 'required'))
+                                {{ $question->label }} wajib diisi.
+                            @elseif (str_contains($message, 'email'))
+                                Format {{ $question->label }} tidak valid.
+                            @elseif (str_contains($message, 'uploaded'))
+                                File {{ $question->label }} gagal diunggah.
+                            @else
+                                {{ str_replace("answers.{$question->id}", $question->label, $message) }}
+                            @endif
                         </div>
                     @enderror
                 </div>
