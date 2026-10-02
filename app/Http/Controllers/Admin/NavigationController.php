@@ -43,4 +43,43 @@ class NavigationController extends Controller
             'questions' => $event?->pertanyaans()->get() ?? collect(),
         ]);
     }
+
+    public function index(Request $request)
+    {
+        // ✅ Baca event aktif dari session (yang sudah dipilih di halaman Kelola Event)
+        $eventId = session('active_event_id');
+        $event = $eventId ? Event::find($eventId) : null;
+        $event ??= Event::query()->latest('id')->first();
+
+        // ✅ Hitung statistik HANYA untuk event aktif
+        $totalPendaftar = 0;
+        $menungguReview = 0;
+        $diterima = 0;
+        $ditolak = 0;
+        $perluRevisi = 0;
+        $pesertas = collect();
+
+        if ($event) {
+            $pesertas = Peserta::where('event_id', $event->id)
+                ->with(['user', 'jawabans.pertanyaan'])
+                ->latest('id')
+                ->get();
+
+            $totalPendaftar = $pesertas->count();
+            $menungguReview = $pesertas->where('status', 'menunggu_review')->count();
+            $diterima = $pesertas->where('status', 'diterima')->count();
+            $ditolak = $pesertas->where('status', 'ditolak')->count();
+            $perluRevisi = $pesertas->where('status', 'revisi')->count();
+        }
+
+        return view('admin.dashboard', [
+            'event' => $event,
+            'pesertas' => $pesertas,
+            'totalPendaftar' => $totalPendaftar,
+            'menungguReview' => $menungguReview,
+            'diterima' => $diterima,
+            'ditolak' => $ditolak,
+            'perluRevisi' => $perluRevisi,
+        ]);
+    }
 }
