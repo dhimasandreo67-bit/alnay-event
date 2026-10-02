@@ -228,8 +228,9 @@
                                                 class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" onclick="handleDelete(this)"
-                                                    class="px-3 py-1.5 bg-red-600 hover:bg-red-50 text-white text-xs font-medium rounded-lg border border-red-700 transition">
+                                                <button type="submit"
+                                                    onclick="event.preventDefault(); konfirmasi('Yakin ingin menghapus event ini?', () => this.form.submit(), { title: 'Hapus Event', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
+                                                    class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg border border-red-700 transition">
                                                     Hapus
                                                 </button>
                                             </form>
@@ -256,8 +257,9 @@
             </div>
         </main>
     </div>
-    @include('partials.swal')
     @include('admin.partials.sidebar', ['active' => 'events-index'])
+
+    @include('partials.swal')
 </body>
 
 </html>
