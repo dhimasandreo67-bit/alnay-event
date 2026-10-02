@@ -105,13 +105,22 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block font-bold mb-1">Biaya Pendaftaran (Rp)</label>
-                            <input type="number" 
-                                   name="biaya_pendaftaran" 
-                                   id="biaya_pendaftaran"
-                                   value="{{ old('biaya_pendaftaran', $event->biaya_pendaftaran) }}" 
-                                   required 
-                                   min="0"
-                                   class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+                                    Rp
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="biaya_pendaftaran"
+                                    id="biaya_pendaftaran"
+                                    value="{{ old('biaya_pendaftaran', $event->biaya_pendaftaran) }}"
+                                    required
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 pl-10 bg-[#fcfbf9]"
+                                    placeholder="0">
+                            </div>
                             <p class="text-xs text-slate-500 mt-1">
                                 Biaya dasar pendaftaran. Setiap peserta akan mendapat kode unik 3 digit ditambahkan ke nominal ini.
                             </p>
@@ -142,8 +151,22 @@
                         </div>
                         <div>
                             <label class="block font-bold mb-1">Harga Per Vote (Rp)</label>
-                            <input type="number" name="harga_per_vote" value="{{ old('harga_per_vote', $event->harga_per_vote) }}" required 
-                                   class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9]">
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+                                    Rp
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="harga_per_vote"
+                                    id="harga_per_vote"
+                                    value="{{ old('harga_per_vote', $event->harga_per_vote) }}"
+                                    required
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                    class="w-full border border-[#e5e1db] rounded-md p-2.5 pl-10 bg-[#fcfbf9]"
+                                    placeholder="0">
+                            </div>
                         </div>
                     </div>
 
@@ -507,6 +530,158 @@
 
     // Inisialisasi awal saat halaman selesai dimuat
     updatePreview();
+});
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+    const biayaInput = document.getElementById('biaya_pendaftaran');
+    const voteInput = document.getElementById('harga_per_vote');
+
+    const previewBiaya = document.getElementById('previewBiaya');
+    const previewHargaVote = document.getElementById('previewHargaVote');
+
+    /**
+     * Ambil angka murni
+     * 90.000 -> 90000
+     * 1.500.000 -> 1500000
+     */
+    function getNumericValue(value) {
+        return String(value ?? '').replace(/\D/g, '');
+    }
+
+    /**
+     * Format angka Indonesia
+     * 90000 -> 90.000
+     * 1500000 -> 1.500.000
+     */
+    function formatNumber(value) {
+        const numeric = getNumericValue(value);
+
+        if (!numeric) {
+            return '';
+        }
+
+        return new Intl.NumberFormat('id-ID').format(Number(numeric));
+    }
+
+    /**
+     * Format untuk preview
+     * 90000 -> Rp 90.000
+     */
+    function formatRupiah(value) {
+        const numeric = getNumericValue(value);
+
+        if (!numeric || Number(numeric) === 0) {
+            return 'Gratis';
+        }
+
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(numeric));
+    }
+
+    /**
+     * Update preview
+     */
+    function updatePreview() {
+
+        if (previewBiaya && biayaInput) {
+            const value = getNumericValue(biayaInput.value);
+
+            previewBiaya.textContent = value
+                ? formatRupiah(value)
+                : 'Gratis';
+        }
+
+        if (previewHargaVote && voteInput) {
+            const value = getNumericValue(voteInput.value);
+
+            previewHargaVote.textContent = value
+                ? formatRupiah(value)
+                : '—';
+        }
+    }
+
+    /**
+     * Format input saat user mengetik
+     */
+    function setupCurrencyInput(input) {
+
+        if (!input) return;
+
+        input.addEventListener('input', function () {
+
+            const numericValue = getNumericValue(this.value);
+
+            this.value = formatNumber(numericValue);
+
+            updatePreview();
+        });
+
+        input.addEventListener('blur', function () {
+
+            const numericValue = getNumericValue(this.value);
+
+            this.value = formatNumber(numericValue);
+
+            updatePreview();
+        });
+    }
+
+    // ==========================================================
+    // FORMAT NILAI DARI DATABASE
+    // ==========================================================
+
+    if (biayaInput) {
+        biayaInput.value = formatNumber(biayaInput.value);
+    }
+
+    if (voteInput) {
+        voteInput.value = formatNumber(voteInput.value);
+    }
+
+    // ==========================================================
+    // AKTIFKAN FORMAT SAAT MENGETIK
+    // ==========================================================
+
+    setupCurrencyInput(biayaInput);
+    setupCurrencyInput(voteInput);
+
+    // ==========================================================
+    // UPDATE PREVIEW SAAT HALAMAN DIBUKA
+    // ==========================================================
+
+    updatePreview();
+
+    // ==========================================================
+    // SEBELUM SUBMIT
+    // Ubah:
+    // 90.000 -> 90000
+    // 1.500.000 -> 1500000
+    // ==========================================================
+
+    const form = biayaInput
+        ? biayaInput.closest('form')
+        : null;
+
+    if (form) {
+
+        form.addEventListener('submit', function () {
+
+            if (biayaInput) {
+                biayaInput.value = getNumericValue(
+                    biayaInput.value
+                );
+            }
+
+            if (voteInput) {
+                voteInput.value = getNumericValue(
+                    voteInput.value
+                );
+            }
+
+        });
+
+    }
+
 });
 </script>
 
