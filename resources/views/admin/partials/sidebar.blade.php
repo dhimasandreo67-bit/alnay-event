@@ -4,17 +4,21 @@
         font-family: "Inter";
     }
 </style>
-<aside class="admin-sidebar">
+<aside class="admin-sidebar hidden lg:block lg:w-64 flex-shrink-0">
     <div class="admin-sidebar__brand">ALNAY<span>.ID</span></div>
 
     <nav class="admin-sidebar__nav" aria-label="Event dan peserta">
         <p class="admin-sidebar__section">Event & Peserta</p>
         
         <a class="{{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}" 
-        href="{{ route('admin.dashboard') }}">
+        href="{{ route('admin.dashboard', $event?->id) }}">
             <span class="admin-sidebar__step">1</span>
             <span>Verifikasi Pendaftaran Peserta</span>
-            <b class="admin-sidebar__badge">{{ $menungguReview ?? 0 }}</b>
+            
+            {{-- Tampilkan badge HANYA jika ada peserta yang menunggu review --}}
+            @if(!empty($menungguReview) && $menungguReview > 0)
+                <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
+            @endif
         </a>
 
         <a class="{{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}" 
@@ -59,17 +63,22 @@
             <span class="admin-sidebar__step">3</span>
             <span>Leaderboard Suara Voting</span>
         </a>
+
+        <a class="{{ ($active ?? '') === 'profile' ? 'is-active' : '' }}"
+        href="{{ route('admin.profile') }}">
+            <span class="admin-sidebar__step">4</span>
+            <span>Profile</span>
+        </a>
     </nav>
 
+    {{-- User Card (Tetap ada untuk Desktop) --}}
     @php
-    $adminName = session('admin_name', 'MAS RADEN');
-
-    $initials = collect(explode(' ', trim($adminName)))
-        ->filter()
-        ->map(fn($word) => strtoupper(substr($word, 0, 1)))
-        ->join('');
+        $adminName = session('admin_name', 'MAS RADEN');
+        $initials = collect(explode(' ', trim($adminName)))
+            ->filter()
+            ->map(fn($word) => strtoupper(substr($word, 0, 1)))
+            ->join('');
     @endphp
-
     <a href="{{ route('admin.profile') }}" class="admin-sidebar__user {{ ($active ?? '') === 'profile' ? 'is-active' : '' }}">
         <span class="admin-sidebar__avatar">{{ $initials }}</span>
         <div>
