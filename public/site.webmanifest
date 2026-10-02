@@ -6,8 +6,9 @@
     "start_url": "/admin/",
     "scope": "/admin/",
     "display": "standalone",
-    "background_color": "#f7f6f3",
-    "theme_color": "#171512",
+    "background_color": "#171512",
+    "theme_color": "#ba8320",
+    "orientation": "portrait-primary",
     "icons": [
         {
             "src": "/icons/admin-app.svg",
