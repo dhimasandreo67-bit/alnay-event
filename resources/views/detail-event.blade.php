@@ -54,11 +54,13 @@
             'foto'             => 'event-alnay1.png',
             'lokasi'           => 'Gedung Serbaguna, Bandar Lampung',
             'harga_vote'       => 5000,
+            'buka_daftar'      => '2026-09-01 08:00:00', // dari form "Buat Event Baru" -> Pendaftaran
+            'batas_daftar'     => '2026-09-20 23:59:00',
             'mulai'            => '2026-10-01 09:00:00',
             'selesai'          => '2026-11-10 21:00:00',
             'jumlah_kandidat'  => 24,
             'total_vote'       => '15.4K',
-            'ketentuan_voting' => [
+            'syarat_ketentuan' => [
                 'Voting hanya dapat dilakukan setelah masuk dengan akun Google.',
                 'Suara yang sudah diberikan tidak dapat dibatalkan atau dipindahkan.',
                 'Kandidat tidak diperbolehkan memberikan suara untuk dirinya sendiri.',
@@ -68,10 +70,10 @@
         ];
 
         $kandidat = [
-            ['nomor' => '01', 'nama' => 'Raden Roro Ayu', 'asal' => 'Jawa Tengah',    'foto' => 'kandidat1.jpg', 'vote' => '1,245'],
-            ['nomor' => '02', 'nama' => 'Made Wirawan',   'asal' => 'Bali',           'foto' => 'kandidat2.jpg', 'vote' => '1,102'],
-            ['nomor' => '03', 'nama' => 'Siti Nurbaya',   'asal' => 'Sumatera Barat', 'foto' => 'kandidat3.jpg', 'vote' => '985'],
-            ['nomor' => '04', 'nama' => 'Bimo Susanto',   'asal' => 'DKI Jakarta',    'foto' => 'kandidat4.jpg', 'vote' => '1,420'],
+            ['nomor' => '01', 'nama' => 'Raden Roro Ayu','foto' => 'kandidat1.jpg', 'vote' => '1,245'],
+            ['nomor' => '02', 'nama' => 'Made Wirawan',  'foto' => 'kandidat2.jpg', 'vote' => '1,102'],
+            ['nomor' => '03', 'nama' => 'Siti Nurbaya',  'foto' => 'kandidat3.jpg', 'vote' => '985'],
+            ['nomor' => '04', 'nama' => 'Bimo Susanto',  'foto' => 'kandidat4.jpg', 'vote' => '1,420'],
         ];
 
         /*
@@ -82,9 +84,10 @@
         // Data tetap dirapikan ke bentuk array yang sama seperti
         // Opsi 1, supaya bagian HTML di bawah tidak perlu diubah.
         //
-        // Catatan: ketentuan_voting disimpan sebagai teks biasa di
+        // Catatan: syarat_ketentuan disimpan sebagai teks biasa di
         // database (satu poin per baris, dipisah Enter), lalu
-        // dipecah menjadi array di sini.
+        // dipecah menjadi array di sini. Form admin cukup satu
+        // kolom "Syarat & Ketentuan" untuk ini.
         //
         // $event bisa bernilai null kalau ID tidak ditemukan di
         // database (dicek lewat @if($event) di bagian HTML).
@@ -106,11 +109,13 @@
             'foto'             => $row_event['foto'],
             'lokasi'           => $row_event['lokasi'],
             'harga_vote'       => $row_event['harga_vote'],
+            'buka_daftar'      => $row_event['buka_daftar'],
+            'batas_daftar'     => $row_event['batas_daftar'],
             'mulai'            => $row_event['tanggal_mulai'],
             'selesai'          => $row_event['tanggal_selesai'], // boleh null
             'jumlah_kandidat'  => $row_event['jumlah_kandidat'],
             'total_vote'       => $row_event['total_vote'],
-            'ketentuan_voting' => $pecah_baris($row_event['ketentuan_voting']),
+            'syarat_ketentuan' => $pecah_baris($row_event['syarat_ketentuan']),
         ] : null;
 
         $kandidat = [];
@@ -123,7 +128,6 @@
                 $kandidat[] = [
                     'nomor' => $row['nomor'],
                     'nama'  => $row['nama'],
-                    'asal'  => $row['asal'],
                     'foto'  => $row['foto'],
                     'vote'  => number_format($row['vote'], 0, ',', '.'),
                 ];
@@ -171,6 +175,26 @@
             };
 
             $periode = $selesai ? $rentang($mulai, $selesai) : 'Mulai ' . $rentang($mulai);
+
+            // ---- Jadwal Event (sama persis dengan halaman "Akan Datang") ----
+            // Verifikasi Data otomatis: mulai sehari setelah batas daftar,
+            // berakhir sehari sebelum voting dibuka. Kalau tidak ada
+            // selisih hari, tahap ini tidak ditampilkan.
+            $bukaDaftar  = $tgl($event['buka_daftar']);
+            $batasDaftar = $tgl($event['batas_daftar']);
+            $verifAwal   = $batasDaftar->copy()->addDay()->startOfDay();
+            $verifAkhir  = $mulai->copy()->subDay()->startOfDay();
+
+            $jadwal = [
+                ['nama' => 'Pendaftaran Kandidat', 'tanggal' => $rentang($bukaDaftar, $batasDaftar)],
+            ];
+
+            if ($verifAwal->lte($verifAkhir)) {
+                $jadwal[] = ['nama' => 'Verifikasi Data', 'tanggal' => $rentang($verifAwal, $verifAkhir)];
+            }
+
+            $jadwal[] = ['nama' => 'Voting Publik', 'tanggal' => $periode];
+            $jadwal[] = ['nama' => 'Pengumuman Pemenang', 'tanggal' => 'Setelah voting berakhir'];
 
             // ---- Hitung mundur sisa waktu voting ----
             // Hanya ada kalau admin mengisi tanggal selesai.
@@ -444,16 +468,6 @@
                     </div>
 
 
-                    <!-- Filter -->
-
-                    <button
-                        class="h-10 px-4 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition">
-
-                        <span class="mr-1.5">☷</span>
-                        Filter
-
-                    </button>
-
                 </div>
 
             </div>
@@ -506,13 +520,6 @@
                                         {{ $item['nama'] }}
 
                                     </h3>
-
-
-                                    <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded">
-
-                                        {{ $item['asal'] }}
-
-                                    </span>
 
                                 </div>
 
@@ -831,7 +838,7 @@
     @if($event)
 
     <!-- =========================================================
-         POPUP SYARAT & KETENTUAN VOTING
+         POPUP SYARAT & KETENTUAN
          Khusus pemilih: tanpa biaya pendaftaran, kuota, dan
          batas pendaftaran.
     ========================================================== -->
@@ -846,7 +853,7 @@
             <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
 
                 <h2 class="font-display text-lg font-bold text-[#15233d]">
-                    Syarat &amp; Ketentuan Voting
+                    Syarat &amp; Ketentuan
                 </h2>
 
                 <button type="button" data-tutup-syarat aria-label="Tutup"
@@ -890,24 +897,56 @@
                 </div>
 
 
-                <!-- Ketentuan Voting -->
-                @if(count($event['ketentuan_voting']) > 0)
+                <!-- Syarat & Ketentuan Event -->
+                @if(count($event['syarat_ketentuan']) > 0)
                 <div>
 
                     <h3 class="text-sm font-semibold text-[#15233d]">
-                        Ketentuan Voting
+                        Syarat &amp; Ketentuan Event
                     </h3>
 
                     <ul class="mt-3 space-y-2 text-sm text-gray-600 list-disc pl-5 marker:text-[#c99a32]">
 
-                        @foreach($event['ketentuan_voting'] as $ketentuan)
-                            <li>{{ $ketentuan }}</li>
+                        @foreach($event['syarat_ketentuan'] as $poin)
+                            <li>{{ $poin }}</li>
                         @endforeach
 
                     </ul>
 
                 </div>
                 @endif
+
+
+                <!-- Jadwal Event -->
+                <div>
+
+                    <h3 class="text-sm font-semibold text-[#15233d]">
+                        Jadwal Event
+                    </h3>
+
+                    <ol class="relative mt-3 space-y-4 border-l border-[#e8dcc0] pl-5">
+
+                        @foreach($jadwal as $tahap)
+
+                            <li class="relative">
+
+                                <span class="absolute -left-[26px] top-1 h-2.5 w-2.5 rounded-full bg-[#c99a32]"></span>
+
+                                <p class="text-sm font-medium text-[#15233d]">
+                                    {{ $tahap['nama'] }}
+                                </p>
+
+                                <p class="text-xs text-gray-500">
+                                    {{ $tahap['tanggal'] }}
+                                </p>
+
+                            </li>
+
+                        @endforeach
+
+                    </ol>
+
+                </div>
 
 
                 <!-- Informasi Event -->
