@@ -23,112 +23,94 @@ class PendaftaranController extends Controller
     }
 
     public function storePublic(Request $request, Event $event)
-{
-    $questions = $event->pertanyaans()->get();
-    $rules = [
-        'answers' => ['required', 'array'],
-    ];
+    {
+        $user = $request->user();
 
-    foreach ($questions as $question) {
-        $type = strtolower($question->tipe_input);
+        $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
+        $rules = [
+            'answers' => ['required', 'array'],
+        ];
 
-        if (in_array($type, ['heading', 'subheading'], true)) {
-            continue;
-        }
+        foreach ($questions as $question) {
+            $type = strtolower($question->tipe_input);
 
-        $field = "answers.{$question->id}";
-        $fieldRules = [$question->wajib ? 'required' : 'nullable'];
-
-        // HELPER PERBAIKAN: Ambil array pilihan & bersihkan dari spasi/newline
-        $rawOptions = $question->pilihan_jawaban ?? [];
-        if (is_string($rawOptions)) {
-            $rawOptions = json_decode($rawOptions, true) ?? [];
-        }
-        
-        $cleanOptions = array_map(function ($opt) {
-            return trim(str_replace(["\r", "\n"], '', (string) $opt));
-        }, (array) $rawOptions);
-
-        if ($type === 'file') {
-            $fieldRules[] = 'file';
-            $fieldRules[] = 'max:5120';
-        } elseif (in_array($type, ['number', 'angka'], true)) {
-            $fieldRules[] = 'regex:/^\d+$/';
-        } elseif ($type === 'checkbox') {
-            $fieldRules[] = 'array';
-            if (!empty($cleanOptions)) {
-                $rules["{$field}.*"] = ['string', Rule::in($cleanOptions)];
+            if (in_array($type, ['heading', 'subheading'], true)) {
+                continue;
             }
-        } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
-            if (!empty($cleanOptions)) {
-                $fieldRules[] = Rule::in($cleanOptions);
+
+            $field = "answers.{$question->id}";
+            $fieldRules = [$question->wajib ? 'required' : 'nullable'];
+
+            // HELPER PERBAIKAN: Ambil array pilihan & bersihkan dari spasi/newline
+            $rawOptions = $question->pilihan_jawaban ?? [];
+            if (is_string($rawOptions)) {
+                $rawOptions = json_decode($rawOptions, true) ?? [];
             }
-        } elseif ($type === 'email') {
-            $fieldRules[] = 'email';
-        } else {
-            $fieldRules[] = 'string';
-            $fieldRules[] = 'max:5000';
+            
+            $cleanOptions = array_map(function ($opt) {
+                return trim(str_replace(["\r", "\n"], '', (string) $opt));
+            }, (array) $rawOptions);
+
+            if ($type === 'file') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'max:5120';
+            } elseif (in_array($type, ['number', 'angka'], true)) {
+                $fieldRules[] = 'regex:/^\d+$/';
+            } elseif ($type === 'checkbox') {
+                $fieldRules[] = 'array';
+                if (!empty($cleanOptions)) {
+                    $rules["{$field}.*"] = ['string', \Illuminate\Validation\Rule::in($cleanOptions)];
+                }
+            } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
+                if (!empty($cleanOptions)) {
+                    $fieldRules[] = \Illuminate\Validation\Rule::in($cleanOptions);
+                }
+            } elseif ($type === 'email') {
+                $fieldRules[] = 'email';
+            } else {
+                $fieldRules[] = 'string';
+                $fieldRules[] = 'max:5000';
+            }
+
+            $rules[$field] = $fieldRules;
         }
 
-        $rules[$field] = $fieldRules;
-    }
-
-    $data = $request->validate($rules);
+        $data = $request->validate($rules);
         $answers = $data['answers'];
+
         $emailQuestion = $questions->first(
             fn ($question): bool => strtolower($question->tipe_input) === 'email'
         );
+        
         $nameQuestion = $questions->first(
             fn ($question): bool => in_array(strtolower($question->tipe_input), ['text', 'teks'], true)
                 && str_contains(strtolower($question->label), 'nama')
         ) ?? $questions->first(
             fn ($question): bool => in_array(strtolower($question->tipe_input), ['text', 'teks'], true)
         );
-        $email = $emailQuestion ? ($answers[$emailQuestion->id] ?? null) : null;
-        $nama = $nameQuestion ? ($answers[$nameQuestion->id] ?? null) : null;
 
-        if (!$emailQuestion || !$email) {
-            throw ValidationException::withMessages([
-                'answers' => 'Form harus memiliki pertanyaan email yang diisi.',
-            ]);
-        }
+        //2. MASUKKAN $user, $answers, DAN $emailQuestion KE DALAM 'use' CLOSURE
+        DB::transaction(function () use ($data, $event, $questions, $request, $user, $answers, $emailQuestion): void {
+            
+            // 3. CEK PENDAFTARAN GANDA (Hanya jika user sedang login)
+            if ($user) {
+                $sudahDaftar = \App\Models\Peserta::query()
+                    ->where('event_id', $event->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
 
-        if (!$nameQuestion || !$nama) {
-            throw ValidationException::withMessages([
-                'answers' => 'Form harus memiliki pertanyaan nama yang diisi.',
-            ]);
-        }
-
-        DB::transaction(function () use ($data, $event, $questions, $request, $nama, $email): void {
-            $user = PenggunaEvent::query()->firstOrCreate(
-                ['email' => $email],
-                [
-                    'google_id' => 'web-'.Str::uuid(),
-                    'nama' => $nama,
-                ],
-            );
-
-            if ($user->nama !== $nama) {
-                $user->update(['nama' => $nama]);
+                if ($sudahDaftar) {
+                    throw ValidationException::withMessages([
+                        'registration' => 'Anda sudah terdaftar untuk event ini.',
+                    ]);
+                }
             }
 
-            // Cegah 1 orang daftar 2x ke event yang sama (unique constraint di
-            // DB akan menolak juga, tapi ini kasih pesan yang jelas ke user,
-            // bukan error 500 mentah).
-            $sudahDaftar = Peserta::where('event_id', $event->id)
-                ->where('user_id', $user->id)
-                ->exists();
-
-            if ($sudahDaftar) {
-                throw ValidationException::withMessages([
-                    'email' => 'Email ini sudah terdaftar untuk event ini.',
-                ]);
-            }
-
-            $peserta = Peserta::create([
+            // 4. BUAT PESERTA (Gunakan nullsafe operator '?->' untuk user_id)
+            $peserta = \App\Models\Peserta::create([
                 'event_id' => $event->id,
-                'user_id' => $user->id,
-                'status' => 'menunggu_review',
+                'user_id'  => $user?->id, // Akan menjadi null jika tamu, atau ID user jika login
+                'status'   => 'menunggu_review',
             ]);
 
             foreach ($questions as $question) {
@@ -136,7 +118,9 @@ class PendaftaranController extends Controller
                     continue;
                 }
 
-                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
+                $answer = $request->file("answers.{$question->id}")
+                    ?->store('peserta', 'public');
+
                 $answer ??= $data['answers'][$question->id] ?? null;
 
                 if ($answer === null || $answer === '') {
@@ -147,10 +131,10 @@ class PendaftaranController extends Controller
                     $answer = json_encode($answer, JSON_THROW_ON_ERROR);
                 }
 
-                Jawabanpeserta::create([
-                    'peserta_id' => $peserta->id,
+                \App\Models\Jawabanpeserta::create([
+                    'peserta_id'    => $peserta->id,
                     'pertanyaan_id' => $question->id,
-                    'jawaban' => $answer,
+                    'jawaban'       => $answer,
                 ]);
             }
         });
