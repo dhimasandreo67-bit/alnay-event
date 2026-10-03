@@ -198,8 +198,13 @@
         {{-- KONDISI 2: JIKA FORM MASIH AKTIF (TAMPILKAN FORMULIR) --}}
 
         @if ($errors->any())
-            <div class="banner error">
-                Ada beberapa isian yang belum sesuai, cek lagi di bawah.
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <p class="text-red-600 text-sm font-semibold mb-2">Ada beberapa isian yang belum sesuai:</p>
+                <ul class="list-disc list-inside text-red-600 text-sm space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
         <form action="{{ route('public.registration.store', $event) }}" method="POST" enctype="multipart/form-data" novalidate>
