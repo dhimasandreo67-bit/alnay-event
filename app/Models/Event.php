@@ -21,6 +21,8 @@ class Event extends Model
         'form_fields',
         'banner',
         'status',
+        'pendaftaran_dibuka',
+        'tampil_di_beranda',
         'syarat_ketentuan',
         'biaya_pendaftaran',
         'harga_per_vote',

@@ -28,6 +28,14 @@ class PendaftaranController extends Controller
         ]);
     }
 
+    public function previewForm(Event $event)
+{
+    // Tandai session — biar view tahu ini preview admin
+    session()->flash('preview_mode', true);
+
+    return $this->showPublicForm($event);
+}
+
     public function storePublic(Request $request, Event $event)
 {
     // 1. User WAJIB login (dari Google)

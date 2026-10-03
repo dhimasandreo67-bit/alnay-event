@@ -4,67 +4,53 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\Peserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
-        /**
-     * GET /admin/events
-     * Tampilkan daftar event dengan fitur "Event Aktif" yang tersimpan di session
-     */
+    // GET /admin/events
+        // GET /admin/events
+        // GET /admin/events
     public function index(Request $request)
     {
-        // 1. Jika ada parameter ?event=X di URL, simpan ID-nya ke session
-        if ($request->has('event')) {
-            session(['active_event_id' => $request->event]);
-        }
+                $eventList = Event::query()->latest('id')->paginate(15);
 
-        // 2. Ambil event aktif: prioritaskan dari session, fallback ke event terbaru
-        $activeEventId = session('active_event_id');
-        $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
-        $activeEvent ??= Event::query()->latest('id')->first();
+        // Event aktif — dari query param ?event= atau default terbaru
+        $activeEventId = $request->query('event');
+        $activeEvent = $activeEventId
+            ? Event::find($activeEventId)
+            : $eventList->first();
 
-        // Safety check: Jika event di session sudah dihapus dari database, reset
-        if (! $activeEvent) {
-            session()->forget('active_event_id');
-            $activeEvent = Event::query()->latest('id')->first();
-        }
-
-        $events = Event::orderBy('id', 'desc')->paginate(10);
-        $eventList = Event::orderBy('id', 'desc')->get(['id', 'nama']);
-
-        // 3. Kirim ke view (variabel 'event' ini yang akan dibaca oleh Sidebar)
         return view('admin.events.index', [
-            'events'      => $events,
-            'activeEvent' => $activeEvent,
             'eventList'   => $eventList,
-            'event'       => $activeEvent, 
+            'events'      => $eventList,   // alias
+            'activeEvent' => $activeEvent,
+            'event'       => $activeEvent, // fallback untuk view lama
         ]);
     }
 
-    // 2. Form Edit Event
+    // GET /admin/events/{id}/edit
     public function edit($id)
     {
         $event = Event::findOrFail($id);
+
         return view('admin.events.edit', compact('event'));
     }
 
+    // GET /admin/events/create
     public function create()
     {
         return view('admin.events.create');
     }
 
-    /**
-     * POST /admin/events (admin, web session)
-     * Buat event baru.
-     */
+    // POST /admin/events
     public function store(Request $request)
     {
         $validated = $request->validate([
             'nama'                      => 'required|string|max:255',
             'deskripsi'                 => 'nullable|string',
+            'syarat_ketentuan'          => 'nullable|string',
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
@@ -82,10 +68,7 @@ class EventController extends Controller
             $validated['banner'] = $request->file('banner')->store('banners', 'public');
         }
 
-        // 3 kolom ini NOT NULL tanpa default di database, dan form "Buat
-        // Event Baru" belum mengumpulkannya (baru diisi di step "Pengaturan
-        // Event & Voting"). Tanpa baris ini, Event::create() di bawah bakal
-        // gagal dengan integrity constraint violation.
+        // 3 kolom ini NOT NULL tanpa default di database
         $validated['biaya_pendaftaran'] ??= 0;
         $validated['harga_per_vote'] ??= 0;
         $validated['mode_penilaian'] ??= 'voting';
@@ -97,10 +80,7 @@ class EventController extends Controller
             ->with('success', 'Event "' . $event->nama . '" berhasil dipublikasikan!');
     }
 
-    /**
-     * PUT /admin/events/:id (admin)
-     * Update detail event.
-     */
+    // PUT /admin/events/{id}
     public function update(Request $request, $id)
     {
         $event = Event::findOrFail($id);
@@ -110,17 +90,19 @@ class EventController extends Controller
             'deskripsi'                 => 'nullable|string',
             'syarat_ketentuan'          => 'nullable|string',
             'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',  // ← TAMBAH INI
+            'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
             'waktu_mulai'               => 'nullable',
-            'tanggal_selesai'           => 'nullable|date|after_or_equal:tanggal_mulai',
+            'tanggal_selesai'           => 'nullable|date',
             'waktu_selesai'             => 'nullable',
-            'lokasi'                    => 'nullable|string|max:255',
+            'lokasi'                    => 'required|string',
+            'kuota_peserta'             => 'nullable|integer',
+            'pembukaan_pendaftaran_tanggal' => 'nullable|date',
+            'pembukaan_pendaftaran_waktu'   => 'nullable',
             'batas_pendaftaran_tanggal' => 'nullable|date',
             'batas_pendaftaran_waktu'   => 'nullable',
-            'kuota_peserta'             => 'nullable|integer|min:1',
         ]);
 
         if ($request->hasFile('banner')) {
@@ -132,13 +114,12 @@ class EventController extends Controller
 
         $event->update($validated);
 
-        return redirect()->route('admin.events.index')->with('success', 'Data event berhasil diperbarui!');
+        return redirect()
+            ->route('admin.events.index')
+            ->with('success', 'Event "' . $event->nama . '" berhasil diperbarui!');
     }
 
-    /**
-     * DELETE /admin/events/:id (admin)
-     * Hapus event.
-     */
+    // DELETE /admin/events/{id}
     public function destroy($id)
     {
         $event = Event::findOrFail($id);
@@ -149,28 +130,32 @@ class EventController extends Controller
 
         $event->delete();
 
-        return redirect()->route('admin.events.index')->with('success', 'Event berhasil dihapus!');
+        return redirect()
+            ->route('admin.events.index')
+            ->with('success', 'Event berhasil dihapus.');
     }
 
-    /**
-     * PATCH /event/:id/voting (admin)
-     * Aktifkan/nonaktifkan sistem voting.
-     */
+    // PATCH /admin/events/{event}/voting
     public function toggleVoting(Event $event)
     {
-        $event->update(['voting_aktif' => ! $event->voting_aktif]);
+        $event->update([
+            'voting_aktif' => ! $event->voting_aktif,
+        ]);
 
-        return response()->json($event);
+        return response()->json([
+            'voting_aktif' => $event->voting_aktif,
+        ]);
     }
 
-    /**
-     * PATCH /event/:id/tampilkan-hasil (admin)
-     * Toggle tampil/sembunyikan leaderboard persentase suara ke publik.
-     */
+    // PATCH /admin/events/{event}/tampilkan-hasil
     public function toggleTampilkanHasil(Event $event)
     {
-        $event->update(['tampilkan_hasil_voting' => ! $event->tampilkan_hasil_voting]);
+        $event->update([
+            'tampilkan_hasil_voting' => ! $event->tampilkan_hasil_voting,
+        ]);
 
-        return response()->json($event);
+        return response()->json([
+            'tampilkan_hasil_voting' => $event->tampilkan_hasil_voting,
+        ]);
     }
 }

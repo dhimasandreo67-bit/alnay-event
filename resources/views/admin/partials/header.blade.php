@@ -20,7 +20,7 @@
                 persyaratan yang wajib diisi peserta fashion show busana adat</small></div>
         <div class="flex shrink-0 items-center gap-[9px]"><a
             class="inline-flex items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-[13px] py-[9px] text-[11px] font-medium text-[#56524c] no-underline"
-            href="{{ $event ? route('public.registration', $event) : '#' }}" target="_blank">Lihat Form Publik</a><button
+            href="{{ $event ? route('admin.preview-form', $event->id) : '#' }}" target="_blank">Preview Form</a><button
                 class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#ba8320] bg-[#ba8320] px-[13px] py-[9px] text-[11px] font-bold text-white"
                 type="button" id="saveFormHeader">▣ Simpan Formulir</button></div>
     @else

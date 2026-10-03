@@ -316,11 +316,11 @@
             const blokThumbs = fotoList.length > 1 ? `
                 <div class="grid grid-cols-3 gap-3 mt-3">
                     ${fotoList.map((url, i) => `
-                                        <button type="button" onclick="gantiFoto(${i})"
-                                            class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
-                                            <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
-                                        </button>
-                                    `).join('')}
+                                            <button type="button" onclick="gantiFoto(${i})"
+                                                class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
+                                                <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
+                                            </button>
+                                        `).join('')}
                 </div>` : '';
 
             const nomor = String(p.id).padStart(2, '0');
@@ -436,10 +436,16 @@
                     ${blokProfil}
                     ${blokStatistik}
 
-                    <a href="/peserta/${pesertaId}/checkout"
-                        class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] py-4 text-base font-semibold tracking-wide hover:bg-[#a97b1f] transition">
-                        Rp ${formatAngka(hargaPerVote)} / Vote
-                    </a>
+                                        ${
+                        p.event?.status === 'akan_datang'
+                            ? `<div class="block w-full text-center bg-gray-200 text-gray-500 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
+                                     Voting belum dibuka
+                                   </div>`
+                            : `<a href="/peserta/${pesertaId}/checkout"
+                                     class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] py-4 text-base font-semibold tracking-wide hover:bg-[#a97b1f] transition">
+                                     Rp ${formatAngka(hargaPerVote)} / Vote
+                                   </a>`
+                    }
 
                     ${blokDukungan}
                 </div>

@@ -308,6 +308,7 @@ class VotingController extends Controller
         };
 
         $nama = $cariJawaban('nama', '/nama/i')
+            ?? $peserta->nama_pendaftaran
             ?? $peserta->user->nama
             ?? 'Peserta';
 
@@ -315,9 +316,14 @@ class VotingController extends Controller
         $lokasi = $cariJawaban('lokasi', '/lokasi|domisili|kota|alamat/i');
 
         $fotoRaw = $cariJawaban('foto', '/foto|gambar|upload/i');
-        $foto = $fotoRaw
-            ? (str_starts_with($fotoRaw, 'http') ? $fotoRaw : asset('storage/' . $fotoRaw))
-            : ($peserta->user->foto_url ?? null);
+
+        if ($fotoRaw) {
+            $foto = str_starts_with($fotoRaw, 'http') ? $fotoRaw : asset('storage/' . $fotoRaw);
+        } elseif ($peserta->user?->foto_custom) {
+            $foto = asset('storage/' . $peserta->user->foto_custom);
+        } else {
+            $foto = $peserta->user?->foto_url;
+        }
 
         return response()->json([
             'id'              => $peserta->id,

@@ -52,8 +52,12 @@ class EventController extends Controller
             'mode_penilaian' => 'required|string',
         ]);
 
+        // Flag default — jangan biarkan form override
         $data['voting_aktif'] = false;
         $data['tampilkan_hasil_voting'] = false;
+
+        // Flag pendaftaran dibuka — bisa diisi dari form (default: true)
+        $data['pendaftaran_dibuka'] = $request->boolean('pendaftaran_dibuka', true);
 
         $id = DB::table('event')->insertGetId($data);
 
@@ -78,6 +82,11 @@ class EventController extends Controller
             'tanggal_selesai' => 'sometimes|required|date|after_or_equal:tanggal_mulai',
             'mode_penilaian' => 'sometimes|required|string',
         ]);
+
+        // Handle pendaftaran_dibuka — boolean dari form
+        if ($request->has('pendaftaran_dibuka')) {
+            $data['pendaftaran_dibuka'] = $request->boolean('pendaftaran_dibuka');
+        }
 
         DB::table('event')->where('id', $id)->update($data);
 

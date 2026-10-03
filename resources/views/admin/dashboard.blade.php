@@ -620,7 +620,7 @@
                             Download Data
                         </a>
 
-                        <a href="{{ route('public.registration', $event->id) }}"
+                        <a href="{{ route('admin.registrations', $event->id) }}"
                             class="inline-flex items-center px-4 py-3 bg-[#ba8320] hover:bg-[#a06f1a] text-white font-bold text-[12px] rounded-md transition-colors shadow-sm">
                             + Tambah Manual
                         </a>

@@ -146,7 +146,7 @@
                     </div>
 
                     <div class="text-[11px] text-[#73716c] mt-1">
-                        Pangsa Suara Peringkat 1
+                        Persentase Peringkat 1
                     </div>
 
                 </div>

@@ -83,6 +83,7 @@ Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta'
 Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
 Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
+Route::get('/event/{event}/kandidat', [PesertaController::class, 'kandidat'])->name('event.peserta');
 Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
 
 /*
@@ -234,6 +235,9 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.registrations');
     Route::post('/registrations/{event}/manual', [AdminPendaftaranController::class, 'storeManual'])
         ->name('admin.registrations.manual.store');
+
+    Route::get('/preview/{event}', [PendaftaranController::class, 'previewForm'])
+        ->name('admin.preview-form');
 
     Route::get('/peserta/{id}', [AdminPendaftaranController::class, 'show'])
         ->name('admin.peserta.show');

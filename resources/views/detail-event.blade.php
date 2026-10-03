@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Event & Kandidat - {{ $event->nama }} | ALNAY.ID</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ asset('images/alnaylogo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -54,7 +55,7 @@
 
         // Pecah ketentuan voting
         $pecahBaris = fn($teks) => array_values(array_filter(array_map('trim', preg_split('/\R/', (string) $teks))));
-        $ketentuanVoting = $pecahBaris($event->ketentuan_voting ?? '');
+        $ketentuanVoting = $pecahBaris($event->syarat_ketentuan ?? '');
 
         // =====================================================
         // LOGIKA TURUNAN
@@ -81,6 +82,48 @@
         };
 
         $periode = $selesai ? $rentang($mulai, $selesai) : ($mulai ? 'Mulai ' . $rentang($mulai) : '-');
+
+        // ---- Jadwal Event (timeline) ----
+        $bukaDaftar = $event->pembukaan_pendaftaran_tanggal
+            ? \Carbon\Carbon::parse($event->pembukaan_pendaftaran_tanggal, $tz)->locale('id')
+            : null;
+        $batasDaftar = $event->batas_pendaftaran_tanggal
+            ? \Carbon\Carbon::parse($event->batas_pendaftaran_tanggal, $tz)->locale('id')
+            : null;
+
+        $jadwal = [];
+
+        if ($batasDaftar) {
+            // Pendaftaran Kandidat — pakai bukaDaftar kalau ada, kalau gak ada pakai "Sampai [batas]"
+            $jadwal[] = [
+                'nama' => 'Pendaftaran Kandidat',
+                'tanggal' => $bukaDaftar
+                    ? $rentang($bukaDaftar, $batasDaftar)
+                    : 'Sampai ' . $batasDaftar->translatedFormat('j F Y'),
+            ];
+
+            // Verifikasi Data — cuma kalau ada tanggal mulai
+            if ($mulai) {
+                $verifAwal = $batasDaftar->copy()->addDay()->startOfDay();
+                $verifAkhir = $mulai->copy()->subDay()->startOfDay();
+
+                if ($verifAwal->lte($verifAkhir)) {
+                    $jadwal[] = [
+                        'nama' => 'Verifikasi Data',
+                        'tanggal' => $rentang($verifAwal, $verifAkhir),
+                    ];
+                }
+            }
+        } elseif ($mulai) {
+            // Kalau gak ada batas daftar — langsung voting
+            $jadwal[] = [
+                'nama' => 'Pendaftaran Kandidat',
+                'tanggal' => 'Sudah ditutup',
+            ];
+        }
+
+        $jadwal[] = ['nama' => 'Voting Publik', 'tanggal' => $periode];
+        $jadwal[] = ['nama' => 'Pengumuman Pemenang', 'tanggal' => 'Setelah voting berakhir'];
 
         // Hitung mundur
         $cdLabel = $selesai ? 'Sisa Waktu Voting' : 'Voting Sedang Berjalan';
@@ -161,16 +204,35 @@
             @endif
         </section>
 
+        @if (!$event->voting_aktif)
+            <div class="mx-4 mt-4 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+                <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.5 0L3.16 16.25A2 2 0 005 19z" />
+                </svg>
+                <div>
+                    <p class="text-[13px] font-bold text-amber-800 m-0">Voting Ditutup</p>
+                    <p class="text-[12px] text-amber-700 mt-0.5 m-0">
+                        Admin telah menutup voting untuk event ini. Kamu masih bisa melihat hasil & daftar kandidat.
+                    </p>
+                </div>
+            </div>
+        @endif
+
         {{-- EVENT INFORMATION --}}
         <section class="relative -mt-5 mx-4 bg-white rounded-xl shadow-sm border border-gray-100">
             <div class="p-4 md:p-5">
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-5">
 
                     <div>
-                        <span
-                            class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#c99a32] text-white text-[10px] font-semibold uppercase tracking-wider">
-                            Voting Sedang Berlangsung
-                        </span>
+                        @if (!$event->voting_aktif)
+                            <span
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-500 text-white text-[10px] font-semibold uppercase tracking-wider">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                Voting Ditutup
+                            </span>
+                        @endif
 
                         <h1 class="font-display text-xl md:text-2xl font-bold text-[#111827] mt-2.5">
                             {{ $event->nama }}
@@ -343,7 +405,8 @@
             @else
                 <div class="mt-3.5 rounded-lg border border-dashed border-gray-200 bg-white p-10 text-center">
                     <p class="text-sm font-semibold text-[#15233d]">Belum ada kandidat pada event ini</p>
-                    <p class="mt-1 text-xs text-gray-400">Kandidat akan muncul di sini begitu admin menambahkannya.</p>
+                    <p class="mt-1 text-xs text-gray-400">Kandidat akan muncul di sini begitu admin menambahkannya.
+                    </p>
                 </div>
             @endif
         </section>
@@ -360,7 +423,7 @@
             class="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl">
 
             <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <h2 class="font-display text-lg font-bold text-[#15233d]">Syarat &amp; Ketentuan Voting</h2>
+                <h2 class="font-display text-lg font-bold text-[#15233d]">Syarat &amp; Ketentuan</h2>
                 <button type="button" data-tutup-syarat aria-label="Tutup"
                     class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-400 hover:bg-gray-100 transition">
                     &times;
@@ -388,7 +451,7 @@
 
                 @if (count($ketentuanVoting) > 0)
                     <div>
-                        <h3 class="text-sm font-semibold text-[#15233d]">Ketentuan Voting</h3>
+                        <h3 class="text-sm font-semibold text-[#15233d]">Syarat &amp; Ketentuan Event</h3>
                         <ul class="mt-3 space-y-2 text-sm text-gray-600 list-disc pl-5 marker:text-[#c99a32]">
                             @foreach ($ketentuanVoting as $ketentuan)
                                 <li>{{ $ketentuan }}</li>
@@ -396,6 +459,20 @@
                         </ul>
                     </div>
                 @endif
+
+                <!-- Jadwal Event -->
+                <div>
+                    <h3 class="text-sm font-semibold text-[#15233d]">Jadwal Event</h3>
+                    <ol class="relative mt-3 space-y-4 border-l border-[#e8dcc0] pl-5">
+                        @foreach ($jadwal as $tahap)
+                            <li class="relative">
+                                <span class="absolute -left-[26px] top-1 h-2.5 w-2.5 rounded-full bg-[#c99a32]"></span>
+                                <p class="text-sm font-medium text-[#15233d]">{{ $tahap['nama'] }}</p>
+                                <p class="text-xs text-gray-500">{{ $tahap['tanggal'] }}</p>
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
 
                 <div>
                     <h3 class="text-sm font-semibold text-[#15233d]">Informasi Event</h3>

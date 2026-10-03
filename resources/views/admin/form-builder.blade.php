@@ -641,7 +641,7 @@
                 <div><strong>{{ session('admin_name', 'Siti Aminah') }}</strong><small>Admin Event</small></div>
             </div>
 
-            <a href="{{ $event ? route('public.registration', $event->id) : '#' }}" target="_blank"
+            <a href="{{ $event ? route('admin.preview-form', $event->id) : '#' }}" target="_blank"
                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
                 Lihat Form Publik
             </a>
