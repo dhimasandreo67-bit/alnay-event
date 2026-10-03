@@ -6,19 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Pengaturan Event &amp; Voting | ALNAY.ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gold: '#ba8320',
-                        cream: '#f7f5f0'
-                    }
-                }
-            }
-        };
-    </script>
+    @vite(['resources/css/app.css'])
 </head>
 
 <body class="bg-cream font-['Inter'] text-[13px] text-[#22201d]">
@@ -206,12 +194,13 @@
                     </div> --}}
                     </div>
 
-                    <div class="mt-8 pt-4 border-t border-[#e3ded6] flex flex-wrap items-center justify-end gap-3">
-                        <a href="{{ route('admin.voting.settings', $event) }}"
-                            class="w-full sm:w-auto px-4 py-2.5 text-[12px] font-semibold text-[#73716c] border border-[#e3ded6] hover:bg-gray-50 rounded-lg text-center transition">
-                            Batalkan Perubahan
-                        </a>
-                        <button type="submit"
+<<<<<<< HEAD
+                                    <div class="mt-8 pt-4 border-t border-[#e3ded6] flex flex-wrap items-center justify-end gap-3 pb-1">
+                    <a href="{{ route('admin.voting.settings', $event) }}"
+                       class="w-full sm:w-auto px-4 py-2.5 text-[12px] font-semibold text-[#73716c] border border-[#e3ded6] hover:bg-gray-50 rounded-lg text-center transition">
+                        Batalkan Perubahan
+                    </a>
+                    <button type="submit"
                             class="w-full sm:w-auto px-5 py-2.5 text-[12px] font-bold bg-gold hover:bg-[#a3721a] text-white rounded-lg shadow-sm transition whitespace-nowrap text-center">
                             ✓ Simpan &amp; Terapkan Pengaturan
                         </button>

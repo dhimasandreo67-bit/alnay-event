@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Georgia&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('public/css/admin-sidebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
     
     <style>
         body {
@@ -15,24 +15,7 @@
         }
     </style>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gold: '#ba8320',
-                        cream: '#f7f5f0',
-                        ink: '#22201d',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'Arial', 'sans-serif'],
-                        serif: ['Georgia', 'serif'],
-                    },
-                },
-            },
-        };
-    </script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-cream text-ink font-sans text-[13px]">
     <div class="flex min-h-screen w-full">
