@@ -346,10 +346,11 @@
                         <div class="mt-4 space-y-4">
                             @foreach ($eventAkanDatangLainnya as $event)
                                 @php
-                                    $$bukaPendaftaran = 
+                                    $bukaPendaftaran =
                                         $event->batas_pendaftaran_tanggal &&
                                         now()->lte($event->batas_pendaftaran_tanggal) &&
-                                        (!$event->pembukaan_pendaftaran_tanggal || now()->gte($event->pembukaan_pendaftaran_tanggal));
+                                        (!$event->pembukaan_pendaftaran_tanggal ||
+                                            now()->gte($event->pembukaan_pendaftaran_tanggal));
                                 @endphp
                                 <div
                                     class="card-shadow rounded-[12px] border border-[#ededed] bg-white overflow-hidden">
