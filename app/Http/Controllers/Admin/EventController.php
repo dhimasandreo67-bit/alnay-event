@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Peserta;
+use App\Models\AkunStaf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,25 +17,55 @@ class EventController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. Jika ada parameter ?event=X di URL, simpan ID-nya ke session
+        // 1. Ambil SEMUA event (kita simpan di variabel $allEvents)
+        $allEvents = Event::orderBy('id', 'desc')->get();
+
+        // 2. Tentukan event aktif
+        $activeEvent = null;
+        $adminId = $request->session()->get('admin_id');
+
+        // Prioritas 1: Dari parameter URL (?event=X) saat dropdown berubah
         if ($request->has('event')) {
-            session(['active_event_id' => $request->event]);
+            $activeEvent = Event::find($request->event);
+            if ($activeEvent) {
+                session(['active_event_id' => $activeEvent->id]);
+                
+                // Simpan ke database agar diingat setelah logout
+                if ($adminId) {
+                    AkunStaf::where('id', $adminId)
+                        ->update(['last_active_event_id' => $activeEvent->id]);
+                }
+            }
         }
 
-        // 2. Ambil event aktif: prioritaskan dari session, fallback ke event terbaru
-        $activeEventId = session('active_event_id');
-        $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
-        $activeEvent ??= Event::query()->latest('id')->first();
+        // Prioritas 2: Dari Session
+        if (!$activeEvent) {
+            $activeEventId = session('active_event_id');
+            $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
+        }
 
-        $events = Event::orderBy('id', 'desc')->paginate(10);
-        $eventList = Event::orderBy('id', 'desc')->get(['id', 'nama']);
+        // Prioritas 3: Dari Database (Last Active Event)
+        if (!$activeEvent && $adminId) {
+            $admin = AkunStaf::find($adminId);
+            if ($admin && $admin->last_active_event_id) {
+                $activeEvent = Event::find($admin->last_active_event_id);
+                if ($activeEvent) {
+                    session(['active_event_id' => $activeEvent->id]);
+                }
+            }
+        }
 
-        // 3. Kirim ke view (variabel 'event' ini yang akan dibaca oleh Sidebar)
+        // Fallback: Jika semuanya gagal, ambil event pertama/terbaru dari list
+        $activeEvent ??= $allEvents->first();
+
+        // 3. Kirim data ke view
+        // KAMI KIRIM KEDUANYA ($events DAN $eventList) AGAR VIEW TIDAK ERROR
+        // Apapun nama variabel yang dipakai di Blade ($events atau $eventList), pasti akan terdeteksi.
         return view('admin.events.index', [
-            'events'      => $events,
+            'events'      => $allEvents, // Untuk tabel (jika view memakai @foreach ($events as $item))
+            'eventList'   => $allEvents, // Untuk dropdown (jika view memakai @foreach ($eventList as $e))
+            'event'       => $activeEvent,
             'activeEvent' => $activeEvent,
-            'eventList'   => $eventList,
-            'event'       => $activeEvent, 
         ]);
     }
 
@@ -213,5 +244,16 @@ class EventController extends Controller
             'is_active' => (bool)$event->is_active,
             'message' => $event->is_active ? 'Pendaftaran berhasil dibuka.' : 'Pendaftaran berhasil ditutup.'
         ]);
+    }
+
+    public function setActive(Request $request)
+    {
+        $request->validate([
+            'event_id' => 'required|exists:event,id',
+        ]);
+
+        \App\Helpers\EventHelper::setActiveEvent($request, $request->event_id);
+
+        return redirect()->back()->with('success', 'Event aktif berhasil diubah.');
     }
 }
