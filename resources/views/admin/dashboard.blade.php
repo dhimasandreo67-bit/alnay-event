@@ -706,8 +706,6 @@
                                     <td class="p-3">{{ $index + 1 }}</td>
                                     <td class="p-3">
                                         <ul class="text-xs space-y-1">
-                                            <li><strong>Nama:</strong> {{ $peserta->user?->nama ?? '-' }}</li>
-                                            <li><strong>Email:</strong> {{ $peserta->user?->email ?? '-' }}</li>
                                             @foreach($peserta->jawabans as $jawaban)
                                                 <li>
                                                     <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
