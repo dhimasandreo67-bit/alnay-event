@@ -69,6 +69,8 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.peserta.export');
     Route::get('/api/event/{event}/pending-payments', [EventController::class, 'getPendingPayments'])
         ->name('admin.events.pending-payments');
+    Route::post('/events/set-active', [EventController::class, 'setActive'])
+        ->name('admin.events.set-active');
 
     // E. Form Builder
     Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])
