@@ -16,6 +16,7 @@ use Midtrans\Config;
 use Midtrans\CoreApi;
 use Midtrans\Notification;
 
+
 class VotingController extends Controller
 {
     // ============================================================
@@ -652,5 +653,71 @@ class VotingController extends Controller
         $color = $colors[$index % count($colors)];
         $index++;
         return $color;
+    }
+
+        /**
+     * DELETE /admin/voters/{id}
+     * Hapus record voting.
+     */
+    public function destroy($id)
+    {
+        $voting = \App\Models\Voting::findOrFail($id);
+
+        DB::transaction(function () use ($voting) {
+            // Kurangi total_vote peserta
+            if ($voting->peserta) {
+                $voting->peserta->decrement('total_vote', $voting->jumlah_vote);
+            }
+
+            $voting->delete();
+        });
+
+        return redirect()
+            ->back()
+            ->with('success', 'Data voting berhasil dihapus.');
+    }
+
+    /**
+     * POST /admin/voters/manual-vote
+     * Tambah vote manual oleh admin.
+     */
+    public function manualVote(Request $request)
+    {
+        $data = $request->validate([
+            'peserta_id'    => 'required|exists:peserta_event,id',
+            'jumlah_vote'   => 'required|integer|min:1|max:1000',
+            'nama_voter'    => 'required|string|max:255',
+            'email_voter'   => 'required|email|max:255',
+            'pesan_dukungan' => 'nullable|string|max:1000',
+        ]);
+
+        $peserta = \App\Models\Peserta::findOrFail($data['peserta_id']);
+        $event = $peserta->event;
+
+        DB::transaction(function () use ($data, $peserta, $event) {
+            // Buat record voting manual
+            \App\Models\Voting::create([
+                'event_id'          => $event->id,
+                'peserta_id'        => $peserta->id,
+                'user_id'           => null,
+                'nama_voter'        => $data['nama_voter'],
+                'email_voter'       => $data['email_voter'],
+                'nama_tampilan'     => $data['nama_voter'],
+                'jumlah_vote'       => $data['jumlah_vote'],
+                'harga_per_vote'    => $event->harga_per_vote,
+                'total_bayar'       => $event->harga_per_vote * $data['jumlah_vote'],
+                'midtrans_order_id' => 'MANUAL-' . Str::random(10),
+                'status_midtrans'   => 'settlement',
+                'pesan_dukungan'    => $data['pesan_dukungan'] ?? null,
+                'tanggal_vote'      => now(),
+            ]);
+
+            // Update total_vote peserta
+            $peserta->increment('total_vote', $data['jumlah_vote']);
+        });
+
+        return redirect()
+            ->back()
+            ->with('success', 'Vote manual berhasil ditambahkan.');
     }
 }
