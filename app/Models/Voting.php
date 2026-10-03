@@ -14,10 +14,12 @@ class Voting extends Model
 
     public $timestamps = false;
 
-    protected $fillable = [
+        protected $fillable = [
         'event_id',
         'peserta_id',
         'user_id',
+        'nama_voter',
+        'email_voter',
         'nama_pemilih',
         'email_pemilih',
         'nama_tampilan',
