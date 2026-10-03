@@ -22,11 +22,6 @@ class PendaftaranController extends Controller
 {
     public function storeManual(Request $request, Event $event): JsonResponse
     {
-        $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
-        $rules = [
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-        ];
 
         foreach ($questions as $question) {
             if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
