@@ -83,7 +83,7 @@ Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta'
 Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
 Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
-Route::get('/event/{event}/kandidat', [PesertaController::class, 'kandidat'])->name('event.peserta');
+Route::get('/event/{event}/kandidat', [AdminPendaftaranController::class, 'kandidat'])->name('event.peserta');
 Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
 
 /*
@@ -156,7 +156,6 @@ Route::middleware('pelanggan')->group(function () {
     Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
 
     // Checkout vote
-        // Checkout vote
     Route::get('/peserta/{id}/checkout', function ($id) {
         return view('vote-checkout', [
             'pesertaId' => $id,
@@ -218,7 +217,7 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.events.toggle-status');
     Route::delete('/events/{event}/questions/clear', [AdminPendaftaranController::class, 'clearQuestions'])
         ->name('admin.events.questions.clear');
-    Route::get('/events/{event}/peserta/export', [PesertaController::class, 'export'])
+    Route::get('/events/{event}/peserta/export', [AdminPendaftaranController::class, 'export'])
         ->name('admin.peserta.export');
     Route::get('/api/event/{event}/pending-payments', [EventController::class, 'getPendingPayments'])
         ->name('admin.events.pending-payments');
