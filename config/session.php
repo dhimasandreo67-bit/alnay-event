@@ -230,4 +230,6 @@ return [
 
     'serialization' => 'json',
 
+    'driver' => env('SESSION_DRIVER', 'redis'),
+
 ];
