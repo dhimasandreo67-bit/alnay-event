@@ -87,6 +87,7 @@ class PendaftaranController extends Controller
             $peserta = $event->pesertas()->create([
                 'user_id'    => $user->id,
                 'status'     => 'diterima',
+                'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
@@ -193,30 +194,37 @@ class PendaftaranController extends Controller
         return Storage::disk('public')->download($filePath, $newFilename);
     }
 
-   public function index()
+   public function index(Request $request)
     {
-        // 1. Ambil data event
-        $event = Event::first(); 
+        // 1. Ambil event aktif dari session (sama seperti DashboardController)
+        $activeEventId = session('active_event_id');
+        $event = $activeEventId ? Event::find($activeEventId) : null;
+        $event ??= Event::query()->latest('id')->first();
 
-        // 2. Ambil seluruh data peserta
-        $pesertas = Peserta::orderBy('id', 'desc')->get();
+        // 2. Hitung statistik HANYA untuk event ini
+        $totalPendaftar = $event ? Peserta::where('event_id', $event->id)->count() : 0;
+        $menungguReview = $event ? Peserta::where('event_id', $event->id)->where('status', 'menunggu_review')->count() : 0;
+        $diterima = $event ? Peserta::where('event_id', $event->id)->where('status', 'diterima')->count() : 0;
+        $ditolak = $event ? Peserta::where('event_id', $event->id)->where('status', 'ditolak')->count() : 0;
 
-        // 3. Hitung jumlah statistik peserta berdasarkan status
-        $totalPendaftar = $pesertas->count();
-        $menungguReview = $pesertas->where('status', 'menunggu_review')->count();
-        $diterima       = $pesertas->where('status', 'diterima')->count();
-        $ditolak        = $pesertas->where('status', 'ditolak')->count();
+        // 3. Ambil daftar peserta HANYA milik event ini + eager load
+        $pesertas = $event 
+            ? Peserta::where('event_id', $event->id)
+                ->with(['user', 'jawabans.pertanyaan'])
+                ->latest('id')
+                ->get()
+            : collect();
 
-        // 4. Ambil waktu update terakhir dari tabel peserta_event
-        $lastUpdate = Peserta::max('updated_at');      // <-- WAJIB ADA
+        // 4. Ambil waktu update terakhir
+        $lastUpdate = $pesertas->first()?->updated_at ?? $event?->updated_at;
 
-        // 5. Kirim semua variabel ke view dashboard
+        // 5. Kirim data ke view
         return view('admin.dashboard', compact(
-            'event', 
-            'pesertas', 
-            'totalPendaftar', 
-            'menungguReview', 
-            'diterima', 
+            'event',
+            'pesertas',
+            'totalPendaftar',
+            'menungguReview',
+            'diterima',
             'ditolak',
             'lastUpdate'
         ));
@@ -388,11 +396,5 @@ class PendaftaranController extends Controller
         
         // Simpan perubahan ke MySQL
         $event->save();
-
-        return response()->json([
-            'success' => true,
-            'is_active' => (bool)$event->is_active,
-            'message' => $event->is_active ? 'Pendaftaran berhasil dibuka.' : 'Pendaftaran berhasil ditutup.'
-        ]);
     }
 }
