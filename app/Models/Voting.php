@@ -18,12 +18,16 @@ class Voting extends Model
         'event_id',
         'peserta_id',
         'user_id',
+        'nama_voter',
+        'email_voter',
         'nama_tampilan',
         'jumlah_vote',
-        'harga_per_vote',   // snapshot harga saat transaksi, JANGAN ambil ulang dari event
+        'harga_per_vote',
         'total_bayar',
         'midtrans_order_id',
         'status_midtrans',
+        'tanggal_vote',
+        'email_voter',
     ];
 
     protected $casts = [
