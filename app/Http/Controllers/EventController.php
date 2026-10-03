@@ -2,8 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use App\Models\AkunStaf;
+use App\Models\Event;
+use App\Models\JawabanPeserta;
+use App\Models\PembayaranEvent;
+use App\Models\Pertanyaan;
+use App\Models\Peserta;
+use App\Models\Voting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
 
 class EventController extends Controller
 {
@@ -93,24 +103,41 @@ class EventController extends Controller
         return response()->json(DB::table('event')->find($id));
     }
 
-    // DELETE /event/{id}
+        // DELETE /admin/events/{id}
     public function destroy($id)
     {
-        $event = DB::table('event')->find($id);
-        if (! $event) {
-            return response()->json(['message' => 'Event tidak ditemukan'], 404);
-        }
+        $event = Event::findOrFail($id);
 
-        $punyaPeserta = DB::table('peserta_event')->where('event_id', $id)->exists();
-        if ($punyaPeserta) {
-            return response()->json([
-                'message' => 'Event tidak bisa dihapus karena sudah ada peserta',
-            ], 409);
-        }
+        DB::transaction(function () use ($event) {
+            $pesertaIds = Peserta::where('event_id', $event->id)->pluck('id');
 
-        DB::table('event')->where('id', $id)->delete();
+            // 1. Hapus jawaban peserta
+            if ($pesertaIds->isNotEmpty()) {
+                JawabanPeserta::whereIn('peserta_id', $pesertaIds)->delete();
+                PembayaranEvent::whereIn('peserta_id', $pesertaIds)->delete();
+            }
 
-        return response()->json(['message' => 'Event dihapus']);
+            // 2. Hapus voting
+            Voting::where('event_id', $event->id)->delete();
+
+            // 3. Hapus peserta
+            Peserta::where('event_id', $event->id)->delete();
+
+            // 4. Hapus pertanyaan
+            Pertanyaan::where('event_id', $event->id)->delete();
+
+            // 5. Hapus banner
+            if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+                Storage::disk('public')->delete($event->banner);
+            }
+
+            // 6. Hapus event
+            $event->delete();
+        });
+
+        return redirect()
+            ->route('admin.events.index')
+            ->with('success', 'Event beserta data terkait berhasil dihapus.');
     }
 
     // PATCH /event/{id}/voting

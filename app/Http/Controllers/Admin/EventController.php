@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Event;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Models\AkunStaf;
+use App\Models\Event;
+use App\Models\JawabanPeserta;
+use App\Models\PembayaranEvent;
+use App\Models\Pertanyaan;
+use App\Models\Peserta;
+use App\Models\Voting;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
-        /**
+    /**
      * GET /admin/events
      */
     public function index(Request $request)
@@ -101,9 +107,13 @@ class EventController extends Controller
         }
 
         // 3 kolom ini NOT NULL tanpa default di database
+                // 3 kolom ini NOT NULL tanpa default di database
         $validated['biaya_pendaftaran'] ??= 0;
         $validated['harga_per_vote'] ??= 0;
         $validated['mode_penilaian'] ??= 'voting';
+
+        // Default pendaftaran dibuka untuk event baru
+        $validated['pendaftaran_dibuka'] = 1;
 
         $event = Event::create($validated);
 
@@ -137,6 +147,9 @@ class EventController extends Controller
             'batas_pendaftaran_waktu'   => 'nullable',
         ]);
 
+        // Handle toggle pendaftaran manual
+        $validated['pendaftaran_dibuka'] = $request->boolean('pendaftaran_dibuka');
+
         if ($request->hasFile('banner')) {
             if ($event->banner && Storage::disk('public')->exists($event->banner)) {
                 Storage::disk('public')->delete($event->banner);
@@ -152,21 +165,44 @@ class EventController extends Controller
     }
 
     // DELETE /admin/events/{id}
+    // DELETE /admin/events/{id}
     public function destroy($id)
     {
         $event = Event::findOrFail($id);
 
-        if ($event->banner && Storage::disk('public')->exists($event->banner)) {
-            Storage::disk('public')->delete($event->banner);
-        }
+        DB::transaction(function () use ($event) {
+            $pesertaIds = Peserta::where('event_id', $event->id)->pluck('id');
 
-        $event->delete();
+            // 1. Hapus jawaban peserta
+            if ($pesertaIds->isNotEmpty()) {
+                JawabanPeserta::whereIn('peserta_id', $pesertaIds)->delete();
+                PembayaranEvent::whereIn('peserta_id', $pesertaIds)->delete();
+            }
+
+            // 2. Hapus voting
+            Voting::where('event_id', $event->id)->delete();
+
+            // 3. Hapus peserta
+            Peserta::where('event_id', $event->id)->delete();
+
+            // 4. Hapus pertanyaan
+            Pertanyaan::where('event_id', $event->id)->delete();
+
+            // 5. Hapus banner
+            if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+                Storage::disk('public')->delete($event->banner);
+            }
+
+            // 6. Hapus event
+            $event->delete();
+        });
 
         return redirect()
             ->route('admin.events.index')
-            ->with('success', 'Event berhasil dihapus.');
+            ->with('success', 'Event beserta data terkait berhasil dihapus.');
     }
 
+    // PATCH /admin/events/{event}/voting
     // PATCH /admin/events/{event}/voting
     public function toggleVoting(Event $event)
     {
@@ -176,6 +212,22 @@ class EventController extends Controller
 
         return response()->json([
             'voting_aktif' => $event->voting_aktif,
+        ]);
+    }
+
+    // PATCH /admin/events/{event}/toggle-pendaftaran
+    public function togglePendaftaran(Event $event)
+    {
+        $event->update([
+            'pendaftaran_dibuka' => ! $event->pendaftaran_dibuka,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'pendaftaran_dibuka' => $event->pendaftaran_dibuka,
+            'message' => $event->pendaftaran_dibuka
+                ? 'Pendaftaran berhasil dibuka.'
+                : 'Pendaftaran berhasil ditutup.',
         ]);
     }
 
@@ -191,7 +243,7 @@ class EventController extends Controller
         ]);
     }
 
-        public function setActive(Request $request)
+    public function setActive(Request $request)
     {
         $request->validate([
             'event_id' => 'required|exists:event,id',

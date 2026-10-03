@@ -12,12 +12,6 @@
 
     @php
         $isPreview = request()->routeIs('admin.preview-form');
-        // DEBUG — hapus setelah fix
-        \Log::info('Preview check', [
-            'route' => request()->route()->getName(),
-            'isPreview' => $isPreview,
-            'url' => request()->url(),
-        ]);
     @endphp
 
     <header class="border-b border-[#CDC5BC]/30 bg-[#FBF9F4]/95 backdrop-blur">
@@ -130,31 +124,48 @@
             </div>
         @endif
 
-        @php
-            $pendaftaranDitutup =
-                !$isPreview &&
-                (!$event->pendaftaran_dibuka || in_array($event->status, ['sedang_berlangsung', 'telah_berakhir']));
+                @php
+            $sekarang = now();
+            $bukaDaftar = $event->pembukaan_pendaftaran_tanggal;
+            $batasDaftar = $event->batas_pendaftaran_tanggal;
+
+            // Status event dulu
+            if (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {
+                $pendaftaranDitutup = true;
+                $alasanTutup = 'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
+            }
+            // Flag manual admin
+            elseif (!$event->pendaftaran_dibuka) {
+                $pendaftaranDitutup = true;
+                $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
+            }
+            // Waktu belum masuk
+            elseif ($bukaDaftar && $sekarang->lt($bukaDaftar)) {
+                $pendaftaranDitutup = true;
+                $alasanTutup = 'Pendaftaran untuk event ini belum dibuka. Buka pada ' . $bukaDaftar->translatedFormat('d F Y') . ' pukul ' . ($event->pembukaan_pendaftaran_waktu ?? '00:00') . ' WIB.';
+            }
+            // Waktu udah lewat
+            elseif ($batasDaftar && $sekarang->gt($batasDaftar)) {
+                $pendaftaranDitutup = true;
+                $alasanTutup = 'Pendaftaran untuk event ini sudah ditutup pada ' . $batasDaftar->translatedFormat('d F Y') . '.';
+            }
+            else {
+                $pendaftaranDitutup = false;
+                $alasanTutup = null;
+            }
         @endphp
 
         @if ($pendaftaranDitutup)
-            <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-10 text-center">
+            <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-8 text-center">
                 <div class="w-16 h-16 rounded-full bg-[#FAF3E7] flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-[#7F5700]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="1.8">
-                        <rect x="4" y="11" width="16" height="9" rx="2" />
-                        <path d="M8 11V7a4 4 0 118 0v4" />
+                        <rect x="4" y="10" width="16" height="11" rx="2" />
+                        <path d="M8 10V7a4 4 0 018 0v3" />
                     </svg>
                 </div>
                 <h2 class="text-xl font-bold text-black mb-2">Pendaftaran Ditutup</h2>
-                <p class="text-sm text-[#4B463F]">
-                    @if ($event->status === 'sedang_berlangsung')
-                        Event ini sedang berlangsung, pendaftaran peserta baru sudah ditutup.
-                    @elseif ($event->status === 'telah_berakhir')
-                        Event ini sudah berakhir.
-                    @else
-                        Pendaftaran untuk event ini belum dibuka.
-                    @endif
-                </p>
+                <p class="text-sm text-[#4B463F]">{{ $alasanTutup }}</p>
             </div>
         @else
             @guest('pelanggan')
@@ -309,7 +320,7 @@
                     </form>
                 @endif
             @endauth
-            @endif
+        @endif
 
     </main>
 

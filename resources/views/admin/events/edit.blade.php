@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css'])
 </head>
 
 <body class="bg-cream text-ink font-sans text-[13px]">
@@ -30,45 +30,50 @@
             {{-- FORM EDIT EVENT --}}
             <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm max-w-4xl">
                 <form action="{{ route('admin.events.update', $event->id) }}" method="POST"
-                    enctype="multipart/form-data" class="space-y-4">
+                    enctype="multipart/form-data"
+                    class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
                     @csrf
                     @method('PUT')
 
-                    {{-- TOGGLE PENDAFTARAN DIBUKA & STATUS EVENT — PALING ATAS --}}
-                    {{-- STATUS EVENT — PALING ATAS --}}
-                    <div class="p-4 bg-[#fcfaf6] border-2 border-[#ba8320] rounded-lg">
-                        <label class="block font-bold mb-2">Status Event</label>
-                        <div class="grid grid-cols-3 gap-3" id="statusContainer">
-                            <label data-color="blue"
-                                class="status-card cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', $event->status) === 'akan_datang' ? 'border-blue-500 bg-blue-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
-                                <input type="radio" name="status" value="akan_datang"
-                                    {{ old('status', $event->status) === 'akan_datang' ? 'checked' : '' }}
-                                    class="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500">
-                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                                <span class="text-sm font-medium">Akan Datang</span>
-                            </label>
+                    {{-- KOLOM KIRI — FORM FIELDS --}}
+                    <div class="space-y-4 min-w-0">
 
-                            <label data-color="emerald"
-                                class="status-card cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', $event->status) === 'sedang_berlangsung' ? 'border-emerald-500 bg-emerald-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
-                                <input type="radio" name="status" value="sedang_berlangsung"
-                                    {{ old('status', $event->status) === 'sedang_berlangsung' ? 'checked' : '' }}
-                                    class="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                <span class="text-sm font-medium">Sedang Berlangsung</span>
-                            </label>
+                        {{-- STATUS EVENT — PALING ATAS --}}
+                        <div class="p-4 bg-[#fcfaf6] border-2 border-[#ba8320] rounded-lg">
 
-                            <label data-color="orange"
-                                class="status-card cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', $event->status) === 'telah_berakhir' ? 'border-orange-500 bg-orange-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
-                                <input type="radio" name="status" value="telah_berakhir"
-                                    {{ old('status', $event->status) === 'telah_berakhir' ? 'checked' : '' }}
-                                    class="w-4 h-4 text-orange-600 border-slate-300 focus:ring-orange-500">
-                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                                <span class="text-sm font-medium">Telah Berakhir</span>
-                            </label>
+                            {{-- STATUS EVENT --}}
+                            <label class="block font-bold mb-2">Status Event</label>
+                            <div class="grid grid-cols-3 gap-3" id="statusContainer">
+                                <label data-color="blue"
+                                    class="status-card cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', $event->status) === 'akan_datang' ? 'border-blue-500 bg-blue-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                    <input type="radio" name="status" value="akan_datang"
+                                        {{ old('status', $event->status) === 'akan_datang' ? 'checked' : '' }}
+                                        class="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                    <span class="text-sm font-medium">Akan Datang</span>
+                                </label>
+                                <label data-color="emerald"
+                                    class="status-card cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', $event->status) === 'sedang_berlangsung' ? 'border-emerald-500 bg-emerald-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                    <input type="radio" name="status" value="sedang_berlangsung"
+                                        {{ old('status', $event->status) === 'sedang_berlangsung' ? 'checked' : '' }}
+                                        class="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <span class="text-sm font-medium">Sedang Berlangsung</span>
+                                </label>
+                                <label data-color="orange"
+                                    class="status-card cursor-pointer border-2 rounded-lg p-3 flex items-center gap-2 transition {{ old('status', $event->status) === 'telah_berakhir' ? 'border-orange-500 bg-orange-50' : 'border-[#e5e1db] hover:bg-[#f5f1eb]' }}">
+                                    <input type="radio" name="status" value="telah_berakhir"
+                                        {{ old('status', $event->status) === 'telah_berakhir' ? 'checked' : '' }}
+                                        class="w-4 h-4 text-orange-600 border-slate-300 focus:ring-orange-500">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                    <span class="text-sm font-medium">Telah Berakhir</span>
+                                </label>
+                            </div>
+                            @error('status')
+                                <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+
                         </div>
-                        @error('status')
-                            <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
-                        @enderror
                     </div>
 
                     {{-- Banner Upload --}}
@@ -307,74 +312,76 @@
                             class="px-6 py-2 bg-gold text-white font-bold rounded-md hover:bg-[#a3721a]">Simpan
                             Perubahan</button>
                     </div>
-                    {{-- ===== PREVIEW ===== --}}
-                    <aside class="md:sticky md:top-6 space-y-3">
-                        <p class="text-[10px] uppercase tracking-wide text-[#8a8984] font-bold">Pratinjau Halaman Event
-                        </p>
 
-                        <div class="bg-white border border-[#e3ded6] rounded-xl overflow-hidden shadow-sm">
-                            <div id="previewBanner"
-                                class="relative bg-gradient-to-br from-[#c99a4a] to-[#ba8320] h-40 flex items-center justify-center rounded-t-xl overflow-hidden">
-                                <span id="previewStatusBadge"
-                                    class="absolute top-3 left-3 z-10 bg-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
-                                    Akan Datang
-                                </span>
+            </div> {{-- ✅ TUTUP KOLOM KIRI --}}
 
-                                @if ($event->banner)
-                                    <span id="previewBannerEmpty" class="text-white/80 text-[11px] hidden">Belum ada
-                                        banner diunggah</span>
-                                    <img id="previewBannerImg" src="{{ Storage::url($event->banner) }}"
-                                        class="absolute inset-0 w-full h-full object-cover z-0"
-                                        alt="{{ $event->nama }}">
-                                @else
-                                    <span id="previewBannerEmpty" class="text-white/80 text-[11px]">Belum ada banner
-                                        diunggah</span>
-                                    <img id="previewBannerImg"
-                                        class="hidden absolute inset-0 w-full h-full object-cover z-0" alt="">
-                                @endif
+            {{-- ===== PREVIEW — KOLOM KANAN ===== --}}
+            <aside class="md:sticky md:top-6 space-y-3">
+                <p class="text-[10px] uppercase tracking-wide text-[#8a8984] font-bold">Pratinjau Halaman Event
+                </p>
+
+                <div class="bg-white border border-[#e3ded6] rounded-xl overflow-hidden shadow-sm">
+                    <div id="previewBanner"
+                        class="relative bg-gradient-to-br from-[#c99a4a] to-[#ba8320] h-40 flex items-center justify-center rounded-t-xl overflow-hidden">
+                        <span id="previewStatusBadge"
+                            class="absolute top-3 left-3 z-10 bg-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                            Akan Datang
+                        </span>
+
+                        @if ($event->banner)
+                            <span id="previewBannerEmpty" class="text-white/80 text-[11px] hidden">Belum ada
+                                banner diunggah</span>
+                            <img id="previewBannerImg" src="{{ Storage::url($event->banner) }}"
+                                class="absolute inset-0 w-full h-full object-cover z-0" alt="{{ $event->nama }}">
+                        @else
+                            <span id="previewBannerEmpty" class="text-white/80 text-[11px]">Belum ada banner
+                                diunggah</span>
+                            <img id="previewBannerImg" class="hidden absolute inset-0 w-full h-full object-cover z-0"
+                                alt="">
+                        @endif
+                    </div>
+                    <div class="p-4">
+                        <h3 id="previewNama" class="font-bold text-[15px] mb-2">Nama event akan muncul di sini
+                        </h3>
+                        <p id="previewDeskripsi" class="text-[11px] text-[#73716c] mb-3 line-clamp-3">
+                            Deskripsi event akan muncul di sini.</p>
+
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="bg-[#f7f5f0] rounded-lg p-2.5">
+                                <div class="text-[9px] uppercase text-[#98958f] font-bold mb-1">Hari &amp; Jam
+                                </div>
+                                <div id="previewJadwal" class="text-[11px] font-semibold">—</div>
                             </div>
-                            <div class="p-4">
-                                <h3 id="previewNama" class="font-bold text-[15px] mb-2">Nama event akan muncul di sini
-                                </h3>
-                                <p id="previewDeskripsi" class="text-[11px] text-[#73716c] mb-3 line-clamp-3">
-                                    Deskripsi event akan muncul di sini.</p>
-
-                                <div class="grid grid-cols-2 gap-2 mb-3">
-                                    <div class="bg-[#f7f5f0] rounded-lg p-2.5">
-                                        <div class="text-[9px] uppercase text-[#98958f] font-bold mb-1">Hari &amp; Jam
-                                        </div>
-                                        <div id="previewJadwal" class="text-[11px] font-semibold">—</div>
-                                    </div>
-                                    <div class="bg-[#f7f5f0] rounded-lg p-2.5">
-                                        <div class="text-[9px] uppercase text-[#98958f] font-bold mb-1">Tempat</div>
-                                        <div id="previewLokasi" class="text-[11px] font-semibold">—</div>
-                                    </div>
-                                </div>
-
-                                <div class="space-y-1.5 border-t border-[#e5e1db] pt-3 text-[11px]">
-                                    <div class="flex justify-between">
-                                        <span class="text-[#73716c]">Biaya Daftar</span>
-                                        <strong id="previewBiaya">Gratis</strong>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-[#73716c]">Harga / Vote</span>
-                                        <strong id="previewHargaVote">—</strong>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-[#73716c]">Batas Pendaftaran</span>
-                                        <strong id="previewBatas">—</strong>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-[#73716c]">Kuota Peserta</span>
-                                        <strong id="previewKuota">—</strong>
-                                    </div>
-                                </div>
+                            <div class="bg-[#f7f5f0] rounded-lg p-2.5">
+                                <div class="text-[9px] uppercase text-[#98958f] font-bold mb-1">Tempat</div>
+                                <div id="previewLokasi" class="text-[11px] font-semibold">—</div>
                             </div>
                         </div>
-                    </aside>
-                </form>
-            </div>
-        </main>
+
+                        <div class="space-y-1.5 border-t border-[#e5e1db] pt-3 text-[11px]">
+                            <div class="flex justify-between">
+                                <span class="text-[#73716c]">Biaya Daftar</span>
+                                <strong id="previewBiaya">Gratis</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-[#73716c]">Harga / Vote</span>
+                                <strong id="previewHargaVote">—</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-[#73716c]">Batas Pendaftaran</span>
+                                <strong id="previewBatas">—</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-[#73716c]">Kuota Peserta</span>
+                                <strong id="previewKuota">—</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            </form>
+    </div>
+    </main>
     </div>
 
     @include('admin.partials.sidebar', ['active' => 'events-index', 'event' => $event])
