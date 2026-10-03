@@ -6,10 +6,7 @@
     @include('admin.partials.pwa-head')
     <title>Profil Admin | ALNAY.ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { gold: '#ba8320', cream: '#f7f5f0' } } } };
-    </script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-cream font-['Inter'] text-[13px] text-[#22201d]">
 
@@ -22,9 +19,6 @@
         <h1 class="text-2xl font-bold m-0">Profil Admin</h1>
         <p class="text-[#73716c] text-[12px] mt-1 mb-6">Kelola informasi akun dan password login kamu.</p>
 
-        @if (session('success'))
-            <div class="mb-4 rounded-lg bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">{{ session('success') }}</div>
-        @endif
         @if ($errors->any())
             <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 px-4 py-3 text-sm">
                 @foreach ($errors->all() as $error)

@@ -6,10 +6,7 @@
     @include('admin.partials.pwa-head')
     <title>Pengaturan Event &amp; Voting | ALNAY.ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { gold: '#ba8320', cream: '#f7f5f0' } } } };
-    </script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-cream font-['Inter'] text-[13px] text-[#22201d]">
 <div class="flex min-h-screen">
@@ -38,26 +35,39 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                     {{-- Visibilitas & Status Publikasi --}}
-                    <div class="bg-white border border-[#e3ded6] rounded-xl p-5">
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="flex items-start gap-3">
-                                <div>
-                                    <h2 class="font-bold text-[15px] m-0">Visibilitas &amp; Status Publikasi</h2>
-                                    <p class="text-[11px] text-[#73716c] mt-1">Tentukan ketersediaan event untuk pendaftaran duta dan pemilihan kurator umum.</p>
-                                </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4 md:p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex-1 pr-3">
+                                <h3 class="font-semibold text-slate-800 flex items-center gap-2 text-sm md:text-base">
+                                    Visibilitas & Status Publikasi
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-1">Tentukan ketersediaan event untuk pengguna umum.</p>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="hidden" name="voting_aktif" value="0">
-                                <input type="checkbox" name="voting_aktif" value="1" {{ $event->voting_aktif ? 'checked' : '' }}>
-                                <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                            </label>
                         </div>
-                        <div class="bg-[#fdf6e8] border border-[#f0dfae] rounded-lg p-3 flex items-center justify-between text-[12px]">
-                            <div>
-                                <strong class="block">Event Aktif &amp; Siap Menerima Suara</strong>
-                                <span class="text-[#8a7a4f]">Terbuka untuk masyarakat umum melalui landing page portal resmi.</span>
+
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4">
+                            <label class="flex items-center justify-between cursor-pointer gap-3">
+                                <div class="flex-1">
+                                    <p class="font-medium text-slate-800 text-sm md:text-base leading-tight">Event Aktif & Siap Menerima Suara</p>
+                                    <p class="text-xs text-slate-600 mt-1">Terbuka untuk masyarakat umum melalui landing page portal resmi.</p>
+                                </div>
+                                
+                                {{-- Toggle Switch yang Lebih Besar untuk Mobile --}}
+                                <div class="relative flex-shrink-0">
+                                    <input type="hidden" name="voting_aktif" value="0">
+                                    <input type="checkbox" name="voting_aktif" value="1" 
+                                        {{ $event->voting_aktif ? 'checked' : '' }}
+                                        class="sr-only peer">
+                                    <div class="w-14 h-8 md:w-11 md:h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-7 after:w-7 md:after:h-5 md:after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                                </div>
+                            </label>
+                            
+                            <div class="mt-3 flex items-center justify-between">
+                                <span class="text-xs text-slate-600">Status saat ini:</span>
+                                <span class="text-xs font-bold px-2 py-1 rounded {{ $event->voting_aktif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                                    {{ $event->voting_aktif ? 'PUBLIK' : 'PRIVAT' }}
+                                </span>
                             </div>
-                            <span class="bg-gold/10 text-gold border border-gold/40 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap ml-3">PUBLIK</span>
                         </div>
                     </div>
 
@@ -85,16 +95,34 @@
                             <span class="text-[#98958f]">WIB (GMT+7)</span>
                         </div>
 
-                        <label class="flex items-start gap-2 mb-3 text-[12px]">
-                            <input type="checkbox" name="auto_freeze_voting" value="1" class="mt-0.5" {{ $event->auto_freeze_voting ? 'checked' : '' }}>
-                            <span><strong class="block">Kunci Suara Otomatis (Auto Freeze)</strong>
-                            <span class="text-[#73716c] text-[11px]">Tutup perolehan secara sistem tepat saat tenggat waktu tercapai tanpa jeda.</span></span>
+                        {{-- Auto Freeze --}}
+                        <label class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer">
+                            <div class="relative flex-shrink-0 mt-0.5">
+                                <input type="hidden" name="auto_freeze_voting" value="0">
+                                <input type="checkbox" name="auto_freeze_voting" value="1"
+                                    {{ $event->auto_freeze_voting ? 'checked' : '' }}
+                                    class="sr-only peer">
+                                <div class="w-14 h-8 md:w-11 md:h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-7 after:w-7 md:after:h-5 md:after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-sm text-slate-800">Kunci Suara Otomatis (Auto Freeze)</p>
+                                <p class="text-xs text-slate-600 mt-0.5">Tutup perolehan secara sistem tepat saat tenggat waktu tercapai tanpa jeda.</p>
+                            </div>
                         </label>
 
-                        <label class="flex items-start gap-2 text-[12px]">
-                            <input type="checkbox" name="blackout_h2_voting" value="1" class="mt-0.5" {{ $event->blackout_h2_voting ? 'checked' : '' }}>
-                            <span><strong class="block">Mode Rahasia H-2 (Blackout Leaderboard)</strong>
-                            <span class="text-[#73716c] text-[11px]">Sembunyikan total suara publik 48 jam sebelum grand final demi unsur kejutan.</span></span>
+                        {{-- Blackout H-2 --}}
+                        <label class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer">
+                            <div class="relative flex-shrink-0 mt-0.5">
+                                <input type="hidden" name="blackout_h2_voting" value="0">
+                                <input type="checkbox" name="blackout_h2_voting" value="1"
+                                    {{ $event->blackout_h2_voting ? 'checked' : '' }}
+                                    class="sr-only peer">
+                                <div class="w-14 h-8 md:w-11 md:h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-7 after:w-7 md:after:h-5 md:after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-sm text-slate-800">Mode Rahasia H-2 (Blackout Leaderboard)</p>
+                                <p class="text-xs text-slate-600 mt-0.5">Sembunyikan total suara publik 48 jam sebelum grand final demi unsur kejutan.</p>
+                            </div>
                         </label>
                     </div>
 
@@ -160,7 +188,7 @@
                     </div> --}}
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-[#e3ded6] flex flex-wrap items-center justify-end gap-3">
+                <div class="mt-8 pt-4 border-t border-[#e3ded6] flex flex-wrap items-center justify-end gap-3 pb-1">
                     <a href="{{ route('admin.voting.settings', $event) }}"
                        class="w-full sm:w-auto px-4 py-2.5 text-[12px] font-semibold text-[#73716c] border border-[#e3ded6] hover:bg-gray-50 rounded-lg text-center transition">
                         Batalkan Perubahan

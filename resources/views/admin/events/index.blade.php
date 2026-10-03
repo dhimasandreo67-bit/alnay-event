@@ -9,17 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { gold: '#ba8320', cream: '#f7f5f0', ink: '#22201d' },
-                    fontFamily: { sans: ['Inter', 'Arial', 'sans-serif'] },
-                },
-            },
-        };
-    </script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-cream text-ink font-sans text-[13px]">
     <div class="flex min-h-screen w-full">
@@ -30,10 +20,22 @@
                     <h1 class="font-bold text-[16px] m-0">Kelola Data Event</h1>
                     <p class="text-[10px] text-[#8a8984] m-0">ALNAY.ID — Daftar seluruh event terdaftar</p>
                 </div>
-                <a href="{{ route('admin.events.create') }}" 
-                   class="inline-flex items-center gap-2 rounded-md bg-gold border border-gold px-4 py-2 text-white text-[11px] font-bold">
-                    + Buat Event Baru
-                </a>
+                <a href="{{ route('admin.events.create') }}"
+                    class="inline-flex items-center gap-2 rounded-lg
+                            bg-gradient-to-r from-yellow-500 to-amber-600
+                            border border-yellow-400
+                            px-5 py-2.5
+                            text-sm font-semibold text-white
+                            shadow-md shadow-amber-500/20
+                            transition-all duration-200
+                            hover:-translate-y-0.5
+                            hover:from-yellow-600 hover:to-amber-700
+                            hover:shadow-lg hover:shadow-amber-500/30
+                            focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2
+                            active:translate-y-0">
+                        <span class="text-base leading-none">+</span>
+                        <span>Event Baru</span>
+                    </a>
             </header>
 
             <div class="p-6">
@@ -232,12 +234,6 @@
                             @endforelse
                         </tbody>
                     </table>
-
-                    @if ($events->hasPages())
-                        <div class="p-4 border-t border-[#e3ded6]">
-                            {{ $events->links() }}
-                        </div>
-                    @endif
                 </div>
             </div>
         </main>

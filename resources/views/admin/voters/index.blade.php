@@ -6,10 +6,7 @@
     @include('admin.partials.pwa-head')
     <title>Daftar Voter | ALNAY.ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { gold: '#ba8320', cream: '#f7f5f0' } } } };
-    </script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-cream font-['Inter'] text-[13px] text-[#22201d]">
 <div class="flex min-h-screen">

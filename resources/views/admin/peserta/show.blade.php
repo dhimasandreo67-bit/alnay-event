@@ -18,34 +18,7 @@
     >
 
     {{-- Tailwind CSS --}}
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#c38b22',
-                            600: '#c38b22',
-                            700: '#c38b22',
-                        },
-                    },
-
-                    boxShadow: {
-                        soft: '0 10px 30px rgba(15, 23, 42, 0.06)',
-                        card: '0 4px 20px rgba(15, 23, 42, 0.05)',
-                    },
-                },
-            },
-        };
-    </script>
+    @vite(['resources/css/app.css'])
 
     {{-- Custom Admin CSS --}}
     <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
