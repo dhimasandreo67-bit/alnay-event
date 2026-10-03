@@ -19,12 +19,20 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $admin = AkunStaf::findOrFail($request->session()->get('admin_id'));
-        
-        // ✅ PERBAIKAN: Baca event aktif dari session, jangan paksa pakai event terbaru
+
+        // ✅ Ambil event aktif dengan prioritas: session → database → terbaru
         $eventId = session('active_event_id');
         $event = $eventId ? Event::find($eventId) : null;
+
+        if (!$event && $admin->last_active_event_id) {
+            $event = Event::find($admin->last_active_event_id);
+            if ($event) {
+                session(['active_event_id' => $event->id]);
+            }
+        }
+
         $event ??= Event::query()->latest('id')->first();
-        
+
         return view('admin.profile.edit', compact('admin', 'event'));
     }
 
