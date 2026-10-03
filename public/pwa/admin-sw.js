@@ -1,16 +1,15 @@
 // public/pwa/admin-sw.js
-const CACHE_NAME = 'alnay-admin-v1';
+const CACHE_NAME = 'alnay-admin-v2'; // ← Upgrade versi agar cache lama terhapus
 const OFFLINE_URL = '/pwa/offline.html';
 
-// Aset statis yang wajib di-cache saat install (app shell)
+// Hanya cache aset yang TIDAK butuh autentikasi
 const STATIC_ASSETS = [
-    '/',
-    '/admin',
-    '/admin/login',
     OFFLINE_URL,
-    // Tambahkan path CSS/JS utama jika ada yang di-compile
-    // '/css/app.css',
-    // '/js/app.js',
+    '/css/admin-sidebar.css',
+    '/css/admin-toast.css',
+    '/css/admin-modal.css',
+    '/js/admin-toast.js',
+    '/js/admin-modal.js',
 ];
 
 // ==========================================
@@ -24,7 +23,7 @@ self.addEventListener('install', (event) => {
                 return cache.addAll(STATIC_ASSETS);
             })
             .catch((err) => {
-                console.warn('[SW] Pre-cache failed:', err);
+                console.warn('[SW] Pre-cache failed (non-critical):', err);
             })
     );
     self.skipWaiting();
@@ -60,8 +59,8 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
     if (url.origin !== location.origin) return;
 
-    // Abaikan request ke Laravel Debugbar / Boost
-    if (url.pathname.startsWith('/_debugbar') || 
+    // Abaikan request ke Laravel Debugbar / Boost / Livewire
+    if (url.pathname.startsWith('/_debugbar') ||
         url.pathname.startsWith('/_boost') ||
         url.pathname.startsWith('/livewire')) {
         return;
@@ -69,11 +68,10 @@ self.addEventListener('fetch', (event) => {
 
     // Strategi berbeda berdasarkan tipe request
     if (request.destination === 'document') {
-        // HTML: Network First, fallback ke cache (penting untuk data dinamis)
+        // HTML: Network First, fallback ke cache
         event.respondWith(
             fetch(request)
                 .then((response) => {
-                    // Clone & simpan ke cache untuk offline
                     if (response && response.status === 200) {
                         const responseClone = response.clone();
                         caches.open(CACHE_NAME).then((cache) => {
@@ -98,7 +96,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.match(request).then((cached) => {
                 if (cached) return cached;
-                
+
                 return fetch(request).then((response) => {
                     if (response && response.status === 200) {
                         const responseClone = response.clone();
@@ -108,7 +106,6 @@ self.addEventListener('fetch', (event) => {
                     }
                     return response;
                 }).catch(() => {
-                    // Fallback: placeholder untuk gambar
                     if (request.destination === 'image') {
                         return new Response('', {
                             status: 404,
