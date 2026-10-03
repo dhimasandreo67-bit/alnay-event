@@ -11,61 +11,79 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Illuminate\Support\Facades\Log;
 
 class VotingController extends Controller
 {
+
     /**
-     * POST /peserta/:id/vote (pelanggan, login wajib)
-     * jumlah_vote dan nama_tampilan dari body, user_id dari token,
-     * total_bayar dihitung SERVER (bukan dari input client).
+     * GET /admin/voters/{event?}
+     * Halaman Daftar Voter
      */
-
-    public function vote(Request $request, Peserta $peserta)
+    public function voters(?Event $event = null): View
     {
-        $data = $request->validate([
-            'jumlah_vote' => ['required', 'integer', 'min:1'],
-            'nama_tampilan' => ['required', 'string', 'max:255'],
-        ]);
+        // 1. Tentukan Event
+        $event ??= Event::query()->latest('id')->first();
 
-        if (! $peserta->event->voting_aktif) {
-            abort(422, 'Voting untuk event ini sedang tidak aktif.');
+        if (!$event) {
+            return view('admin.voters.index', ['event' => null]);
         }
 
-        $hargaPerVote = $peserta->event->harga_per_vote;
-        $totalBayar = $hargaPerVote * $data['jumlah_vote'];
-        $orderId = 'VOTE-'.$peserta->id.'-'.Str::random(8);
+        // 2. Ambil semua voting untuk event ini (yang sudah settlement)
+        $votings = \App\Models\Voting::where('event_id', $event->id)
+            ->where('status_midtrans', 'settlement')
+            ->with(['peserta.user', 'user'])
+            ->latest('id')
+            ->get();
 
-        Config::$serverKey = config('services.midtrans.server_key');
-        Config::$isProduction = config('services.midtrans.is_production');
-        Config::$isSanitized = config('services.midtrans.is_sanitized');
-        Config::$is3ds = config('services.midtrans.is_3ds');
-        $snapToken = Snap::getSnapToken([
-            'transaction_details' => [
-                'order_id' => $orderId,
-                'gross_amount' => (int) $totalBayar,
-            ],
-            'customer_details' => [
-                'first_name' => $request->user()->nama,
-                'email' => $request->user()->email,
-            ],
-        ]);
+        // 3. Statistik dasar
+        $totalSuara = $votings->sum('jumlah_vote');
+        $voterUnik = $votings->whereNotNull('user_id')->pluck('user_id')->unique()->count();
 
-        $voting = Voting::create([
-            'event_id' => $peserta->event_id,
-            'peserta_id' => $peserta->id,
-            'user_id' => $request->user()->id,
-            'nama_tampilan' => $data['nama_tampilan'],
-            'jumlah_vote' => $data['jumlah_vote'],
-            'harga_per_vote' => $hargaPerVote, // snapshot, jangan ambil ulang dari event nanti
-            'total_bayar' => $totalBayar,
-            'midtrans_order_id' => $orderId,
-            'status_midtrans' => 'pending',
-        ]);
+        // 4. ✅ HITUNG PESERTA TERPOPULER
+        $terpopuler = null;
+        
+        if ($votings->isNotEmpty()) {
+            $groupedVotes = $votings->groupBy('peserta_id');
+            
+            $topPesertaId = null;
+            $topTotal = 0;
+            
+            foreach ($groupedVotes as $pesertaId => $votes) {
+                $total = $votes->sum('jumlah_vote');
+                if ($total > $topTotal) {
+                    $topTotal = $total;
+                    $topPesertaId = $pesertaId;
+                }
+            }
+            
+            if ($topPesertaId) {
+                $peserta = \App\Models\Peserta::with('user')->find($topPesertaId);
+                $terpopuler = (object) [
+                    'total' => $topTotal,
+                    'peserta' => $peserta,
+                ];
+            }
+        }
 
-        return response()->json([
-            'snap_token' => $snapToken,
-            'order_id' => $orderId,
-            'voting' => $voting,
+        // 5. Suara terakhir
+        $suaraTerakhir = $votings->first();
+
+        // 6. List peserta untuk dropdown filter
+        $pesertaList = \App\Models\Peserta::where('event_id', $event->id)
+            ->where('status', 'diterima')
+            ->with('user')
+            ->get();
+
+        // 7. Kirim ke view
+        return view('admin.voters.index', [
+            'event'         => $event,
+            'votings'       => $votings,
+            'totalSuara'    => $totalSuara,
+            'voterUnik'     => $voterUnik,
+            'terpopuler'    => $terpopuler,
+            'suaraTerakhir' => $suaraTerakhir,
+            'pesertaList'   => $pesertaList,
         ]);
     }
 
@@ -187,82 +205,6 @@ class VotingController extends Controller
         $event->update($validated);
 
         return redirect()->back()->with('success', 'Pengaturan voting berhasil diperbarui!');
-    }
-
-    /**
-     * GET /admin/voters/{event?}
-     * Halaman Daftar Voter - menampilkan semua data voting
-     */
-    public function voters(?Event $event = null): View
-    {
-        // Ambil event terbaru jika tidak ada parameter
-        $event ??= Event::query()->latest('id')->first();
-
-        // Base query untuk voting yang sudah lunas (settlement)
-        $votingQuery = \App\Models\Voting::where('event_id', $event?->id ?? 0)
-            ->where('status_midtrans', 'settlement')
-            ->with(['peserta.user', 'user']);
-
-        // Statistik
-        $totalSuaraMasuk = (clone $votingQuery)->sum('jumlah_vote');
-        $voterUnik = (clone $votingQuery)->distinct('user_id')->count('user_id');
-
-        // Peserta terpopuler - gunakan withSum dengan relasi votingMasuk
-        $pesertaTerpopuler = \App\Models\Peserta::where('event_id', $event?->id ?? 0)
-            ->withSum(['voting as total_vote' => function ($q) {
-                $q->where('status_midtrans', 'settlement');
-            }], 'jumlah_vote')
-            ->with('user:id,nama')
-            ->orderByDesc('total_vote')
-            ->first();
-
-        // Suara terakhir masuk - gunakan id DESC karena tidak ada created_at
-        $suaraTerakhir = (clone $votingQuery)->latest('id')->first();
-
-        // List semua voting - gunakan id DESC
-        $votings = $votingQuery
-            ->latest('id')
-            ->get()
-            ->map(function ($voting) {
-                // Format waktu dari id atau gunakan updated_at jika ada
-                $waktu = '-';
-                if (property_exists($voting, 'updated_at') && $voting->updated_at) {
-                    $waktu = $voting->updated_at->format('H.i.s');
-                } elseif (property_exists($voting, 'created_at') && $voting->created_at) {
-                    $waktu = $voting->created_at->format('H.i.s');
-                } else {
-                    // Fallback: gunakan id sebagai indikator urutan
-                    $waktu = '#' . $voting->id;
-                }
-
-                return [
-                    'id' => $voting->id,
-                    'waktu' => $waktu,
-                    'nama_voter' => $voting->nama_tampilan ?? $voting->user?->nama ?? 'Anonim',
-                    'no_hp' => $voting->user?->no_hp ?? $voting->user?->email ?? '-',
-                    'peserta_id' => $voting->peserta_id,
-                    'peserta_nama' => $voting->peserta?->user?->nama ?? 'Peserta dihapus',
-                    'peserta_inisial' => strtoupper(substr($voting->peserta?->user?->nama ?? 'P', 0, 2)),
-                    'jumlah_vote' => $voting->jumlah_vote,
-                ];
-            });
-
-        // List peserta untuk filter dropdown
-        $pesertaList = \App\Models\Peserta::where('event_id', $event?->id ?? 0)
-            ->with('user:id,nama')
-            ->orderBy('user_id')
-            ->get(['id', 'user_id']);
-
-        return view('admin.voters.index', [
-            'event' => $event,
-            'events' => Event::query()->latest('id')->get(['id', 'nama']),
-            'totalSuaraMasuk' => $totalSuaraMasuk,
-            'voterUnik' => $voterUnik,
-            'pesertaTerpopuler' => $pesertaTerpopuler,
-            'suaraTerakhir' => $suaraTerakhir ? ($suaraTerakhir->updated_at?->format('H.i.s') ?? '#' . $suaraTerakhir->id) : '-',
-            'votings' => $votings,
-            'pesertaList' => $pesertaList,
-        ]);
     }
 
     public function leaderboard($event = null)
@@ -389,5 +331,78 @@ class VotingController extends Controller
         $color = $colors[$index % count($colors)];
         $index++;
         return $color;
+    }
+
+    public function manualVote(Request $request)
+    {
+        $request->validate([
+            'peserta_id'  => 'required|exists:peserta_event,id',
+            'jumlah_vote' => 'required|integer|min:1',
+            'nama_voter'  => 'nullable|string|max:255',
+            'email_voter' => 'nullable|email|max:255',
+        ]);
+
+        try {
+            $peserta = \App\Models\Peserta::findOrFail($request->peserta_id);
+            
+            // ✅ PERBAIKAN: Trim dulu, baru cek kosong
+            $namaVoter = trim($request->input('nama_voter', ''));
+            $emailVoter = trim($request->input('email_voter', ''));
+            
+            // Jika kosong setelah trim, gunakan default
+            $namaVoter = $namaVoter !== '' ? $namaVoter : 'Seseorang';
+            $emailVoter = $emailVoter !== '' ? $emailVoter : null;
+
+            \App\Models\Voting::create([
+                'event_id'          => $peserta->event_id,
+                'peserta_id'        => $peserta->id,
+                'jumlah_vote'       => $request->jumlah_vote,
+                'tanggal_vote'      => now(),
+                'nama_voter'        => $namaVoter,
+                'email_voter'       => $emailVoter,
+                'user_id'           => null,
+                'nama_tampilan'     => $namaVoter,
+                'harga_per_vote'    => $peserta->event?->harga_per_vote ?? 0,
+                'total_bayar'       => ($peserta->event?->harga_per_vote ?? 0) * $request->jumlah_vote,
+                'midtrans_order_id' => 'MANUAL-' . date('YmdHis') . '-' . $peserta->id,
+                'status_midtrans'   => 'settlement',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vote manual berhasil ditambahkan untuk ' . $namaVoter . '.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Manual Vote Failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $voting = Voting::findOrFail($id);
+            
+            // Hapus data voting
+            $voting->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vote berhasil dihapus.'
+            ]);
+        } catch (\Exception $e) {
+            // Catat error ke log jika ada masalah
+            Log::error('Delete Vote Failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus vote: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
