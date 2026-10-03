@@ -104,9 +104,13 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.voting.settings');
     Route::post('/voting/settings/{event}', [VotingController::class, 'update'])
         ->name('admin.voting.settings.update');
+    Route::delete('/voters/{id}', [VotingController::class, 'destroy'])
+        ->name('admin.voters.destroy');
 
     Route::get('/voters/{event?}', [VoterController::class, 'index'])
         ->name('admin.voters');
+    Route::post('/voters/manual-vote', [VotingController::class, 'manualVote'])
+        ->name('admin.voters.manual-vote');
     Route::get('/leaderboard/{event?}', [VotingController::class, 'leaderboard'])
         ->name('admin.leaderboard');
 });
