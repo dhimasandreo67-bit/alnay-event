@@ -33,13 +33,22 @@ Route::get('/login', fn() => view('auth.login'))->name('login');
 Route::get('/beranda', [BerandaController::class, 'index'])
     ->name('dashboard-user');
 
-Route::get('/detail-event', function () {
-    return '<div style="padding:40px;font-family:sans-serif"><h1>Detail Event</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
-})->name('detail-event');
+/*
+|--------------------------------------------------------------------------
+| DETAIL EVENT
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/detail-event-selesai', function () {
-    return '<div style="padding:40px;font-family:sans-serif"><h1>Detail Event Selesai</h1><p>Halaman ini sedang dikembangkan.</p><a href="/beranda">← Kembali ke Beranda</a></div>';
-})->name('detail-event-selesai');
+use App\Http\Controllers\DetailEventController;
+
+Route::get('/detail-event/{event}', [DetailEventController::class, 'berlangsung'])
+    ->name('detail-event.berlangsung');
+
+Route::get('/detail-event-akan-datang/{event}', [DetailEventController::class, 'akanDatang'])
+    ->name('detail-event.akan-datang');
+
+Route::get('/detail-event-selesai/{event}', [DetailEventController::class, 'selesai'])
+    ->name('detail-event.selesai');
 
 /*
 |--------------------------------------------------------------------------
@@ -146,13 +155,14 @@ Route::middleware('pelanggan')->group(function () {
     Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
 
     // Checkout vote
+        // Checkout vote
     Route::get('/peserta/{id}/checkout', function ($id) {
         return view('vote-checkout', [
             'pesertaId' => $id,
             'midtransClientKey' => config('services.midtrans.client_key'),
             'midtransIsProduction' => config('services.midtrans.is_production'),
         ]);
-    });
+    })->name('vote.checkout');
 });
 
 /*

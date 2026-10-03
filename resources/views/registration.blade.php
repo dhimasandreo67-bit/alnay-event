@@ -11,7 +11,7 @@
 <body class="bg-[#FFF8F1] text-[#1D1B17] min-h-screen">
 
     @php
-        $isPreview = session()->has('admin_id') && ! auth('pelanggan')->check();
+        $isPreview = session()->has('admin_id') && !auth('pelanggan')->check();
     @endphp
 
     <header class="border-b border-[#CDC5BC]/30 bg-[#FBF9F4]/95 backdrop-blur">
@@ -36,18 +36,27 @@
 
         <div class="mb-6">
             @php
-                // Tombol back — kalau admin, balik ke form builder. Kalau user, balik ke beranda.
-                $backUrl = $isPreview ? route('admin.form-builder', $event->id) : '/beranda';
-                $backLabel = $isPreview ? 'Kembali ke Form Builder' : 'Kembali ke Beranda';
+                // Tombol back — admin: ke form builder. User: history back + fallback.
+                $backLabel = $isPreview ? 'Kembali ke Form Builder' : 'Kembali';
             @endphp
 
-            <a href="{{ $backUrl }}" aria-label="{{ $backLabel }}"
-                class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-[#CDC5BC]/40 hover:bg-[#FBF9F4] hover:border-[#C28E27] transition text-[#4B463F] hover:text-[#C28E27]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-            </a>
+            @if ($isPreview)
+                <a href="{{ route('admin.form-builder', $event->id) }}" aria-label="{{ $backLabel }}"
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-[#CDC5BC]/40 hover:bg-[#FBF9F4] hover:border-[#C28E27] transition text-[#4B463F] hover:text-[#C28E27]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                </a>
+            @else
+                <button type="button" onclick="goBack()" aria-label="{{ $backLabel }}"
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-[#CDC5BC]/40 hover:bg-[#FBF9F4] hover:border-[#C28E27] transition text-[#4B463F] hover:text-[#C28E27]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                </button>
+            @endif
         </div>
 
         @if ($isPreview)
@@ -264,6 +273,21 @@
         @endauth
 
     </main>
+
+    {{-- Script goBack — history back + fallback ke beranda --}}
+    @unless ($isPreview)
+        <script>
+            function goBack() {
+                // Kalau ada history (user datang dari halaman lain), balik ke sana
+                if (window.history.length > 1 && document.referrer) {
+                    window.history.back();
+                } else {
+                    // Fallback: kalau user buka langsung / refresh, balik ke beranda
+                    window.location.href = '{{ route('dashboard-user') }}';
+                }
+            }
+        </script>
+    @endunless
 
 </body>
 
