@@ -691,13 +691,14 @@
                     <div class="table-wrap">
                         <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b">
-                                <th class="p-3">No</th>
-                                <th class="p-3">Jawaban Form / Detail Peserta</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3">Aksi</th>
-                            </tr>
-                        </thead>
+            <tr class="border-b border-slate-200 bg-slate-50">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">No</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Jawaban Form / Detail Peserta</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Waktu Pendaftaran</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Status</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Aksi</th>
+            </tr>
+        </thead>
                         <tbody id="participantRows">
                             @forelse($pesertas ?? [] as $index => $peserta)
                             @php $status = strtolower($peserta->status ?? 'menunggu_review'); @endphp
@@ -719,6 +720,24 @@
                                             @endforeach
                                         </ul>
                                     </td>
+                                    {{-- ✅ Waktu Pendaftaran --}}
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                    @if ($peserta->created_at)
+                                        <div class="text-xs">
+                                            <div class="font-medium text-slate-700">
+                                                {{ \Carbon\Carbon::parse($peserta->created_at)->isoFormat('dddd') }}
+                                            </div>
+                                            <div class="text-slate-500">
+                                                {{ \Carbon\Carbon::parse($peserta->created_at)->format('d M Y') }}
+                                            </div>
+                                            <div class="text-slate-400 text-[10px]">
+                                                {{ \Carbon\Carbon::parse($peserta->created_at)->format('H:i') }} WIB
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-slate-400">-</span>
+                                    @endif
+                                </td>
                                     <!-- Status Peserta -->
                                     <td class="p-3">
 
