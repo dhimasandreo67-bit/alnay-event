@@ -587,7 +587,8 @@
                                 {{ $event->waktu_mulai ? \Carbon\Carbon::parse($event->waktu_mulai)->format('H:i') : '00:00' }}
                                 –
                                 {{ \Carbon\Carbon::parse($event->tanggal_selesai)->format('d M Y') }},
-                                {{ $event->waktu_selesai ? \Carbon\Carbon::parse($event->waktu_selesai)->format('H:i') : '23:59' }} WIB
+                                {{ $event->waktu_selesai ? \Carbon\Carbon::parse($event->waktu_selesai)->format('H:i') : '23:59' }}
+                                WIB
                             @else
                                 Jadwal event belum ditentukan
                             @endif
@@ -674,11 +675,22 @@
                     <div class="table-wrap">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="border-b">
-                                    <th class="p-3">No</th>
-                                    <th class="p-3">Peserta</th>
-                                    <th class="p-3">Status</th>
-                                    <th class="p-3">Aksi</th>
+                                <tr class="border-b border-slate-200 bg-slate-50">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        No</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        Jawaban Form / Detail Peserta</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        Waktu Pendaftaran</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        Status</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="participantRows">
@@ -701,7 +713,8 @@
                                                     <li>
                                                         <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
                                                         @if ($jawaban->pertanyaan?->tipe_input === 'file')
-                                                            <a href="{{ route('admin.jawaban.file', $jawaban) }}" target="_blank">Lihat file</a>
+                                                            <a href="{{ route('admin.jawaban.file', $jawaban) }}"
+                                                                target="_blank">Lihat file</a>
                                                         @else
                                                             {{ is_array($jawaban->jawaban) ? implode(', ', $jawaban->jawaban) : $jawaban->jawaban }}
                                                         @endif
@@ -709,13 +722,36 @@
                                                 @endforeach
                                             </ul>
                                         </td>
+                                        {{-- ✅ Waktu Pendaftaran --}}
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            @if ($peserta->created_at)
+                                                <div class="text-xs">
+                                                    <div class="font-medium text-slate-700">
+                                                        {{ \Carbon\Carbon::parse($peserta->created_at)->isoFormat('dddd') }}
+                                                    </div>
+                                                    <div class="text-slate-500">
+                                                        {{ \Carbon\Carbon::parse($peserta->created_at)->format('d M Y') }}
+                                                    </div>
+                                                    <div class="text-slate-400 text-[10px]">
+                                                        {{ \Carbon\Carbon::parse($peserta->created_at)->format('H:i') }}
+                                                        WIB
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="text-xs text-slate-400">-</span>
+                                            @endif
+                                        </td>
                                         <td class="p-3">
                                             @if ($status === 'diterima')
-                                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Diterima</span>
                                             @elseif($status === 'ditolak')
-                                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
                                             @else
-                                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu Review</span>
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu
+                                                    Review</span>
                                             @endif
                                         </td>
                                         <td class="p-3">
@@ -728,11 +764,9 @@
                                                 <form action="{{ route('admin.peserta.destroy', $peserta->id) }}"
                                                     method="POST"
                                                     onsubmit="event.preventDefault(); konfirmasi('Yakin hapus peserta ini?', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium">
-                                                        Hapus
+                                                    @csrf @method('DELETE') <button type="submit"
+                                                    class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium">
+                                                    Hapus
                                                     </button>
                                                 </form>
                                             </div>
@@ -740,7 +774,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="p-4 text-center text-gray-500">
+                                        <td colspan="5" class="p-4 text-center text-gray-500">
                                             Belum ada peserta tercatat.
                                         </td>
                                     </tr>
@@ -816,7 +850,7 @@
         }));
 
         // === Last Update (relatif) ===
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const el = document.getElementById('lastUpdateText');
             if (!el) return;
 
