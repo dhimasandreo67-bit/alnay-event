@@ -11,9 +11,14 @@ use Illuminate\Validation\ValidationException;
 
 class WebAuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request)
     {
-        return view('admin.login'); // Sesuaikan dengan nama view login kamu
+        // Kalau admin udah login — auto-redirect ke dashboard
+        if ($request->session()->has('admin_id')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return view('admin.login');
     }
 
     public function login(Request $request)
@@ -31,7 +36,7 @@ class WebAuthController extends Controller
 
         // Regenerasi session untuk keamanan
         $request->session()->regenerate();
-        
+
         // Simpan data admin ke session
         $request->session()->put('admin_id', $admin->id);
         $request->session()->put('admin_name', $admin->nama);
