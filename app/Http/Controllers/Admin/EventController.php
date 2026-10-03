@@ -6,27 +6,59 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\AkunStaf;
 
 class EventController extends Controller
 {
-    // GET /admin/events
-        // GET /admin/events
-        // GET /admin/events
+        /**
+     * GET /admin/events
+     */
     public function index(Request $request)
     {
-                $eventList = Event::query()->latest('id')->paginate(15);
+        // 1. Ambil event dengan paginate — biar view punya hasPages()
+        $eventList = Event::query()->latest('id')->paginate(15);
 
-        // Event aktif — dari query param ?event= atau default terbaru
-        $activeEventId = $request->query('event');
-        $activeEvent = $activeEventId
-            ? Event::find($activeEventId)
-            : $eventList->first();
+        // 2. Tentukan event aktif — 3 prioritas
+        $activeEvent = null;
+        $adminId = $request->session()->get('admin_id');
+
+        // Prioritas 1: URL ?event=X
+        if ($request->has('event')) {
+            $activeEvent = Event::find($request->event);
+            if ($activeEvent) {
+                session(['active_event_id' => $activeEvent->id]);
+                if ($adminId) {
+                    AkunStaf::where('id', $adminId)
+                        ->update(['last_active_event_id' => $activeEvent->id]);
+                }
+            }
+        }
+
+        // Prioritas 2: Session
+        if (!$activeEvent) {
+            $activeEventId = session('active_event_id');
+            $activeEvent = $activeEventId ? Event::find($activeEventId) : null;
+        }
+
+        // Prioritas 3: Database
+        if (!$activeEvent && $adminId) {
+            $admin = AkunStaf::find($adminId);
+            if ($admin && $admin->last_active_event_id) {
+                $activeEvent = Event::find($admin->last_active_event_id);
+                if ($activeEvent) {
+                    session(['active_event_id' => $activeEvent->id]);
+                }
+            }
+        }
+
+        // Fallback: event terbaru
+        $activeEvent ??= $eventList->first();
 
         return view('admin.events.index', [
-            'eventList'   => $eventList,
-            'events'      => $eventList,   // alias
+            'eventList'   => $eventList,      // dropdown + tabel
+            'events'      => $eventList,      // alias
             'activeEvent' => $activeEvent,
-            'event'       => $activeEvent, // fallback untuk view lama
+            'event'       => $activeEvent,
         ]);
     }
 
@@ -157,5 +189,16 @@ class EventController extends Controller
         return response()->json([
             'tampilkan_hasil_voting' => $event->tampilkan_hasil_voting,
         ]);
+    }
+
+        public function setActive(Request $request)
+    {
+        $request->validate([
+            'event_id' => 'required|exists:event,id',
+        ]);
+
+        \App\Helpers\EventHelper::setActiveEvent($request, $request->event_id);
+
+        return redirect()->back()->with('success', 'Event aktif berhasil diubah.');
     }
 }
