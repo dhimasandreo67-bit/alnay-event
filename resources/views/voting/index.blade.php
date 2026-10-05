@@ -31,6 +31,7 @@
 <body class="min-h-screen flex flex-col text-[#1D1B17]">
 
         @include('partials.header')
+        
 
     <main class="glow flex-1">
         <div class="max-w-6xl mx-auto px-6 py-8">
