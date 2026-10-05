@@ -101,8 +101,16 @@ class PembayaranController extends Controller
     }
 
     // POST /peserta/midtrans/webhook
+        // POST /peserta/midtrans/webhook
     public function webhook(Request $request)
     {
+        \Log::info('Midtrans webhook received', $request->all());
+
+        // ===== GUARD: Test notification dari Midtrans — payload kosong =====
+        if (! $request->filled('order_id') || ! $request->filled('signature_key')) {
+            return response()->json(['message' => 'OK — test notification'], 200);
+        }
+
         // 1. Verifikasi signature Midtrans
         $signature = hash(
             'sha512',
@@ -113,12 +121,21 @@ class PembayaranController extends Controller
         );
 
         if (! hash_equals($signature, (string) $request->input('signature_key'))) {
-            abort(403, 'Signature tidak valid');
+            \Log::warning('Midtrans webhook: signature tidak valid', $request->all());
+            return response()->json(['message' => 'Signature tidak valid'], 403);
         }
 
         // 2. Cari pembayaran
         $pembayaran = PembayaranEvent::where('midtrans_order_id', $request->order_id)
-            ->firstOrFail();
+            ->first();
+
+        // Kalau order_id gak ketemu — log & return OK biar Midtrans gak retry terus
+        if (! $pembayaran) {
+            \Log::warning('Midtrans webhook: order_id tidak ditemukan', [
+                'order_id' => $request->order_id,
+            ]);
+            return response()->json(['message' => 'Order tidak ditemukan'], 200);
+        }
 
         // 3. Update data pembayaran
         $pembayaran->update([
@@ -130,14 +147,8 @@ class PembayaranController extends Controller
                 : $pembayaran->tanggal_bayar,
         ]);
 
-        // 4. TIDAK mengubah status peserta.
-        //    Status peserta tetap 'diterima' (dari admin).
-        //    Untuk cek "peserta aktif", gunakan:
-        //    peserta.status = 'diterima' AND pembayaran.status_midtrans = 'settlement'
-
         return response()->json(['message' => 'OK']);
     }
-
     /**
      * GET /peserta/{peserta}/pembayaran
      * Halaman pembayaran pendaftaran.

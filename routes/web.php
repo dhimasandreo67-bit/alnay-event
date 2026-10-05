@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', fn() => view('welcome'));
+Route::get('/', fn() => redirect()->route('dashboard-user'));
 
 Route::get('/login', fn() => view('auth.login'))->name('login');
 
@@ -80,7 +80,7 @@ Route::get('/event', [EventController::class, 'index']);
 Route::get('/event/{id}', [EventController::class, 'show']);
 Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
 Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta']);
-Route::get('/peserta/{id}', [PendaftaranController::class, 'show']);
+Route::get('/peserta/{id}', [PendaftaranController::class, 'show'])->name('peserta.show');
 Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
 Route::get('/event/{event}/kandidat', [AdminPendaftaranController::class, 'kandidat'])->name('event.peserta');
@@ -92,9 +92,20 @@ Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingControlle
 |--------------------------------------------------------------------------
 */
 
-Route::post('/voting/midtrans/webhook', [VotingController::class, 'webhook']);
-Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook']);
+Route::post('/midtrans/webhook', function (\Illuminate\Http\Request $request) {
+    $orderId = $request->input('order_id', '');
 
+    if (str_starts_with($orderId, 'VOTING-')) {
+        return app(\App\Http\Controllers\VotingController::class)->webhook($request);
+    }
+
+    if (str_starts_with($orderId, 'PENDAFTARAN-')) {
+        return app(\App\Http\Controllers\PembayaranController::class)->webhook($request);
+    }
+
+    \Log::warning('Midtrans webhook: order_id tidak dikenal', ['order_id' => $orderId]);
+    return response()->json(['status' => 'unknown order'], 200);
+})->name('midtrans.webhook.universal');
 /*
 |--------------------------------------------------------------------------
 | 6. PENDAFTARAN PUBLIK

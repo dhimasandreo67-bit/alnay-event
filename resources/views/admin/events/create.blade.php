@@ -119,61 +119,44 @@
                             <div class="text-red-600 text-[10px] -mt-3 mb-4">{{ $message }}</div>
                         @enderror
 
-                        {{-- Pendaftaran + Status Event --}}
-                        <div class="bg-white rounded-xl border border-[#e5e1db] p-5 space-y-4">
+                        {{-- Status Event --}}
+                        <div class="bg-white rounded-xl border border-[#e5e1db] p-5">
 
-                            {{-- TOGGLE PENDAFTARAN --}}
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" name="pendaftaran_dibuka" value="1"
-                                    @checked(old('pendaftaran_dibuka', true))
-                                    class="mt-1 w-5 h-5 rounded border-[#e5e1db] text-[#ba8320] focus:ring-[#ba8320]">
-                                <div>
-                                    <span class="block font-bold text-[14px] text-[#ba8320]">📢 Buka Pendaftaran</span>
-                                    <span class="block text-[12px] text-[#73716c] mt-0.5">
-                                        Centang untuk langsung membuka pendaftaran setelah event dibuat.
-                                    </span>
-                                </div>
-                            </label>
-
-                            <div class="pt-3 border-t border-[#f0ece6]">
-
-                                {{-- STATUS EVENT --}}
-                                <h3 class="font-bold text-slate-800 mb-3">Status Event</h3>
-                                <div class="grid grid-cols-3 gap-3">
-                                    <label
-                                        class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md border-[#e5e1db]"
-                                        data-color="blue" onclick="selectStatus(this, 'akan_datang')">
-                                        <input type="radio" name="status" value="akan_datang"
-                                            {{ old('status', 'akan_datang') === 'akan_datang' ? 'checked' : '' }}
-                                            class="sr-only">
-                                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                                        <span class="text-sm font-medium">Akan Datang</span>
-                                    </label>
-                                    <label
-                                        class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md border-[#e5e1db]"
-                                        data-color="emerald" onclick="selectStatus(this, 'sedang_berlangsung')">
-                                        <input type="radio" name="status" value="sedang_berlangsung"
-                                            {{ old('status') === 'sedang_berlangsung' ? 'checked' : '' }}
-                                            class="sr-only">
-                                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                                        <span class="text-sm font-medium">Sedang Berlangsung</span>
-                                    </label>
-                                    <label
-                                        class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md border-[#e5e1db]"
-                                        data-color="orange" onclick="selectStatus(this, 'telah_berakhir')">
-                                        <input type="radio" name="status" value="telah_berakhir"
-                                            {{ old('status') === 'telah_berakhir' ? 'checked' : '' }} class="sr-only">
-                                        <span class="w-3 h-3 rounded-full bg-orange-500"></span>
-                                        <span class="text-sm font-medium">Telah Berakhir</span>
-                                    </label>
-                                </div>
-                                @error('status')
-                                    <p class="text-xs text-rose-500 mt-2">{{ $message }}</p>
-                                @enderror
-
+                            {{-- STATUS EVENT --}}
+                            <h3 class="font-bold text-slate-800 mb-3">Status Event</h3>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label
+                                    class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md border-[#e5e1db]"
+                                    data-color="blue" onclick="selectStatus(this, 'akan_datang')">
+                                    <input type="radio" name="status" value="akan_datang"
+                                        {{ old('status', 'akan_datang') === 'akan_datang' ? 'checked' : '' }}
+                                        class="sr-only">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                    <span class="text-sm font-medium">Akan Datang</span>
+                                </label>
+                                <label
+                                    class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md border-[#e5e1db]"
+                                    data-color="emerald" onclick="selectStatus(this, 'sedang_berlangsung')">
+                                    <input type="radio" name="status" value="sedang_berlangsung"
+                                        {{ old('status') === 'sedang_berlangsung' ? 'checked' : '' }} class="sr-only">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                    <span class="text-sm font-medium">Sedang Berlangsung</span>
+                                </label>
+                                <label
+                                    class="status-option cursor-pointer border-2 rounded-lg p-3 flex items-center justify-center gap-2 transition-all hover:shadow-md border-[#e5e1db]"
+                                    data-color="orange" onclick="selectStatus(this, 'telah_berakhir')">
+                                    <input type="radio" name="status" value="telah_berakhir"
+                                        {{ old('status') === 'telah_berakhir' ? 'checked' : '' }} class="sr-only">
+                                    <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                    <span class="text-sm font-medium">Telah Berakhir</span>
+                                </label>
                             </div>
-                        </div>
-                    </div>
+                            @error('status')
+                                <p class="text-xs text-rose-500 mt-2">{{ $message }}</p>
+                            @enderror
+
+                        </div> {{-- ← Menutup Status Event --}}
+                    </div> {{-- ← Menutup Banner --}}
 
                     {{-- Jadwal & Lokasi Event --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
@@ -343,6 +326,7 @@
                         class="w-full py-3 bg-[#ba8320] hover:bg-[#a06f1a] text-white font-bold rounded-lg transition-colors">
                         ✓ Publikasikan Event
                     </button>
+
                 </div>
 
                 {{-- ===== PREVIEW ===== --}}
@@ -861,9 +845,6 @@
 
             });
 
-            // ======================================================
-            // LOAD NILAI AWAL
-            // ======================================================
 
             [inputBiaya, inputHargaVote].forEach(input => {
 
@@ -881,14 +862,6 @@
             });
 
             updateNominalPreview();
-
-            // ======================================================
-            // SEBELUM SUBMIT
-            // Ubah:
-            // 1.500.000
-            // menjadi:
-            // 1500000
-            // ======================================================
 
             if (form) {
                 form.addEventListener('submit', function() {

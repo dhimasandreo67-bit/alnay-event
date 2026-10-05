@@ -382,15 +382,13 @@
                                 </div>
 
                                 @php
-                                    $voteUrl = \Illuminate\Support\Facades\Route::has('vote.checkout')
-                                        ? route('vote.checkout', ['id' => $item['id']])
-                                        : '#';
-                                @endphp
+    // Link ke halaman DETAIL KANDIDAT — bukan langsung checkout
+    $voteUrl = '/peserta/' . $item['id'];
+@endphp
 
-                                <a href="{{ $voteUrl }}"
-                                    @if ($voteUrl === '#') onclick="alert('Fitur vote segera hadir!'); return false;" @endif
+                                <a href="/peserta/{{ $item['id'] }}"
                                     class="block text-center w-full mt-2.5 py-2 rounded-md bg-[#c69220] hover:bg-[#b58219] text-white text-sm font-medium transition">
-                                    {{ $rp($event->harga_per_vote) }} / Vote
+                                    Detail
                                 </a>
                             </div>
                         </div>

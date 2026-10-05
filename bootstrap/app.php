@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'peserta/*',
             'pendaftaran/*',
             'voting/*',
+            'midtrans/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

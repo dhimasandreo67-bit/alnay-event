@@ -223,19 +223,32 @@
                             </div>
 
                             @if ($heroIsBerlangsung)
-                                @if ($eventHero->voting_aktif)
-                                    <span
-                                        class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-md">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                                        Voting Aktif
-                                    </span>
-                                @else
-                                    <span
-                                        class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-gray-500 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-md">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-                                        Voting Ditutup
-                                    </span>
-                                @endif
+                                @php
+                                    $statusBadge = match ($eventHero->status) {
+                                        'akan_datang' => [
+                                            'label' => 'Akan Datang',
+                                            'bg' => 'bg-blue-500',
+                                        ],
+                                        'sedang_berlangsung' => [
+                                            'label' => 'Sedang Berlangsung',
+                                            'bg' => 'bg-emerald-500',
+                                        ],
+                                        'telah_berakhir' => [
+                                            'label' => 'Telah Berakhir',
+                                            'bg' => 'bg-orange-500',
+                                        ],
+                                        default => [
+                                            'label' => 'Status',
+                                            'bg' => 'bg-gray-500',
+                                        ],
+                                    };
+                                @endphp
+
+                                <span
+                                    class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full {{ $statusBadge['bg'] }} px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-md">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                    {{ $statusBadge['label'] }}
+                                </span>
                             @else
                                 <span
                                     class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-blue-500 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-md">
@@ -347,6 +360,7 @@
                             @foreach ($eventAkanDatangLainnya as $event)
                                 @php
                                     $bukaPendaftaran =
+                                        $event->pendaftaran_dibuka &&
                                         $event->batas_pendaftaran_tanggal &&
                                         now()->lte($event->batas_pendaftaran_tanggal) &&
                                         (!$event->pembukaan_pendaftaran_tanggal ||

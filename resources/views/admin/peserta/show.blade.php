@@ -924,7 +924,7 @@
                         </div>
                     </form>
 
-                    <script>
+                                        <script>
                         function cekCatatan(e) {
                             const catatan = document.getElementById('catatan_admin').value.trim();
                             if (!catatan) {
@@ -935,10 +935,11 @@
                             }
 
                             e.preventDefault();
-                            const form = e.target;
+                            const form = e.target.form;
+                            const btn = e.target;
                             konfirmasi(
                                 'Yakin menolak pendaftaran ini?',
-                                () => form.submit(), {
+                                () => form.requestSubmit(btn), {
                                     title: 'Tolak Pendaftaran',
                                     confirmText: 'Ya, Tolak',
                                     confirmColor: '#dc2626',

@@ -27,7 +27,7 @@
 
         <div class="flex shrink-0 items-center gap-3">
 
-            {{-- ✅ TOGGLE PENDAFTARAN — BISA DIKLIK --}}
+            {{-- TOGGLE PENDAFTARAN — BISA DIKLIK --}}
             @if ($event)
                 <button type="button" onclick="togglePendaftaran({{ $event->id }})" id="togglePendaftaranBtn"
                     data-event-id="{{ $event->id }}"
@@ -71,11 +71,11 @@
                 </button>
             @endif
 
-                        <a class="inline-flex items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-3 py-[9px] text-[11px] font-medium text-[#56524c] no-underline hover:bg-[#f9f8f5] transition"
-                href="{{ $event ? route('admin.preview-form', $event->id) : '#' }}" target="_blank">
+            <button type="button" onclick="saveThenPreview()"
+                class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-3 py-[9px] text-[11px] font-bold text-[#56524c] hover:bg-[#f9f8f5] transition">
                 Lihat Form Publik
-            </a>
-                        <button
+            </button>
+            <button
                 class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#ba8320] bg-[#ba8320] px-3 py-[9px] text-[11px] font-bold text-white hover:bg-[#a06f1a] transition"
                 type="button" id="saveFormHeader">▣ Simpan Formulir</button>
         </div>
@@ -110,7 +110,7 @@
             toast.classList.add('translate-x-[120%]', 'opacity-0');
         }, 2800);
     };
-        // Toggle pendaftaran manual — klik dari header
+    // Toggle pendaftaran manual — klik dari header
     window.togglePendaftaran = async function(eventId) {
         const btn = document.getElementById('togglePendaftaranBtn');
         const label = document.getElementById('togglePendaftaranLabel');
@@ -137,16 +137,20 @@
             const isOn = data.pendaftaran_dibuka;
 
             if (isOn) {
-                btn.classList.remove('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100', 'hover:border-rose-400');
-                btn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'hover:bg-emerald-100', 'hover:border-emerald-400');
+                btn.classList.remove('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100',
+                    'hover:border-rose-400');
+                btn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300',
+                    'hover:bg-emerald-100', 'hover:border-emerald-400');
 
                 if (label) label.textContent = 'Nonaktifkan Pendaftaran';
                 if (track) track.style.backgroundColor = '#10b981';
                 if (thumb) thumb.style.transform = 'translateX(14px)';
 
             } else {
-                btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'hover:bg-emerald-100', 'hover:border-emerald-400');
-                btn.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100', 'hover:border-rose-400');
+                btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300',
+                    'hover:bg-emerald-100', 'hover:border-emerald-400');
+                btn.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100',
+                    'hover:border-rose-400');
 
                 if (label) label.textContent = 'Aktifkan Pendaftaran';
                 if (track) track.style.backgroundColor = '#fb7185';
@@ -167,5 +171,11 @@
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-wait');
         }
+    };
+
+    window.saveThenPreview = function() {
+        @if ($event)
+            window.open('{{ route('admin.preview-form', $event->id) }}', '_blank');
+        @endif
     };
 </script>

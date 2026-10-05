@@ -193,8 +193,6 @@
                                class="w-full border border-[#e5e1db] rounded-lg px-3 py-2 text-[12px]">
                     </div> --}}
                     </div>
-
-<<<<<<< HEAD
                                     <div class="mt-8 pt-4 border-t border-[#e3ded6] flex flex-wrap items-center justify-end gap-3 pb-1">
                     <a href="{{ route('admin.voting.settings', $event) }}"
                        class="w-full sm:w-auto px-4 py-2.5 text-[12px] font-semibold text-[#73716c] border border-[#e3ded6] hover:bg-gray-50 rounded-lg text-center transition">

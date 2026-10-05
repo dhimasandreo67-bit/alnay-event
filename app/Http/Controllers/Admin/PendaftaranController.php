@@ -183,7 +183,7 @@ class PendaftaranController extends Controller
             : Event::query()->latest('id')->first();
 
         $baseQuery = Peserta::query()
-            ->when($event, fn ($q) => $q->where('event_id', $event->id));
+            ->when($event, fn($q) => $q->where('event_id', $event->id));
 
         $totalPendaftar = (clone $baseQuery)->count();
         $menungguReview = (clone $baseQuery)->where('status', 'menunggu_review')->count();
@@ -255,17 +255,20 @@ class PendaftaranController extends Controller
         return redirect()->back()->with('success', 'Status peserta berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $peserta = Peserta::findOrFail($id);
 
-        JawabanPeserta::where('peserta_id', $peserta->id)->delete();
-
+        // Hapus relasi dulu
+        \App\Models\JawabanPeserta::where('peserta_id', $peserta->id)->delete();
+        \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)->delete();
         $peserta->delete();
 
-        return redirect()->back()->with('success', 'Data peserta dan jawabannya berhasil dihapus.');
+        // Redirect ke halaman list peserta (dashboard admin)
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('success', 'Data peserta, jawaban, dan pembayaran berhasil dihapus.');
     }
-
     public function file(JawabanPeserta $jawaban)
     {
         $raw = is_array($jawaban->jawaban)

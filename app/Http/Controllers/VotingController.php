@@ -189,6 +189,13 @@ class VotingController extends Controller
             'event'   => $voting->peserta?->event ?? $voting->event
         ]);
     }
+    /**
+     * Alias untuk hasilVoting — kompatibilitas route user.php
+     */
+    public function hasilEvent(Event $event)
+    {
+        return $this->hasilVoting($event);
+    }
 
     /**
      * GET /voting/{orderId}/status
@@ -489,28 +496,7 @@ class VotingController extends Controller
 
         $votings = $votingQuery
             ->latest('id')
-            ->get()
-            ->map(function ($voting) {
-                $waktu = '-';
-                if (property_exists($voting, 'updated_at') && $voting->updated_at) {
-                    $waktu = $voting->updated_at->format('H.i.s');
-                } elseif (property_exists($voting, 'created_at') && $voting->created_at) {
-                    $waktu = $voting->created_at->format('H.i.s');
-                } else {
-                    $waktu = '#' . $voting->id;
-                }
-
-                return [
-                    'id' => $voting->id,
-                    'waktu' => $waktu,
-                    'nama_voter' => $voting->nama_tampilan ?? $voting->voter?->nama ?? 'Anonim',
-                    'no_hp' => $voting->voter?->no_hp ?? $voting->voter?->email ?? '-',
-                    'peserta_id' => $voting->peserta_id,
-                    'peserta_nama' => $voting->peserta?->user?->nama ?? 'Peserta dihapus',
-                    'peserta_inisial' => strtoupper(substr($voting->peserta?->user?->nama ?? 'P', 0, 2)),
-                    'jumlah_vote' => $voting->jumlah_vote,
-                ];
-            });
+            ->get();
 
         $pesertaList = Peserta::where('event_id', $event?->id ?? 0)
             ->with('user:id,nama')
@@ -655,7 +641,7 @@ class VotingController extends Controller
         return $color;
     }
 
-        /**
+    /**
      * DELETE /admin/voters/{id}
      * Hapus record voting.
      */

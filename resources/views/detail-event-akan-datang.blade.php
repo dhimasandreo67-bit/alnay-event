@@ -151,14 +151,21 @@
 
                     <div class="bg-[#faf8f2] border border-[#eee5d2] rounded-lg p-3.5">
                         <p class="text-[10px] uppercase tracking-wider text-[#8a8178] font-semibold text-center">
-                            @if ($sisaHari !== null)
+                            @if (!$event->pendaftaran_dibuka)
+                                Pendaftaran Ditutup
+                            @elseif ($sisaHari !== null)
                                 Pendaftaran Ditutup Dalam
                             @else
                                 Status Pendaftaran
                             @endif
                         </p>
 
-                        @if ($sisaHari !== null)
+                        @if (!$event->pendaftaran_dibuka)
+                            {{-- Pendaftaran ditutup manual — gak ada countdown --}}
+                            <p class="text-center text-sm font-semibold text-rose-500 mt-3">
+                                Pendaftaran Ditutup
+                            </p>
+                        @elseif ($sisaHari !== null)
                             <div class="grid grid-cols-3 gap-1 mt-3 text-center">
                                 <div>
                                     <p class="text-lg font-bold text-[#c99a32]">{{ sprintf('%02d', $sisaHari) }}</p>
@@ -247,7 +254,9 @@
                         </div>
 
                         @php
-                            $bukaPendaftaran = $statusPendaftaran === 'Pendaftaran Dibuka';
+                            // Cek flag admin + waktu
+                            $bukaPendaftaran =
+                                $event->pendaftaran_dibuka && $statusPendaftaran === 'Pendaftaran Dibuka';
                         @endphp
 
                         @if ($bukaPendaftaran)

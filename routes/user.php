@@ -25,7 +25,7 @@ Route::get('/event/{event}/pertanyaan', [PertanyaanController::class, 'index']);
 Route::get('/event/{event}/peserta', [PesertaController::class, 'indexDiterima']);
 
 // Rekap hasil voting publik
-Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilEvent']);
+Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
 
 /*
 |--------------------------------------------------------------------------
@@ -33,8 +33,21 @@ Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilEvent'
 |--------------------------------------------------------------------------
 */
 
-Route::post('/peserta/midtrans/webhook', [PembayaranController::class, 'webhook'])
-    ->name('midtrans.webhook.pendaftaran');
+Route::post('/peserta/midtrans/webhook', function (\Illuminate\Http\Request $request) {
+    $orderId = (string) $request->input('order_id', '');
+
+    \Log::info('Midtrans webhook universal (legacy URL)', ['order_id' => $orderId]);
+
+    if (str_starts_with($orderId, 'VOTING-')) {
+        return app(\App\Http\Controllers\VotingController::class)->webhook($request);
+    }
+
+    if (str_starts_with($orderId, 'PENDAFTARAN-')) {
+        return app(\App\Http\Controllers\PembayaranController::class)->webhook($request);
+    }
+
+    return response()->json(['status_code' => '200', 'status_message' => 'OK']);
+});
 
 Route::post('/voting/midtrans/webhook', [VotingController::class, 'webhook'])
     ->name('midtrans.webhook.voting');
