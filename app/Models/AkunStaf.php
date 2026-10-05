@@ -20,6 +20,7 @@ class AkunStaf extends Authenticatable
         'nama',
         'email',
         'password_hash',
+        'last_active_event_id',
     ];
 
     protected $hidden = [
@@ -38,5 +39,10 @@ class AkunStaf extends Authenticatable
     public function getAuthPassword()
     {
         return $this->password_hash;
+    }
+
+    public function lastActiveEvent()
+    {
+        return $this->belongsTo(Event::class, 'last_active_event_id');
     }
 }
