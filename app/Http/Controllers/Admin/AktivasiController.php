@@ -103,7 +103,7 @@ class AktivasiController extends Controller
         return [
             'id' => $peserta->id,
             'no_registrasi' => 'PPA-' . now()->year . '-' . str_pad($peserta->id, 3, '0', STR_PAD_LEFT),
-            'nama' => $peserta->nama_pendaftaran ?: ($peserta->user->nama_custom ?: $peserta->user->nama ?? '-'),
+            'nama' => $peserta->namaTampil(),
             'email' => $peserta->user->email ?? '-',
             'kategori' => $kategoriJawaban?->jawaban ?? '-',
             'pembayaran' => $pembayaran,

@@ -420,9 +420,10 @@
                 </div>
             </section>
 
-            {{-- PERINGKAT --}}
+                        {{-- PERINGKAT --}}
             @php
                 $tampilPeringkat = false;
+                $blackoutMode = $blackoutAktif ?? false;
                 $judulPeringkat = 'Peringkat Sementara';
                 $subjudulPeringkat = 'Peserta dengan suara terbanyak';
                 $namaEventPeringkat = null;
@@ -431,16 +432,16 @@
                 $totalSuaraPeringkat = 0;
                 $routeAllPeserta = null;
 
-                if ($eventBerlangsung && $peringkatTerkini->count() > 0) {
+                if (! $blackoutMode && $eventBerlangsung && $peringkatTerkini->count() > 0) {
                     $tampilPeringkat = true;
                     $namaEventPeringkat = $eventBerlangsung->nama;
                     $peringkatData = $peringkatTerkini;
                     $totalSuaraPeringkat = $totalSuara;
                     $routeAllPeserta = $routeDetail($eventBerlangsung);
-                } elseif (!$eventBerlangsung && $eventPeringkatAkhir && $peringkatAkhir->count() > 0) {
+                } elseif (! $blackoutMode && ! $eventBerlangsung && $eventPeringkatAkhir && $peringkatAkhir->count() > 0) {
                     $tampilPeringkat = true;
-                    $judulPeringkat = 'Peringkat Akhir';
-                    $subjudulPeringkat = 'Hasil akhir suara peserta';
+                    $judulPeringkat = 'Peringkat Sekarang';
+                    $subjudulPeringkat = 'Hasil suara peserta sementara';
                     $namaEventPeringkat = $eventPeringkatAkhir->nama;
                     $badgePeringkat = 'Telah Berakhir';
                     $peringkatData = $peringkatAkhir;
@@ -449,7 +450,74 @@
                 }
             @endphp
 
-            @if ($tampilPeringkat)
+                                   {{-- ✅ Kalau blackout — notice elegan --}}
+            @if ($blackoutMode)
+                <section class="mt-14">
+                    <div class="card-shadow overflow-hidden rounded-[16px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed]">
+
+                        <div class="relative px-6 pt-10 pb-8 md:px-12 md:pt-14 md:pb-10 text-center">
+
+                            {{-- Ornamen atas --}}
+                            <div class="flex items-center justify-center gap-2 mb-6">
+                                <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
+                                <svg class="w-3.5 h-3.5 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+                                </svg>
+                                <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
+                            </div>
+
+                            {{-- Eyebrow --}}
+                            <p class="text-[10px] uppercase tracking-[0.35em] text-[#c99a32] font-bold mb-4">
+                                Peringkat Sementara
+                            </p>
+
+                            {{-- Judul utama — teaser elegan --}}
+                            <h2 class="display-font text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
+                                Siapa yang akan<br class="hidden sm:block"> membawa pulang mahkota?
+                            </h2>
+
+                            {{-- Deskripsi puitis --}}
+                            <p class="max-w-xl mx-auto text-[13px] md:text-[15px] leading-[1.8] text-[#5a5750]">
+                                Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan
+                                peringkat sementara saat ini. Ikuti terus perjalanan para finalis,
+                                dan saksikan siapa yang akan tampil sebagai yang terbaik.
+                            </p>
+
+                            {{-- Divider --}}
+                            <div class="mt-8 mb-6 flex items-center justify-center gap-3">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#c99a32]/40"></span>
+                                <span class="w-1 h-1 rounded-full bg-[#c99a32]/30"></span>
+                                <span class="w-1 h-1 rounded-full bg-[#c99a32]/20"></span>
+                            </div>
+
+                            {{-- Timeline grand final --}}
+                            @if (($blackoutEvent ?? null)?->voting_selesai)
+                                <div class="inline-flex flex-col items-center gap-2">
+                                    <p class="text-[10px] uppercase tracking-[0.25em] text-[#8a8178] font-bold">
+                                        Malam Puncak
+                                    </p>
+                                    <p class="display-font text-lg md:text-xl font-bold text-[#0a1526]">
+                                        {{ $blackoutEvent->voting_selesai->translatedFormat('d F Y') }}
+                                    </p>
+                                    <p class="text-[12px] text-[#8a8178]">
+                                        Pukul {{ $blackoutEvent->voting_selesai->format('H:i') }} WIB
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Footer info --}}
+                        <div class="border-t border-[#e8dcc0]/60 bg-white/40 px-6 py-4 md:px-12">
+                            <div class="flex items-center justify-center gap-2 text-[11px] text-[#8a8178]">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="italic">Peringkat akan diumumkan secara resmi pada malam puncak.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            @elseif ($tampilPeringkat)
                 <section class="mt-14">
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-5">
                         <div>
