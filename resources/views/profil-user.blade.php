@@ -40,25 +40,7 @@
     @endphp
 
     {{-- HEADER --}}
-    <header class="sticky top-0 z-50 border-b border-[#e9e9e9] bg-white/95 backdrop-blur">
-        <div class="mx-auto flex h-[56px] max-w-[1200px] items-center justify-between px-5 md:px-8">
-            <a href="{{ route('dashboard-user') }}" class="flex items-center gap-2.5">
-                <img src="{{ asset('images/alnaylogo.png') }}" alt="ALNAY.ID" class="h-9 w-9 object-contain">
-                <span class="brand-font text-[16px] font-bold tracking-tight text-[#13223a]">
-                    EVENT ALNAY.ID
-                </span>
-            </a>
-
-            <a href="{{ route('profil-user') }}" aria-label="Profil pengguna"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-[#c99a32] bg-[#fbf6e9] text-[#c99a32] transition hover:bg-[#f7f0dc] overflow-hidden">
-                @if ($fotoTampil)
-                    <img src="{{ $fotoTampil }}" alt="{{ $namaTampil }}" class="w-full h-full object-cover">
-                @else
-                    <span class="text-[11px] font-bold">{{ $inisial }}</span>
-                @endif
-            </a>
-        </div>
-    </header>
+    @include('partials.header')
 
     <main class="max-w-3xl mx-auto px-5 pt-8 pb-14">
 
