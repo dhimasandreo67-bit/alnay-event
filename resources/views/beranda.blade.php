@@ -374,22 +374,89 @@
             @endif
 
             {{-- ALUR EVENT --}}
-            <section class="mt-14">
-                <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">Alur Event</h2>
-                <p class="mt-1 text-[13px] text-[#6b6b6b] md:text-[14px]">Cara ikut serta dan mendukung peserta</p>
+            {{-- ALUR EVENT --}}
+<section class="mt-16">
+    <div class="text-center md:text-left">
+        <span class="inline-block text-[11px] font-bold tracking-widest text-[#c99a32] uppercase bg-[#fdf8ec] px-3.5 py-1 rounded-full border border-[#f4ede0] mb-2">
+            Panduan Pelaksanaan
+        </span>
+        <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[28px]">Alur Event & Voting</h2>
+        <p class="mt-1 text-[13px] text-[#6b6b6b] md:text-[14px]">3 langkah mudah untuk mendaftar, berpartisipasi, dan mendukung kandidat favoritmu</p>
+    </div>
 
-                <div class="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-                    @foreach ($alurEvent as $langkah)
-                        <div class="card-shadow rounded-[10px] border border-[#ededed] bg-white p-6">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4ede0] text-[14px] font-bold text-[#c99a32]">
-                                {{ $langkah['nomor'] }}
+    {{-- Container Alur Card --}}
+    <div class="relative mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-5">
+        
+        {{-- Garis Penghubung Alur (Hanya Tampil di Desktop) --}}
+        <div class="hidden md:block absolute top-[48px] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-[#e8dec9] via-[#c99a32] to-[#e8dec9] z-0"></div>
+
+        @foreach ($alurEvent as $index => $langkah)
+            <div class="group relative z-10 flex flex-col justify-between rounded-[16px] border border-[#ededed] bg-white p-6 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-[#c99a32]/40 hover:shadow-xl hover:shadow-[#c99a32]/10">
+                
+                <div>
+                    {{-- Header Card: Icon, Nomor, & Panah Desktop --}}
+                    <div class="flex items-center justify-between">
+                        <!-- Wrapper Icon & Nomor Badge -->
+                        <div class="relative">
+                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fdf8ec] text-[#c99a32] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white shadow-sm">
+                                @if ($langkah['nomor'] == 1)
+                                    <!-- Icon Pendaftaran -->
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                @elseif ($langkah['nomor'] == 2)
+                                    <!-- Icon Voting -->
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                @else
+                                    <!-- Icon Pemenang / Trophy -->
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4a5 5 0 005 5h4a5 5 0 005-5V3M3 3h18M12 12v6m-4 0h8m-6 4h4"/>
+                                    </svg>
+                                @endif
                             </div>
-                            <h3 class="mt-4 text-[16px] font-bold text-[#13223a]">{{ $langkah['judul'] }}</h3>
-                            <p class="mt-2 text-[13px] leading-[1.6] text-[#666]">{{ $langkah['deskripsi'] }}</p>
+                            
+                            <!-- Badge Angka -->
+                            <span class="absolute -top-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white shadow-md border-2 border-white">
+                                {{ $langkah['nomor'] }}
+                            </span>
                         </div>
-                    @endforeach
+
+                        <!-- Panah Alur Kanan (Desktop) -->
+                        @if (!$loop->last)
+                            <div class="hidden md:flex items-center text-[#c99a32] opacity-40 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1.5">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                </svg>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Judul & Deskripsi --}}
+                    <div class="mt-5 text-left">
+                        <h3 class="text-[17px] font-bold text-[#13223a] transition-colors duration-200 group-hover:text-[#c99a32]">
+                            {{ $langkah['judul'] }}
+                        </h3>
+                        <p class="mt-2 text-[13px] leading-[1.6] text-[#666]">
+                            {{ $langkah['deskripsi'] }}
+                        </p>
+                    </div>
                 </div>
-            </section>
+
+                {{-- Panah Alur Bawah (Tampilan Mobile) --}}
+                @if (!$loop->last)
+                    <div class="mt-4 flex justify-center md:hidden text-[#c99a32] opacity-70">
+                        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                        </svg>
+                    </div>
+                @endif
+
+            </div>
+        @endforeach
+    </div>
+</section>
 
             {{-- PERINGKAT --}}
             @php
