@@ -32,11 +32,7 @@
 
 <body class="min-h-screen bg-[#FFF8F1] text-[#1E1B18]">
 
-    <header class="border-b border-[#CDC5BC]/30 bg-[#FBF9F4]/95 backdrop-blur">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-            <span class="font-display font-bold text-xl text-black">EVENT ALNAY.ID</span>
-        </div>
-    </header>
+    @include('partials.header')
 
     <main class="max-w-4xl mx-auto px-6 py-8">
 

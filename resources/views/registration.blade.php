@@ -14,24 +14,7 @@
         $isPreview = request()->routeIs('admin.preview-form');
     @endphp
 
-    <header class="border-b border-[#CDC5BC]/30 bg-[#FBF9F4]/95 backdrop-blur">
-        <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ $isPreview ? route('admin.dashboard') : '/beranda' }}"
-                class="font-bold text-xl text-[#0A1526]">EVENT ALNAY.ID</a>
-
-            @if ($isPreview)
-                <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-1.5 text-[11px] font-semibold text-amber-800">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Mode Preview (Admin)
-                </span>
-            @endif
-        </div>
-    </header>
+    @include('partials.header')
 
     <main class="max-w-3xl mx-auto px-6 py-8">
 
