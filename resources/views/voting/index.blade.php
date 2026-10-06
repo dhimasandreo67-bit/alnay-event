@@ -30,8 +30,8 @@
 
 <body class="min-h-screen flex flex-col text-[#1D1B17]">
 
-        @include('partials.header')
-        
+    @include('partials.header')
+
 
     <main class="glow flex-1">
         <div class="max-w-6xl mx-auto px-6 py-8">
@@ -54,7 +54,7 @@
         </div>
     </main>
 
-        @include('partials.footer')
+    @include('partials.footer')
 
     <script>
         const pesertaId = {{ (int) $pesertaId }};
@@ -167,85 +167,85 @@
         ];
 
         async function muatPeserta() {
-            try {
-                const res = await fetch(`/peserta/${pesertaId}`, {
-                    headers: {
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'include'
-                });
+        try {
+            const res = await fetch(`/peserta/${pesertaId}`, {
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
 
-                if (res.status === 401) {
-                    tampilkanError('Kamu belum login. Silakan login dulu untuk melihat detail kandidat.');
-                    return;
+            if (res.status === 401) {
+                tampilkanError('Kamu belum login. Silakan login dulu untuk melihat detail kandidat.');
+                return;
+            }
+            if (res.status === 404) {
+                tampilkanError('Peserta tidak ditemukan.');
+                return;
+            }
+            if (!res.ok) {
+                tampilkanError('Gagal memuat data peserta. Status: ' + res.status);
+                return;
+            }
+
+            const p = await res.json();
+            hargaPerVote = p.event?.harga_per_vote ?? 0;
+
+            const [statistik, dukungan] = await Promise.all([
+                muatStatistik(p.event?.id),
+                muatDukunganTerkini(p.event?.id),
+            ]);
+
+            const nama = cariJawaban(p.jawabans, 'nama', /nama/i) ?? p.user?.nama ?? 'Peserta';
+            const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota|alamat/i);
+            const deskripsi = cariJawaban(p.jawabans, 'bio', /bio|profil|tentang|deskripsi/i);
+
+            // ===== Foto: ambil SEMUA jawaban tipe file/gambar + galeri_foto =====
+            const galeri = [];
+
+            // 1. Semua jawaban peserta yang tipenya file/gambar
+            (p.jawabans ?? []).forEach(j => {
+                const tipe = (j.pertanyaan?.tipe_input ?? '').toLowerCase();
+                const label = (j.pertanyaan?.label ?? '').toLowerCase();
+
+                // Cek apakah jawaban ini berupa file gambar
+                const isFileTipe = ['file', 'upload gambar', 'upload_gambar', 'image', 'gambar'].includes(
+                    tipe);
+                const isLabelGambar = /upload gambar|foto|gambar|image/i.test(label);
+
+                if ((isFileTipe || isLabelGambar) && j.jawaban) {
+                    const url = fotoUrl(j.jawaban);
+                    if (url) galeri.push(url);
                 }
-                if (res.status === 404) {
-                    tampilkanError('Peserta tidak ditemukan.');
-                    return;
-                }
-                if (!res.ok) {
-                    tampilkanError('Gagal memuat data peserta. Status: ' + res.status);
-                    return;
-                }
+            });
 
-                const p = await res.json();
-                hargaPerVote = p.event?.harga_per_vote ?? 0;
+            // 2. Galeri foto tambahan (kolom JSON di peserta)
+            if (Array.isArray(p.galeri_foto)) {
+                p.galeri_foto.map(fotoUrl).filter(Boolean).forEach(u => galeri.push(u));
+            }
 
-                const [statistik, dukungan] = await Promise.all([
-                    muatStatistik(p.event?.id),
-                    muatDukunganTerkini(p.event?.id),
-                ]);
+            // 3. Fallback: foto Google / ui-avatar
+            if (galeri.length === 0) {
+                const fotoAvatar = fotoUrl(p.user?.foto_url) ??
+                    `https://ui-avatars.com/api/?size=512&background=0A1526&color=FFF8F1&name=${encodeURIComponent(nama)}`;
+                galeri.push(fotoAvatar);
+            }
 
-                const nama = cariJawaban(p.jawabans, 'nama', /nama/i) ?? p.user?.nama ?? 'Peserta';
-                const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota|alamat/i);
-                const deskripsi = cariJawaban(p.jawabans, 'bio', /bio|profil|tentang|deskripsi/i);
+            fotoList = galeri;
 
-                // ===== Foto: ambil SEMUA jawaban tipe file/gambar + galeri_foto =====
-                const galeri = [];
-
-                // 1. Semua jawaban peserta yang tipenya file/gambar
-                (p.jawabans ?? []).forEach(j => {
-                    const tipe = (j.pertanyaan?.tipe_input ?? '').toLowerCase();
-                    const label = (j.pertanyaan?.label ?? '').toLowerCase();
-
-                    // Cek apakah jawaban ini berupa file gambar
-                    const isFileTipe = ['file', 'upload gambar', 'upload_gambar', 'image', 'gambar'].includes(
-                        tipe);
-                    const isLabelGambar = /upload gambar|foto|gambar|image/i.test(label);
-
-                    if ((isFileTipe || isLabelGambar) && j.jawaban) {
-                        const url = fotoUrl(j.jawaban);
-                        if (url) galeri.push(url);
-                    }
-                });
-
-                // 2. Galeri foto tambahan (kolom JSON di peserta)
-                if (Array.isArray(p.galeri_foto)) {
-                    p.galeri_foto.map(fotoUrl).filter(Boolean).forEach(u => galeri.push(u));
-                }
-
-                // 3. Fallback: foto Google / ui-avatar
-                if (galeri.length === 0) {
-                    const fotoAvatar = fotoUrl(p.user?.foto_url) ??
-                        `https://ui-avatars.com/api/?size=512&background=0A1526&color=FFF8F1&name=${encodeURIComponent(nama)}`;
-                    galeri.push(fotoAvatar);
-                }
-
-                fotoList = galeri;
-
-                const blokThumbs = fotoList.length > 1 ? `
+            const blokThumbs = fotoList.length > 1 ? `
                     <div class="grid grid-cols-3 gap-3 mt-3">
                         ${fotoList.map((url, i) => `
-                                <button type="button" onclick="gantiFoto(${i})"
-                                    class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
-                                    <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
-                                </button>
-                            `).join('')}
+                                        <button type="button" onclick="gantiFoto(${i})"
+                                            class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
+                                            <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
+                                        </button>
+                                    `).join('')}
                     </div>` : '';
 
-                const nomor = String(p.id).padStart(2, '0');
+            const nomor = String(p.id).padStart(2, '0');
 
-                const blokLokasi = lokasi ? `
+            const blokLokasi = lokasi ? `
                     <p class="flex items-center gap-2 text-[#4B463F] mb-6">
                         <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                             stroke-linecap="round" stroke-linejoin="round">
@@ -255,27 +255,27 @@
                         <span>${esc(lokasi)}</span>
                     </p>` : '';
 
-                const blokProfil = deskripsi ? `
+            const blokProfil = deskripsi ? `
                     <div class="mb-6">
                         <h3 class="font-display font-bold text-xl text-black mb-2">Profil Kandidat</h3>
                         <p class="text-[#4B463F] leading-relaxed whitespace-pre-line">${esc(deskripsi)}</p>
                     </div>` : '';
 
-                const format = p.event?.format_hasil_voting ?? 'keduanya';
-                let blokTotalVote = '';
-                let blokPersentase = '';
+            const format = p.event?.format_hasil_voting ?? 'keduanya';
+            let blokTotalVote = '';
+            let blokPersentase = '';
 
-                if (statistik) {
-                    if (format === 'angka' || format === 'keduanya') {
-                        blokTotalVote = `
+            if (statistik) {
+                if (format === 'angka' || format === 'keduanya') {
+                    blokTotalVote = `
                             <div class="bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4">
                                 <p class="text-[11px] font-semibold uppercase tracking-wide text-[#4B463F] mb-1">Total Vote</p>
                                 <p class="font-display font-bold text-3xl text-black">${formatAngka(statistik.totalVoteKu)}</p>
                                 <p class="text-xs text-[#4B463F] mt-1">dari ${formatAngka(statistik.totalSemua)} total</p>
                             </div>`;
-                    }
-                    if (format === 'persentase' || format === 'keduanya') {
-                        blokPersentase = `
+                }
+                if (format === 'persentase' || format === 'keduanya') {
+                    blokPersentase = `
                             <div class="bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4">
                                 <div class="flex items-center justify-between mb-1">
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-[#4B463F]">Persentase Suara</p>
@@ -286,11 +286,11 @@
                                     <div class="h-full bg-[#7F5700] rounded-full" style="width: ${Math.min(100, statistik.persentase)}%"></div>
                                 </div>
                             </div>`;
-                    }
                 }
+            }
 
-                const gridCols = (format === 'keduanya') ? 'sm:grid-cols-2' : '';
-                const blokStatistik = statistik ? `
+            const gridCols = (format === 'keduanya') ? 'sm:grid-cols-2' : '';
+            const blokStatistik = statistik ? `
                     <div class="grid grid-cols-1 ${gridCols} gap-3 mb-5">
                         ${blokTotalVote}
                         ${blokPersentase}
@@ -299,15 +299,15 @@
                         Statistik suara belum tersedia.
                     </div>`;
 
-                let isiDukungan;
-                if (dukungan === null) {
-                    isiDukungan = '<p class="text-sm text-[#4B463F] py-3">Daftar pendukung belum tersedia.</p>';
-                } else if (dukungan.length === 0) {
-                    isiDukungan = '<p class="text-sm text-[#4B463F] py-3">Belum ada dukungan.</p>';
-                } else {
-                    isiDukungan = dukungan.map((d, i) => {
-                        const waktu = waktuLalu(d.tanggal_vote ?? d.created_at);
-                        return `
+            let isiDukungan;
+            if (dukungan === null) {
+                isiDukungan = '<p class="text-sm text-[#4B463F] py-3">Daftar pendukung belum tersedia.</p>';
+            } else if (dukungan.length === 0) {
+                isiDukungan = '<p class="text-sm text-[#4B463F] py-3">Belum ada dukungan.</p>';
+            } else {
+                isiDukungan = dukungan.map((d, i) => {
+                    const waktu = waktuLalu(d.tanggal_vote ?? d.created_at);
+                    return `
                             <div class="flex items-center gap-3 bg-[#FAF3E7]/70 px-3 py-3">
                                 <div class="w-10 h-10 rounded-full ${warnaAvatar[i % warnaAvatar.length]} flex items-center justify-center text-xs font-bold shrink-0">
                                     ${esc(inisial(d.nama_tampilan))}
@@ -319,11 +319,11 @@
                                 </div>
                                 ${waktu ? `<span class="text-xs text-[#4B463F] bg-[#EFE7DC] rounded px-2 py-1 whitespace-nowrap">${esc(waktu)}</span>` : ''}
                             </div>`;
-                    }).join('');
-                }
+                }).join('');
+            }
 
-                const jumlahPendukung = dukungan ? dukungan.length : 0;
-                const blokDukungan = `
+            const jumlahPendukung = dukungan ? dukungan.length : 0;
+            const blokDukungan = `
                     <div class="mt-8 border-t border-[#CDC5BC]/40 pt-6">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="font-display font-bold text-xl text-black">Daftar Pendukung Terkini</h3>
@@ -332,7 +332,7 @@
                         <div class="space-y-2">${isiDukungan}</div>
                     </div>`;
 
-                document.getElementById('konten').innerHTML = `
+            document.getElementById('konten').innerHTML = `
                     <div class="min-w-0">
                         <div class="relative rounded-xl overflow-hidden bg-[#EFE7DC] aspect-[4/5]">
                             <img id="foto-utama" src="${esc(fotoList[0])}" class="w-full h-full object-cover" alt="${esc(nama)}">
@@ -352,27 +352,44 @@
                         ${blokStatistik}
 
                         ${
-                            p.event?.status === 'akan_datang'
-                                ? `<div class="block w-full text-center bg-gray-200 text-gray-500 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
-                                           Voting belum dibuka
-                                       </div>`
-                                : `<a href="/peserta/${pesertaId}/checkout"
-                                           class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] py-4 text-base font-semibold tracking-wide hover:bg-[#a97b1f] transition">
-                                           Rp ${formatAngka(hargaPerVote)} / Vote
-                                       </a>`
+                            (() => {
+                                // Belum dibuka?
+                                if (p.event?.voting_mulai && new Date(p.event.voting_mulai) > new Date()) {
+                                    return `<div class="block w-full text-center bg-blue-50 text-blue-700 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
+                                                Voting belum dibuka
+                                            </div>`;
+                                }
+                                // Sudah ditutup? (auto freeze)
+                                if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
+                                    return `<div class="block w-full text-center bg-gray-200 text-gray-600 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
+                                                Voting Ditutup
+                                            </div>`;
+                                }
+                                // Status event = akan datang?
+                                if (p.event?.status === 'akan_datang') {
+                                    return `<div class="block w-full text-center bg-gray-200 text-gray-500 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
+                                                Voting belum dibuka
+                                            </div>`;
+                                }
+                                // Default — tampilkan tombol vote
+                                return `<a href="/peserta/${pesertaId}/checkout"
+                                            class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] py-4 text-base font-semibold tracking-wide hover:bg-[#a97b1f] transition">
+                                            Rp ${formatAngka(hargaPerVote)} / Vote
+                                        </a>`;
+                            })()
                         }
 
                         ${blokDukungan}
                     </div>
                 `;
-            } catch (e) {
-                console.error('muatPeserta error:', e);
-                tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');
-            }
-        }
+                    } catch (e) {
+                        console.error('muatPeserta error:', e);
+                        tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');
+                    }
+                }
 
-        // Boot — selalu panggil muatPeserta (gak perlu cekLogin dulu, karena fetch akan handle 401)
-        muatPeserta();
+                // Boot — selalu panggil muatPeserta (gak perlu cekLogin dulu, karena fetch akan handle 401)
+                muatPeserta();
     </script>
 </body>
 

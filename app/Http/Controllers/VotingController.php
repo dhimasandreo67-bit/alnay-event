@@ -32,10 +32,26 @@ class VotingController extends Controller
     {
         $event = $peserta->event;
 
+        // 1. Cek voting aktif
         if (! $event->voting_aktif) {
             return response()->json(['message' => 'Voting untuk event ini belum/tidak aktif.'], 403);
         }
 
+        // 2. Cek periode voting — belum dibuka?
+        if ($event->voting_mulai && now()->lt($event->voting_mulai)) {
+            return response()->json([
+                'message' => 'Voting belum dibuka. Jadwal: ' . $event->voting_mulai->format('d M Y, H:i') . ' WIB',
+            ], 403);
+        }
+
+        // 3. Cek periode voting — sudah ditutup?
+        if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
+            return response()->json([
+                'message' => 'Voting sudah ditutup pada ' . $event->voting_selesai->format('d M Y, H:i') . ' WIB',
+            ], 403);
+        }
+
+        // 4. Cek status peserta
         if ($peserta->status !== 'diterima') {
             return response()->json(['message' => 'Peserta ini belum berstatus diterima.'], 403);
         }
@@ -277,8 +293,23 @@ class VotingController extends Controller
     {
         $adminLogin = Auth::guard('admin')->check();
 
+        // Cek tampilkan hasil
         if (! $event->tampilkan_hasil_voting && ! $adminLogin) {
             return response()->json(['message' => 'Hasil voting untuk event ini belum ditampilkan ke publik.'], 403);
+        }
+
+        // Cek blackout H-2
+        if (! $adminLogin && $event->blackout_h2_voting && $event->voting_selesai) {
+            $selisihJam = now()->diffInHours($event->voting_selesai, false);
+
+            // Kalau dalam 48 jam sebelum voting_selesai
+            if ($selisihJam <= 48 && $selisihJam > 0) {
+                return response()->json([
+                    'message' => 'Hasil voting disembunyikan sampai grand final (Blackout H-2).',
+                    'blackout' => true,
+                    'waktu_grand_final' => $event->voting_selesai->format('d M Y, H:i'),
+                ], 403);
+            }
         }
 
         $pesertaList = Peserta::with('user')
