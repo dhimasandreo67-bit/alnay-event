@@ -59,14 +59,14 @@
 
         // Daftar kandidat untuk grid "Daftar Kandidat"
         $kandidat = [
-            ['nomor' => '01', 'nama' => 'Raden Roro Ayu', 'asal' => 'Jawa Tengah',    'foto' => 'kandidat1.jpg', 'persen' => '29.35'],
-            ['nomor' => '02', 'nama' => 'Made Wirawan',   'asal' => 'Bali',           'foto' => 'kandidat2.jpg', 'persen' => '19.39'],
-            ['nomor' => '03', 'nama' => 'Siti Nurbaya',   'asal' => 'Sumatera Barat', 'foto' => 'kandidat3.jpg', 'persen' => '19.06'],
-            ['nomor' => '04', 'nama' => 'Bimo Susanto',   'asal' => 'DKI Jakarta',    'foto' => 'kandidat4.jpg', 'persen' => '19.2'],
-            ['nomor' => '05', 'nama' => 'Ega Daniswara',  'asal' => 'Yogyakarta',     'foto' => 'kandidat5.jpg', 'persen' => '17.7'],
-            ['nomor' => '06', 'nama' => 'I Gede Anune',   'asal' => 'Sumatera Utara', 'foto' => 'kandidat6.jpg', 'persen' => '16.2'],
-            ['nomor' => '07', 'nama' => 'Siti Nurbaya',   'asal' => 'Sumatera Barat', 'foto' => 'kandidat7.jpg', 'persen' => '14.7'],
-            ['nomor' => '08', 'nama' => 'Bimo Susanto',   'asal' => 'DKI Jakarta',    'foto' => 'kandidat3.jpg', 'persen' => '14.0'],
+            ['nomor' => '01', 'nama' => 'Raden Roro Ayu','foto' => 'kandidat1.jpg', 'persen' => '29.35'],
+            ['nomor' => '02', 'nama' => 'Made Wirawan',  'foto' => 'kandidat2.jpg', 'persen' => '19.39'],
+            ['nomor' => '03', 'nama' => 'Siti Nurbaya',  'foto' => 'kandidat3.jpg', 'persen' => '19.06'],
+            ['nomor' => '04', 'nama' => 'Bimo Susanto',  'foto' => 'kandidat4.jpg', 'persen' => '19.2'],
+            ['nomor' => '05', 'nama' => 'Ega Daniswara', 'foto' => 'kandidat5.jpg', 'persen' => '17.7'],
+            ['nomor' => '06', 'nama' => 'I Gede Anune',  'foto' => 'kandidat6.jpg', 'persen' => '16.2'],
+            ['nomor' => '07', 'nama' => 'Siti Nurbaya',  'foto' => 'kandidat7.jpg', 'persen' => '14.7'],
+            ['nomor' => '08', 'nama' => 'Bimo Susanto',  'foto' => 'kandidat3.jpg', 'persen' => '14.0'],
         ];
 
         /*
@@ -110,7 +110,6 @@
                 $kandidat[] = [
                     'nomor'  => $row['nomor'],
                     'nama'   => $row['nama'],
-                    'asal'   => $row['asal'],
                     'foto'   => $row['foto'],
                     'persen' => $row['persen'],
                 ];
@@ -350,10 +349,6 @@
                                         {{ $p['nama'] }}
                                     </h3>
 
-                                    <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded">
-                                        {{ $p['asal'] }}
-                                    </span>
-
                                 </div>
 
                                 <p class="text-base font-bold text-[#15233d] mt-1.5">
@@ -393,10 +388,6 @@
                                 <p class="text-sm font-semibold text-[#15233d] w-40 truncate">
                                     {{ $r['nama'] }}
                                 </p>
-
-                                <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded whitespace-nowrap">
-                                    {{ $r['asal'] }}
-                                </span>
 
                                 <div class="flex-1 h-1.5 bg-gray-100 rounded-full mx-2">
                                     <div class="h-1.5 bg-[#c99a32] rounded-full" style="width: {{ $r['persen'] }}%"></div>
@@ -528,12 +519,6 @@
 
                                     </h3>
 
-
-                                    <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded">
-
-                                        {{ $item['asal'] }}
-
-                                    </span>
 
                                 </div>
 

@@ -237,39 +237,101 @@
     // Daftar event yang sudah berakhir, ditampilkan di tab
     // "Event Sebelumnya". Field 'foto' boleh null/kosong kalau
     // fotonya belum diupload, nanti otomatis tampil placeholder.
+    //
+    // Field 'tanggal_selesai_raw' (format Y-m-d) dan 'peringkat'
+    // (3 besar) dipakai khusus untuk section "Peringkat Hasil
+    // Event Sebelumnya" di tab "Event Terkini" — lihat penjelasan
+    // di bagian $eventTerbaruSelesai / $tampilkanHasilAkhir di bawah.
     // =====================================================
 
     $eventSebelumnya = [
         [
-            'id'      => 3,
-            'judul'   => 'Lomba Foto Baju Adat Cilik',
-            'foto'    => 'event-alnay4.png',
-            'tanggal' => 'Agustus 2026',
-            'juara'   => 'Raden Roro Ayu',
+            'id'                  => 3,
+            'judul'               => 'Lomba Foto Baju Adat Cilik',
+            'foto'                => 'event-alnay4.png',
+            'tanggal'             => 'Agustus 2026',
+            'tanggal_selesai_raw' => '2026-09-27',
+            'juara'               => 'Raden Roro Ayu',
+            'peringkat'           => [
+                ['nomor' => '01', 'nama' => 'Raden Roro Ayu', 'inisial' => 'RR', 'persen' => '31.20'],
+                ['nomor' => '02', 'nama' => 'Made Wirawan',   'inisial' => 'MW', 'persen' => '24.10'],
+                ['nomor' => '03', 'nama' => 'Siti Nurbaya',   'inisial' => 'SN', 'persen' => '18.75'],
+            ],
         ],
         [
-            'id'      => 4,
-            'judul'   => 'Pemilihan Duta Budaya 2025',
-            'foto'    => 'event-alnay3.png',
-            'tanggal' => 'Desember 2025',
-            'juara'   => 'Made Wirawan',
+            'id'                  => 4,
+            'judul'               => 'Pemilihan Duta Budaya 2025',
+            'foto'                => 'event-alnay3.png',
+            'tanggal'             => 'Desember 2025',
+            'tanggal_selesai_raw' => '2025-12-20',
+            'juara'               => 'Made Wirawan',
+            'peringkat'           => [
+                ['nomor' => '01', 'nama' => 'Made Wirawan',   'inisial' => 'MW', 'persen' => '27.40'],
+                ['nomor' => '02', 'nama' => 'Raden Roro Ayu', 'inisial' => 'RR', 'persen' => '22.15'],
+                ['nomor' => '03', 'nama' => 'Bimo Susanto',   'inisial' => 'BS', 'persen' => '16.60'],
+            ],
         ],
     ];
 
+    // =====================================================
+    // Ambil event yang paling baru selesai (item pertama, asumsi
+    // $eventSebelumnya sudah terurut dari yang terbaru ke terlama)
+    // lalu cek apakah masih dalam masa "tampil sementara" di dashboard.
+    // =====================================================
+
+    $eventTerbaruSelesai = $eventSebelumnya[0] ?? null;
+
+    $batasHariTampilHasil = 5; // ubah angka ini kalau mau masa tampilnya lebih lama/singkat
+
+    $selisihHari = $eventTerbaruSelesai
+        ? floor((strtotime('today') - strtotime($eventTerbaruSelesai['tanggal_selesai_raw'])) / 86400)
+        : null;
+
+    $tampilkanHasilAkhir = $eventTerbaruSelesai
+        && $selisihHari !== null
+        && $selisihHari >= 0
+        && $selisihHari <= $batasHariTampilHasil;
+
     /*
     // OPSI 2 — DATA DINAMIS DARI DATABASE (NONAKTIF)
-    $qSebelumnya = $pdo->query("SELECT * FROM events WHERE status = 'selesai' ORDER BY tanggal_selesai DESC");
+    $qSebelumnya = $pdo->query("SELECT * FROM events WHERE status = 'selesai' ORDER BY tanggal_selesai_raw DESC");
 
     $eventSebelumnya = [];
     foreach ($qSebelumnya->fetchAll(PDO::FETCH_ASSOC) as $row) {
+
+        $qPeringkatSelesai = $pdo->prepare("SELECT * FROM kandidat WHERE event_id = ? ORDER BY persen DESC LIMIT 3");
+        $qPeringkatSelesai->execute([$row['id']]);
+
+        $peringkat = [];
+        foreach ($qPeringkatSelesai->fetchAll(PDO::FETCH_ASSOC) as $k) {
+            $peringkat[] = [
+                'nomor'   => $k['nomor'],
+                'nama'    => $k['nama'],
+                'inisial' => strtoupper(substr($k['nama'], 0, 2)),
+                'persen'  => $k['persen'],
+            ];
+        }
+
         $eventSebelumnya[] = [
-            'id'      => $row['id'],
-            'judul'   => $row['judul'],
-            'foto'    => $row['foto'], // null kalau kolomnya kosong
-            'tanggal' => $row['tanggal_selesai'],
-            'juara'   => $row['nama_juara_1'],
+            'id'                  => $row['id'],
+            'judul'               => $row['judul'],
+            'foto'                => $row['foto'], // null kalau kolomnya kosong
+            'tanggal'             => $row['tanggal_selesai'],
+            'tanggal_selesai_raw' => $row['tanggal_selesai_raw'], // kolom DATE, terpisah dari kolom teks
+            'juara'               => $row['nama_juara_1'],
+            'peringkat'           => $peringkat,
         ];
     }
+
+    $eventTerbaruSelesai = $eventSebelumnya[0] ?? null;
+    $batasHariTampilHasil = 5;
+    $selisihHari = $eventTerbaruSelesai
+        ? floor((strtotime('today') - strtotime($eventTerbaruSelesai['tanggal_selesai_raw'])) / 86400)
+        : null;
+    $tampilkanHasilAkhir = $eventTerbaruSelesai
+        && $selisihHari !== null
+        && $selisihHari >= 0
+        && $selisihHari <= $batasHariTampilHasil;
     */
 
 @endphp
@@ -486,10 +548,10 @@
 
                             @endif
 
-                            <a href="#"
-                                class="rounded-[5px] border border-[#dedede] bg-white px-5 py-2.5 text-[12px] font-semibold text-[#333] transition hover:bg-[#f7f7f7]">
-                                Lihat Syarat &amp; Ketentuan
-                            </a>
+                            <a href="{{ route('detail-event-akan-datang', $eventAkanDatang['id']) }}"
+    class="rounded-[5px] border border-[#dedede] bg-white px-5 py-2.5 text-[12px] font-semibold text-[#333] transition hover:bg-[#f7f7f7]">
+    Lihat Syarat &amp; Ketentuan
+</a>
                         </div>
                     </div>
 
@@ -597,7 +659,6 @@
                                 {{ $p['nama'] }}
                             </p>
 
-
                             <div class="mx-2 h-1.5 flex-1 rounded-full bg-gray-100">
                                 <div class="h-1.5 rounded-full bg-[#c99a32]" style="width: {{ $p['persen'] }}%"></div>
                             </div>
@@ -621,6 +682,67 @@
                 </div>
 
             @endif
+
+        </section>
+
+    @elseif($tampilkanHasilAkhir)
+
+        <section class="mt-14">
+
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+
+                <div>
+                    <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">
+                        Peringkat Hasil Event Sebelumnya
+                    </h2>
+
+                    <p class="mt-1 text-[13px] text-[#6b6b6b] md:text-[14px]">
+                        Tiga besar dengan suara terbanyak pada
+                        <span class="text-[#c8c8c8]">›</span>
+                        <a href="{{ route('detail-event-selesai') }}" class="font-semibold text-[#c99a32] hover:underline">
+                            {{ $eventTerbaruSelesai['judul'] }}
+                        </a>
+                    </p>
+                </div>
+
+                <a href="{{ route('detail-event-selesai') }}"
+                    class="whitespace-nowrap text-[13px] font-semibold text-[#c99a32] hover:underline">
+                    Lihat semua peserta →
+                </a>
+
+            </div>
+
+            <div class="card-shadow mt-5 divide-y divide-gray-100 rounded-[10px] border border-gray-100 bg-white">
+
+                @foreach($eventTerbaruSelesai['peringkat'] as $p)
+
+                    <div class="flex items-center gap-4 px-5 py-4">
+
+                        <span class="display-font w-6 text-[16px] font-bold text-[#c99a32]">
+                            {{ $p['nomor'] }}
+                        </span>
+
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fbf6e9] text-[11px] font-bold text-[#c99a32]">
+                            {{ $p['inisial'] }}
+                        </div>
+
+                        <p class="w-44 truncate text-[14px] font-semibold text-[#15233d]">
+                            {{ $p['nama'] }}
+                        </p>
+
+                        <div class="mx-2 h-1.5 flex-1 rounded-full bg-gray-100">
+                            <div class="h-1.5 rounded-full bg-[#c99a32]" style="width: {{ $p['persen'] }}%"></div>
+                        </div>
+
+                        <span class="whitespace-nowrap text-[14px] font-semibold text-[#15233d]">
+                            {{ $p['persen'] }}%
+                        </span>
+
+                    </div>
+
+                @endforeach
+
+            </div>
 
         </section>
 

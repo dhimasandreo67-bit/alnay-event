@@ -133,4 +133,22 @@ class EventController extends Controller
 
         return response()->json(DB::table('event')->find($id));
     }
+    // Fungsi khusus untuk menampilkan halaman tampilan web Blade
+    public function detailWeb($id)
+    {
+        // 1. Ambil data event dari database
+        $event = DB::table('event')->find($id);
+
+        if (! $event) {
+            abort(404, 'Event tidak ditemukan');
+        }
+
+        // 2. Ambil data peserta/kandidat
+        $kandidat = DB::table('peserta_event')
+            ->where('event_id', $id)
+            ->get();
+
+        // 3. Tampilkan ke file detail-event.blade.php
+        return view('detail-event', compact('event', 'kandidat'));
+    }
 }

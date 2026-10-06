@@ -2,13 +2,13 @@
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
-
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Admin\AuthController;
+
+// Toko (storefront) — berdiri sendiri
+Route::get('/', function () {
+    return view('beranda');
+})->name('beranda');
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
@@ -30,3 +30,44 @@ Route::middleware('admin')->group(function () {
     Route::patch('/event/{id}/voting', [EventController::class, 'toggleVoting']);
     Route::patch('/event/{id}/tampilkan-hasil', [EventController::class, 'toggleTampilkanHasil']);
 });
+
+// Dashboard Event (voting) — berdiri sendiri juga, tetap terpisah dari toko
+Route::get('/dashboard-user', function () {
+    return view('dashboard-user');
+})->name('dashboard-user');
+
+Route::get('/koleksi', function () {
+    return view('penjualan.katalog-produk');
+})->name('katalog-produk');
+
+  Route::get('/detail-produk-beli', function () {
+      return view('penjualan.detail-produk-beli');
+  })->name('detail-produk-beli');
+
+Route::get('/detail-produk-sewa', function () {
+    return view('detail-produk-sewa');
+})->name('detail-produk-sewa');
+
+Route::get('/detail-event', function () {
+    return view('detail-event');
+})->name('detail-event');
+
+Route::get('/detail-event-selesai', function () {
+    return view('detail-event-selesai');
+})->name('detail-event-selesai');
+
+Route::get('/profil-user', function () {
+    return view('profil-user');
+})->name('profil-user');
+
+Route::get('/riwayat-vote', function () {
+    return view('riwayat-vote');
+})->name('riwayat-vote');
+
+Route::get('/detail-event-akan-datang', function () {
+    return view('detail-event-akan-datang');
+})->name('detail-event-akan-datang');
+
+Route::put('/profil-user', [ProfilController::class, 'update'])->name('profil-update');
+Route::post('/profil-user/foto', [ProfilController::class, 'updateFoto'])->name('profil-foto');
+Route::delete('/profil-user/foto', [ProfilController::class, 'hapusFoto'])->name('profil-foto-hapus');
