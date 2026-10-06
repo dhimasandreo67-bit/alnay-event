@@ -126,6 +126,10 @@
                 const res = await fetch(`/event/${eventId}/hasil-voting`, {
                     credentials: 'include'
                 });
+
+                // ✅ Handle blackout H-2 (403)
+                if (!res.ok) return null;
+
                 if (!res.ok) return null;
                 const data = await res.json();
                 const daftar = (data.hasil_voting ?? data.peserta ?? []).slice()
@@ -145,7 +149,6 @@
                 return null;
             }
         }
-
         async function muatDukunganTerkini(eventId) {
             try {
                 const res = await fetch(`/event/${eventId}/peserta/${pesertaId}/dukungan-terkini`, {
@@ -236,11 +239,11 @@
             const blokThumbs = fotoList.length > 1 ? `
                     <div class="grid grid-cols-3 gap-3 mt-3">
                         ${fotoList.map((url, i) => `
-                                        <button type="button" onclick="gantiFoto(${i})"
-                                            class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
-                                            <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
-                                        </button>
-                                    `).join('')}
+                                            <button type="button" onclick="gantiFoto(${i})"
+                                                class="aspect-square rounded-lg overflow-hidden bg-[#EFE7DC] border border-[#CDC5BC]/40 hover:opacity-80 transition">
+                                                <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
+                                            </button>
+                                        `).join('')}
                     </div>` : '';
 
             const nomor = String(p.id).padStart(2, '0');
@@ -290,14 +293,39 @@
             }
 
             const gridCols = (format === 'keduanya') ? 'sm:grid-cols-2' : '';
-            const blokStatistik = statistik ? `
-                    <div class="grid grid-cols-1 ${gridCols} gap-3 mb-5">
-                        ${blokTotalVote}
-                        ${blokPersentase}
-                    </div>` : `
-                    <div class="mb-5 bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4 text-sm text-[#4B463F]">
-                        Statistik suara belum tersedia.
-                    </div>`;
+            const blokStatistik = (() => {
+                // ✅ Kalau blackout H-2
+                if (statistik?.blackout) {
+                    return `
+            <div class="mb-5 bg-amber-50 border border-amber-200 rounded-lg p-5 text-center">
+                <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <p class="text-amber-800 font-bold text-base mb-1">🔒 Mode Rahasia H-2</p>
+                <p class="text-amber-700 text-sm">${esc(statistik.message)}</p>
+                <p class="text-amber-600 text-xs mt-3">
+                    Grand Final: <strong>${esc(statistik.waktuGrandFinal)} WIB</strong>
+                </p>
+            </div>`;
+                }
+
+                // ✅ Normal — tampil statistik
+                if (statistik) {
+                    return `
+            <div class="grid grid-cols-1 ${gridCols} gap-3 mb-5">
+                ${blokTotalVote}
+                ${blokPersentase}
+            </div>`;
+                }
+
+                // ✅ Fallback
+                return `
+        <div class="mb-5 bg-[#FAF3E7] border border-[#CDC5BC]/40 p-4 text-sm text-[#4B463F]">
+            Statistik suara belum tersedia.
+        </div>`;
+            })();
 
             let isiDukungan;
             if (dukungan === null) {
@@ -343,9 +371,15 @@
 
                     <div class="min-w-0">
                         <p class="flex flex-wrap items-center gap-x-4 text-sm font-bold uppercase tracking-wide text-[#7F5700] mb-3">
-                            <span>${esc(p.event?.nama ?? '')}</span>
-                            ${statistik?.ranking ? `<span class="normal-case font-semibold tracking-normal">&#9734; Ranking: #${statistik.ranking}</span>` : ''}
-                        </p>
+    <span>${esc(p.event?.nama ?? '')}</span>
+    ${
+        statistik?.blackout
+            ? `<span class="normal-case font-semibold tracking-normal"> Ranking disembunyikan </span>`
+            : statistik?.ranking
+                ? `<span class="normal-case font-semibold tracking-normal">&#9734; Ranking: #${statistik.ranking}</span>`
+                : ''
+    }
+</p>
                         <h1 class="font-display font-bold text-4xl md:text-5xl text-black mb-3">${esc(nama)}</h1>
                         ${blokLokasi}
                         ${blokProfil}
@@ -356,40 +390,41 @@
                                 // Belum dibuka?
                                 if (p.event?.voting_mulai && new Date(p.event.voting_mulai) > new Date()) {
                                     return `<div class="block w-full text-center bg-blue-50 text-blue-700 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
-                                                Voting belum dibuka
-                                            </div>`;
+                                                    Voting belum dibuka
+                                                </div>`;
                                 }
                                 // Sudah ditutup? (auto freeze)
                                 if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
-                                    return `<div class="block w-full text-center bg-gray-200 text-gray-600 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
-                                                Voting Ditutup
-                                            </div>`;
-                                }
-                                // Status event = akan datang?
-                                if (p.event?.status === 'akan_datang') {
-                                    return `<div class="block w-full text-center bg-gray-200 text-gray-500 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
-                                                Voting belum dibuka
-                                            </div>`;
-                                }
-                                // Default — tampilkan tombol vote
-                                return `<a href="/peserta/${pesertaId}/checkout"
-                                            class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] py-4 text-base font-semibold tracking-wide hover:bg-[#a97b1f] transition">
-                                            Rp ${formatAngka(hargaPerVote)} / Vote
-                                        </a>`;
-                            })()
+                                    return ` < div class =
+                "block w-full text-center bg-gray-200 text-gray-600 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed" >
+                Voting Ditutup <
+                /div>`;
+    }
+    // Status event = akan datang?
+    if (p.event?.status === 'akan_datang') {
+        return `<div class="block w-full text-center bg-gray-200 text-gray-500 py-4 text-base font-semibold tracking-wide rounded cursor-not-allowed">
+                                                    Voting belum dibuka
+                                                </div>`;
+    }
+    // Default — tampilkan tombol vote
+    return `<a href="/peserta/${pesertaId}/checkout"
+                                                class="block w-full text-center bg-[#C28E27] text-[#FFF8F1] py-4 text-base font-semibold tracking-wide hover:bg-[#a97b1f] transition">
+                                                Rp ${formatAngka(hargaPerVote)} / Vote
+                                            </a>`;
+    })()
+    }
+
+    ${blokDukungan} 
+    </div>
+    `;
+                        } catch (e) {
+                            console.error('muatPeserta error:', e);
+                            tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');
                         }
-
-                        ${blokDukungan}
-                    </div>
-                `;
-                    } catch (e) {
-                        console.error('muatPeserta error:', e);
-                        tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');
                     }
-                }
 
-                // Boot — selalu panggil muatPeserta (gak perlu cekLogin dulu, karena fetch akan handle 401)
-                muatPeserta();
+                    // Boot — selalu panggil muatPeserta (gak perlu cekLogin dulu, karena fetch akan handle 401)
+                    muatPeserta();
     </script>
 </body>
 

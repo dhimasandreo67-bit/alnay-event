@@ -99,11 +99,62 @@ class BerandaController extends Controller
         // ============================================================
         // 6. EVENT SEBELUMNYA (arsip)
         // ============================================================
+                // ============================================================
+        // 6. EVENT SEBELUMNYA (arsip)
+        // ============================================================
         $eventSebelumnya = Event::where('tampil_di_beranda', true)
             ->where('status', 'telah_berakhir')
             ->latest('tanggal_selesai')
             ->take(6)
             ->get();
+
+        // ============================================================
+        // 7. BLACKOUT H-2 — cek mode rahasia
+        // ============================================================
+        $blackoutAktif = false;
+        $blackoutEvent = null;
+
+        // Cek event berlangsung
+        if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting && $eventBerlangsung->voting_selesai) {
+            $selisihJam = now()->diffInHours($eventBerlangsung->voting_selesai, false);
+            if ($selisihJam <= 48 && $selisihJam > 0) {
+                $blackoutAktif = true;
+                $blackoutEvent = $eventBerlangsung;
+            }
+        }
+
+        // Cek event peringkat akhir
+        if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting && $eventPeringkatAkhir->voting_selesai) {
+            $selisihJam = now()->diffInHours($eventPeringkatAkhir->voting_selesai, false);
+            if ($selisihJam <= 48 && $selisihJam > 0) {
+                $blackoutAktif = true;
+                $blackoutEvent = $eventPeringkatAkhir;
+            }
+        }
+
+                // ============================================================
+        // 7. BLACKOUT H-2 — cek mode rahasia
+        // ============================================================
+        $blackoutAktif = false;
+        $blackoutEvent = null;
+
+        // Cek event berlangsung
+        if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting && $eventBerlangsung->voting_selesai) {
+            $selisihJam = now()->diffInHours($eventBerlangsung->voting_selesai, false);
+            if ($selisihJam <= 48 && $selisihJam > 0) {
+                $blackoutAktif = true;
+                $blackoutEvent = $eventBerlangsung;
+            }
+        }
+
+        // Cek event peringkat akhir
+        if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting && $eventPeringkatAkhir->voting_selesai) {
+            $selisihJam = now()->diffInHours($eventPeringkatAkhir->voting_selesai, false);
+            if ($selisihJam <= 48 && $selisihJam > 0) {
+                $blackoutAktif = true;
+                $blackoutEvent = $eventPeringkatAkhir;
+            }
+        }
 
         return view('beranda', compact(
             'eventBerlangsung',
@@ -117,7 +168,9 @@ class BerandaController extends Controller
             'sisaWaktu',
             'peringkatAkhir',
             'totalSuaraAkhir',
-            'eventPeringkatAkhir'
+            'eventPeringkatAkhir',
+            'blackoutAktif',
+            'blackoutEvent'
         ));
     }
 }

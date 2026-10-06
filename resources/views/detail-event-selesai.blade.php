@@ -154,13 +154,48 @@
             </div>
         </section>
 
-        {{-- PEMENANG & HASIL AKHIR --}}
+                        {{-- PERINGKAT --}}
+        @if ($blackoutAktif ?? false)
+            {{-- ✅ Blackout H-2 — notice elegan --}}
+            <section class="mt-8">
+                <div class="overflow-hidden rounded-[16px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed] shadow-sm">
+                    <div class="relative px-6 pt-10 pb-8 md:px-12 md:pt-14 md:pb-10 text-center">
+                        <div class="flex items-center justify-center gap-2 mb-6">
+                            <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
+                            <svg class="w-3.5 h-3.5 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+                            </svg>
+                            <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
+                        </div>
+                        <p class="text-[10px] uppercase tracking-[0.35em] text-[#c99a32] font-bold mb-4">
+                            Peringkat Sementara
+                        </p>
+                        <h2 class="font-display text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
+                            Siapa yang akan<br class="hidden sm:block"> membawa pulang mahkota?
+                        </h2>
+                        <p class="max-w-xl mx-auto text-[13px] md:text-[15px] leading-[1.8] text-[#5a5750]">
+                            Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan
+                            peringkat sementara saat ini. Ikuti terus perjalanan para finalis.
+                        </p>
+                        @if ($event->voting_selesai)
+                            <div class="mt-8 inline-flex flex-col items-center gap-2">
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-[#8a8178] font-bold">Malam Puncak</p>
+                                <p class="font-display text-lg md:text-xl font-bold text-[#0a1526]">
+                                    {{ $event->voting_selesai->translatedFormat('d F Y') }}
+                                </p>
+                                <p class="text-[12px] text-[#8a8178]">Pukul {{ $event->voting_selesai->format('H:i') }} WIB</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </section>
+        @else
         <section class="mt-8">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
                 <div>
-                    <h2 class="font-display text-lg md:text-xl font-bold text-[#15233d]">Pemenang &amp; Hasil Akhir</h2>
+                    <h2 class="font-display text-lg md:text-xl font-bold text-[#15233d]">Peringkat Sekarang</h2>
                     <p class="text-gray-500 text-xs md:text-sm mt-1">
-                        Tiga besar dengan perolehan suara tertinggi, disusul peringkat 4–6.
+                        Peringkat peserta berdasarkan perolehan suara.
                     </p>
                 </div>
                 <p class="text-xs text-gray-500 whitespace-nowrap">
@@ -239,13 +274,14 @@
                         @endforeach
                     </div>
                 @endif
-            @else
+                       @else
                 <div class="bg-white rounded-lg border border-dashed border-gray-200 p-10 text-center mt-4">
                     <p class="text-sm font-semibold text-[#15233d]">Belum ada peserta</p>
                     <p class="mt-1 text-xs text-gray-400">Event ini belum memiliki peserta yang diterima.</p>
                 </div>
             @endif
         </section>
+        @endif
 
         {{-- DAFTAR KANDIDAT --}}
         <section class="mt-8">
