@@ -5,26 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\Peserta;
 use App\Models\Voting;
-use Illuminate\Http\Request;
 
 class DetailEventController extends Controller
 {
-    /**
-     * GET /detail-event/{event}
-     * Halaman detail event BERLANGSUNG.
-     */
     public function berlangsung(Event $event)
     {
-        // Data peserta yang diterima + sudah bayar
         $pesertas = $this->getPesertas($event);
-
-        // Hitung total suara event
         $totalSuara = $this->getTotalSuara($event);
-
-        // Jumlah peserta
         $jumlahPeserta = $pesertas->count();
 
-        // Sisa waktu (hari)
         $sisaWaktu = $event->tanggal_selesai
             ? (int) now()->diffInDays($event->tanggal_selesai)
             : 0;
@@ -35,13 +24,10 @@ class DetailEventController extends Controller
             'totalSuara'    => $totalSuara,
             'jumlahPeserta' => $jumlahPeserta,
             'sisaWaktu'     => $sisaWaktu,
+            'blackoutAktif' => $this->isBlackoutAktif($event),
         ]);
     }
 
-    /**
-     * GET /detail-event-akan-datang/{event}
-     * Halaman detail event AKAN DATANG.
-     */
     public function akanDatang(Event $event)
     {
         $jumlahPeserta = Peserta::where('event_id', $event->id)
@@ -56,16 +42,12 @@ class DetailEventController extends Controller
             'event'               => $event,
             'jumlahPeserta'       => $jumlahPeserta,
             'sisaHariPendaftaran' => $sisaHariPendaftaran,
+            'blackoutAktif'       => $this->isBlackoutAktif($event),
         ]);
     }
 
-    /**
-     * GET /detail-event-selesai/{event}
-     * Halaman detail event SELESAI.
-     */
     public function selesai(Event $event)
     {
-        // Peserta — diurutkan by total_vote (pemenang)
         $pesertas = Peserta::with('user')
             ->where('event_id', $event->id)
             ->where('status', 'diterima')
@@ -73,11 +55,7 @@ class DetailEventController extends Controller
             ->get();
 
         $totalSuara = $pesertas->sum('total_vote');
-
-        // Pemenang — top 3
         $pemenang = $pesertas->take(3);
-
-        // Peringkat lainnya — 4-10
         $peringkatLain = $pesertas->slice(3, 7);
 
         return view('detail-event-selesai', [
@@ -86,12 +64,10 @@ class DetailEventController extends Controller
             'pemenang'      => $pemenang,
             'peringkatLain' => $peringkatLain,
             'totalSuara'    => $totalSuara,
+            'blackoutAktif' => $this->isBlackoutAktif($event),
         ]);
     }
 
-    /**
-     * Helper — ambil peserta event.
-     */
     private function getPesertas(Event $event)
     {
         return Peserta::with(['user', 'jawaban.pertanyaan'])
@@ -101,13 +77,24 @@ class DetailEventController extends Controller
             ->get();
     }
 
-    /**
-     * Helper — total suara event.
-     */
     private function getTotalSuara(Event $event)
     {
         return Voting::where('event_id', $event->id)
             ->where('status_midtrans', 'settlement')
             ->sum('jumlah_vote');
+    }
+
+    /**
+     * Helper — cek blackout H-2 aktif.
+     */
+    private function isBlackoutAktif(Event $event): bool
+    {
+        if (! $event->blackout_h2_voting || ! $event->voting_selesai) {
+            return false;
+        }
+
+        $selisihJam = now()->diffInHours($event->voting_selesai, false);
+
+        return $selisihJam <= 48 && $selisihJam > 0;
     }
 }

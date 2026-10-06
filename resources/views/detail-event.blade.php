@@ -311,9 +311,14 @@
                                     <p class="text-lg font-bold">{{ $jumlahPeserta }}</p>
                                     <p class="text-xs text-gray-500 mt-1">Kandidat</p>
                                 </div>
-                                <div>
-                                    <p class="text-lg font-bold">{{ $formatAngka($totalSuara) }}</p>
-                                    <p class="text-xs text-gray-500 mt-1">Total Vote</p>
+                                 <div>
+                                    @if ($blackoutAktif ?? false)
+                                        <p class="text-lg font-bold text-amber-600">🔒</p>
+                                        <p class="text-xs text-gray-500 mt-1">Total Vote</p>
+                                    @else
+                                        <p class="text-lg font-bold">{{ $formatAngka($totalSuara) }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">Total Vote</p>
+                                    @endif
                                 </div>
                             </div>
 
@@ -323,6 +328,117 @@
                 </div>
             </div>
         </section>
+
+                {{-- PERINGKAT SEMENTARA --}}
+        @php
+            // Ambil top 3 dari $pesertas — sorted by total_vote
+            $top3 = $pesertas->take(3);
+            $totalUntukPersen = $totalSuara > 0 ? $totalSuara : 1;
+        @endphp
+
+        @if ($blackoutAktif ?? false)
+            {{-- ✅ Blackout H-2 — notice elegan --}}
+            <section class="mt-7">
+                <div class="overflow-hidden rounded-[16px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed] shadow-sm">
+                    <div class="relative px-6 pt-10 pb-8 md:px-12 md:pt-14 md:pb-10 text-center">
+                        <div class="flex items-center justify-center gap-2 mb-6">
+                            <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
+                            <svg class="w-3.5 h-3.5 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+                            </svg>
+                            <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
+                        </div>
+                        <p class="text-[10px] uppercase tracking-[0.35em] text-[#c99a32] font-bold mb-4">
+                            Peringkat Sementara
+                        </p>
+                        <h2 class="font-display text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
+                            Siapa yang akan<br class="hidden sm:block"> membawa pulang mahkota?
+                        </h2>
+                        <p class="max-w-xl mx-auto text-[13px] md:text-[15px] leading-[1.8] text-[#5a5750]">
+                            Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan
+                            peringkat sementara saat ini. Ikuti terus perjalanan para finalis.
+                        </p>
+                        @if ($event->voting_selesai)
+                            <div class="mt-8 inline-flex flex-col items-center gap-2">
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-[#8a8178] font-bold">Malam Puncak</p>
+                                <p class="font-display text-lg md:text-xl font-bold text-[#0a1526]">
+                                    {{ $event->voting_selesai->translatedFormat('d F Y') }}
+                                </p>
+                                <p class="text-[12px] text-[#8a8178]">Pukul {{ $event->voting_selesai->format('H:i') }} WIB</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </section>
+        @else
+            {{-- ✅ Normal — tampil podium top 3 --}}
+            <section class="mt-7">
+                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
+                    <div>
+                        <h2 class="font-display text-lg md:text-xl font-bold text-[#15233d]">Peringkat Sementara</h2>
+                        <p class="text-gray-500 text-xs md:text-sm mt-1">
+                            Peserta dengan perolehan suara tertinggi saat ini.
+                        </p>
+                    </div>
+                </div>
+
+                @if ($top3->count() > 0)
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-end">
+                        @foreach ($top3 as $i => $p)
+                            @php
+                                $namaP = $p->namaTampil();
+                                $fotoP = $p->user?->foto_custom
+                                    ? asset('storage/' . $p->user->foto_custom)
+                                    : $p->user?->foto_url;
+                                $inisialP = strtoupper(
+                                    implode('', array_map(
+                                        fn ($kata) => mb_substr($kata, 0, 1),
+                                        array_slice(preg_split('/\s+/', trim($namaP)), 0, 2)
+                                    ))
+                                );
+                                $persenP = $totalUntukPersen > 0
+                                    ? round(($p->total_vote / $totalUntukPersen) * 100, 2)
+                                    : 0;
+                                $juara = $i + 1;
+                                $order = $juara == 1 ? 'sm:order-2' : ($juara == 2 ? 'sm:order-1' : 'sm:order-3');
+                                $border = $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-gray-100';
+                                $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]';
+                            @endphp
+
+                            <div class="bg-white rounded-lg overflow-hidden shadow-sm {{ $border }} {{ $order }}">
+                                <div class="relative overflow-hidden {{ $height }}">
+                                    @if ($fotoP)
+                                        <img src="{{ $fotoP }}" alt="{{ $namaP }}" class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full bg-[#fbf6e9] flex items-center justify-center">
+                                            <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
+                                        </div>
+                                    @endif
+
+                                    <span class="absolute top-2.5 left-2.5 bg-white px-2.5 py-1 rounded-md text-xs font-semibold text-[#15233d] shadow-sm">
+                                        {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
+                                    </span>
+
+                                    <span class="absolute top-2.5 right-2.5 bg-[#c99a32] text-white text-[10px] font-semibold px-2.5 py-1 rounded-md uppercase tracking-wide">
+                                        Juara {{ $juara }}
+                                    </span>
+                                </div>
+
+                                <div class="p-3">
+                                    <h3 class="font-semibold text-sm text-[#15233d]">{{ $namaP }}</h3>
+                                    <p class="text-base font-bold text-[#15233d] mt-1.5">
+                                        {{ $persenP }}% <span class="text-xs font-normal text-gray-400">Vote</span>
+                                    </p>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded-full mt-2">
+                                        <div class="h-1.5 bg-[#c99a32] rounded-full" style="width: {{ $persenP }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+        @endif
 
         {{-- CANDIDATE SECTION --}}
         <section class="mt-7">
@@ -372,14 +488,27 @@
                                     </span>
                                 </div>
 
-                                <div class="flex items-center gap-1.5 mt-2.5 text-xs text-gray-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                            d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0" />
-                                    </svg>
-                                    <span>{{ $item['vote'] }} suara</span>
-                                </div>
+                                                                                                @if ($blackoutAktif ?? false)
+                                    {{-- ✅ Blackout — vote disembunyikan --}}
+                                    <div class="flex items-center gap-1.5 mt-2.5 text-xs text-amber-600 italic">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                        </svg>
+                                        <span>Jumlah suara dirahasiakan</span>
+                                    </div>
+                                @else
+                                    {{-- ✅ Normal --}}
+                                    <div class="flex items-center gap-1.5 mt-2.5 text-xs text-gray-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0" />
+                                        </svg>
+                                        <span>{{ $item['vote'] }} suara</span>
+                                    </div>
+                                @endif
 
                                 @php
     // Link ke halaman DETAIL KANDIDAT — bukan langsung checkout
@@ -388,7 +517,7 @@
 
                                 <a href="/peserta/{{ $item['id'] }}"
                                     class="block text-center w-full mt-2.5 py-2 rounded-md bg-[#c69220] hover:bg-[#b58219] text-white text-sm font-medium transition">
-                                    Detail
+                                    {{ ($blackoutAktif ?? false) ? 'Lihat Profil' : 'Detail' }}
                                 </a>
                             </div>
                         </div>

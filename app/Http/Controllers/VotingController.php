@@ -44,8 +44,9 @@ class VotingController extends Controller
             ], 403);
         }
 
-        // 3. Cek periode voting — sudah ditutup?
-        if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
+
+        //    Kunci HANYA kalau auto_freeze_voting aktif
+        if ($event->auto_freeze_voting && $event->voting_selesai && now()->gt($event->voting_selesai)) {
             return response()->json([
                 'message' => 'Voting sudah ditutup pada ' . $event->voting_selesai->format('d M Y, H:i') . ' WIB',
             ], 403);
@@ -274,8 +275,45 @@ class VotingController extends Controller
 
                 if ($statusPembayaranBaru === 'settlement') {
                     $peserta = $voting->peserta;
-                    if ($peserta) {
-                        $peserta->increment('total_vote', $voting->jumlah_vote);
+                    $event = $voting->event;
+
+                    if (! $peserta) {
+                        return;
+                    }
+
+                    // ✅ Cek apakah order dari ADMIN (manual vote)
+                    $isAdminOrder = str_starts_with($voting->midtrans_order_id, 'MANUAL-');
+
+                    // ✅ Cek auto freeze — HANYA untuk order non-admin
+                    $freezeAktif = ! $isAdminOrder
+                        && $event->auto_freeze_voting
+                        && $event->voting_selesai
+                        && now()->gt($event->voting_selesai);
+
+                    if ($freezeAktif) {
+                        \Log::warning('Vote settlement setelah freeze — suara TIDAK dihitung', [
+                            'voting_id'      => $voting->id,
+                            'peserta_id'     => $peserta->id,
+                            'order_id'       => $voting->midtrans_order_id,
+                            'jumlah_vote'    => $voting->jumlah_vote,
+                            'voting_selesai' => $event->voting_selesai,
+                            'waktu_sekarang' => now(),
+                        ]);
+
+                        return; // Skip increment
+                    }
+
+                    // ✅ Increment — normal atau admin
+                    $peserta->increment('total_vote', $voting->jumlah_vote);
+
+                    // ✅ Log — kalau order admin
+                    if ($isAdminOrder) {
+                        \Log::info('Admin menambah suara manual (via webhook)', [
+                            'voting_id'   => $voting->id,
+                            'peserta_id'  => $peserta->id,
+                            'jumlah_vote' => $voting->jumlah_vote,
+                            'order_id'    => $voting->midtrans_order_id,
+                        ]);
                     }
                 }
             });
@@ -296,20 +334,6 @@ class VotingController extends Controller
         // Cek tampilkan hasil
         if (! $event->tampilkan_hasil_voting && ! $adminLogin) {
             return response()->json(['message' => 'Hasil voting untuk event ini belum ditampilkan ke publik.'], 403);
-        }
-
-        // Cek blackout H-2
-        if (! $adminLogin && $event->blackout_h2_voting && $event->voting_selesai) {
-            $selisihJam = now()->diffInHours($event->voting_selesai, false);
-
-            // Kalau dalam 48 jam sebelum voting_selesai
-            if ($selisihJam <= 48 && $selisihJam > 0) {
-                return response()->json([
-                    'message' => 'Hasil voting disembunyikan sampai grand final (Blackout H-2).',
-                    'blackout' => true,
-                    'waktu_grand_final' => $event->voting_selesai->format('d M Y, H:i'),
-                ], 403);
-            }
         }
 
         $pesertaList = Peserta::with('user')
@@ -407,6 +431,7 @@ class VotingController extends Controller
         $dukungan = Voting::where('event_id', $event->id)
             ->where('peserta_id', $peserta->id)
             ->where('status_midtrans', 'settlement')
+            ->where('midtrans_order_id', 'NOT LIKE', 'MANUAL-%')
             ->orderBy('tanggal_vote', 'desc')
             ->take(10)
             ->get(['id', 'nama_tampilan', 'jumlah_vote', 'pesan_dukungan', 'tanggal_vote']);
@@ -423,6 +448,7 @@ class VotingController extends Controller
         $voters = Voting::with('voter:id,nama,email')
             ->where('peserta_id', $peserta->id)
             ->where('status_midtrans', 'settlement')
+            ->where('midtrans_order_id', 'NOT LIKE', 'MANUAL-%')
             ->orderBy('tanggal_vote', 'desc')
             ->paginate(15);
 
@@ -610,7 +636,7 @@ class VotingController extends Controller
 
         // 5. Format data untuk view
         $pesertas = $rawPeserta->map(function ($p, $index) use ($totalSuara, $warnaList) {
-            $nama = $p->user->nama ?? $p->nama ?? 'Tanpa Nama';
+            $nama = $p->namaTampil();
             $totalVote = $p->total_vote ?? 0;
             $persentase = $totalSuara > 0 ? round(($totalVote / $totalSuara) * 100, 1) : 0;
 
@@ -701,12 +727,12 @@ class VotingController extends Controller
     public function manualVote(Request $request)
     {
         $data = $request->validate([
-            'peserta_id'    => 'required|exists:peserta_event,id',
-            'jumlah_vote'   => 'required|integer|min:1|max:1000',
-            'nama_voter'    => 'required|string|max:255',
-            'email_voter'   => 'required|email|max:255',
-            'pesan_dukungan' => 'nullable|string|max:1000',
-        ]);
+    'peserta_id'    => 'required|exists:peserta_event,id',
+    'jumlah_vote'   => 'required|integer|min:1|max:1000',
+    'nama_voter'    => 'nullable|string|max:255',   
+    'email_voter'   => 'nullable|email|max:255',        
+    'pesan_dukungan' => 'nullable|string|max:1000',
+]);
 
         $peserta = \App\Models\Peserta::findOrFail($data['peserta_id']);
         $event = $peserta->event;
@@ -717,12 +743,12 @@ class VotingController extends Controller
                 'event_id'          => $event->id,
                 'peserta_id'        => $peserta->id,
                 'user_id'           => null,
-                'nama_voter'        => $data['nama_voter'],
-                'email_voter'       => $data['email_voter'],
-                'nama_tampilan'     => $data['nama_voter'],
+                'nama_voter'        => $data['nama_voter'] ?? 'Juri',          
+                'email_voter'       => $data['email_voter'] ?? null,            
+                'nama_tampilan'     => $data['nama_voter'] ?? 'Nilai Juri',     
                 'jumlah_vote'       => $data['jumlah_vote'],
                 'harga_per_vote'    => $event->harga_per_vote,
-                'total_bayar'       => $event->harga_per_vote * $data['jumlah_vote'],
+                'total_bayar'       => 0,                                
                 'midtrans_order_id' => 'MANUAL-' . Str::random(10),
                 'status_midtrans'   => 'settlement',
                 'pesan_dukungan'    => $data['pesan_dukungan'] ?? null,
@@ -732,6 +758,13 @@ class VotingController extends Controller
             // Update total_vote peserta
             $peserta->increment('total_vote', $data['jumlah_vote']);
         });
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Vote manual berhasil ditambahkan.',
+            ]);
+        }
 
         return redirect()
             ->back()
