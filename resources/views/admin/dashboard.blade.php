@@ -572,7 +572,7 @@
                                 <select name="event_id" onchange="this.form.submit()"
                                     class="border border-[var(--line)] rounded-md px-2 py-1 text-xs bg-white">
                                     @foreach ($events as $ev)
-                                        <option value="{{ $ev->id }}" @selected($event && $event->id === $ev->id)>
+                                        <option value="{{ $ev->id }}" @selected($event && $event?->id === $ev->id)>
                                             {{ $ev->nama }}
                                         </option>
                                     @endforeach

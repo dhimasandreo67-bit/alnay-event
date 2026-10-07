@@ -68,6 +68,40 @@
         } else {
             $sisaHari = $sisaJam = $sisaMenit = null;
         }
+
+        // ---- Jadwal Event (otomatis, termasuk Verifikasi Data kalau ada selisih hari) ----
+        $jadwal = [];
+
+        if ($batasDaftar) {
+            $jadwal[] = [
+                'nama'    => 'Pendaftaran Kandidat',
+                'tanggal' => $bukaDaftar
+                    ? $bukaDaftar->translatedFormat('d M Y') . ' – ' . $batasDaftar->translatedFormat('d M Y')
+                    : 'Sampai ' . $batasDaftar->translatedFormat('d M Y'),
+            ];
+
+            if ($event->tanggal_mulai) {
+                $mulaiVoting = \Carbon\Carbon::parse($event->tanggal_mulai)->locale('id');
+                $verifAwal   = $batasDaftar->copy()->addDay()->startOfDay();
+                $verifAkhir  = $mulaiVoting->copy()->subDay()->startOfDay();
+
+                if ($verifAwal->lte($verifAkhir)) {
+                    $jadwal[] = [
+                        'nama'    => 'Verifikasi Data',
+                        'tanggal' => $verifAwal->translatedFormat('d M Y') . ' – ' . $verifAkhir->translatedFormat('d M Y'),
+                    ];
+                }
+            }
+        } else {
+            $jadwal[] = ['nama' => 'Pendaftaran Kandidat', 'tanggal' => '-'];
+        }
+
+        $jadwal[] = [
+            'nama'    => 'Voting Publik',
+            'tanggal' => ($event->tanggal_mulai?->translatedFormat('d M') ?? '-') . ' – ' . ($event->tanggal_selesai?->translatedFormat('d M Y') ?? '-'),
+        ];
+
+        $jadwal[] = ['nama' => 'Pengumuman Pemenang', 'tanggal' => 'Setelah voting berakhir'];
     @endphp
 
     {{-- HEADER --}}
@@ -90,11 +124,16 @@
 
         {{-- EVENT INFORMATION --}}
         <section class="relative -mt-5 mx-4 bg-white rounded-xl shadow-sm border border-gray-100">
-            <div class="p-4 md:p-5">
+            <div class="p-4 md:p-5"> 
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr_200px] gap-5">
 
                     <div>
-                        <h1 class="font-display text-xl md:text-2xl font-bold text-[#111827]">
+                        <!-- Status -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#c99a32] text-white text-[10px] font-semibold uppercase tracking-wider">
+                            Event Belum Dimulai
+                        </span>
+
+                        <h1 class="font-display text-xl md:text-2xl font-bold text-[#111827] mt-2.5">
                             {{ $event->nama }}
                         </h1>
 
@@ -120,7 +159,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-[#faf8f2] border border-[#eee5d2] rounded-lg p-3.5">
+                    <div class="bg-[#faf8f2] border border-[#eee5d2] rounded-lg p-3.5 self-start mt-9">
                         <p class="text-[10px] uppercase tracking-wider text-[#8a8178] font-semibold text-center">
                             @if (!$event->pendaftaran_dibuka)
                                 Pendaftaran Ditutup
@@ -245,35 +284,15 @@
                         <h3 class="font-display text-base font-bold text-[#15233d]">Jadwal Event</h3>
 
                         <div class="mt-3 space-y-3 text-xs">
-                            <div class="flex items-start gap-3">
-                                <span class="shrink-0 w-2 h-2 rounded-full bg-[#c99a32] mt-1"></span>
-                                <div>
-                                    <p class="font-semibold text-[#15233d]">Pendaftaran Kandidat</p>
-                                    <p class="text-gray-500 mt-0.5">
-                                        {{ $bukaDaftar ? $bukaDaftar->translatedFormat('d M Y') : '-' }}
-                                        –
-                                        {{ $batasDaftar ? $batasDaftar->translatedFormat('d M Y') : '-' }}
-                                    </p>
+                            @foreach ($jadwal as $tahap)
+                                <div class="flex items-start gap-3">
+                                    <span class="shrink-0 w-2 h-2 rounded-full bg-[#c99a32] mt-1"></span>
+                                    <div>
+                                        <p class="font-semibold text-[#15233d]">{{ $tahap['nama'] }}</p>
+                                        <p class="text-gray-500 mt-0.5">{{ $tahap['tanggal'] }}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <span class="shrink-0 w-2 h-2 rounded-full bg-[#c99a32] mt-1"></span>
-                                <div>
-                                    <p class="font-semibold text-[#15233d]">Voting Publik</p>
-                                    <p class="text-gray-500 mt-0.5">
-                                        {{ $event->tanggal_mulai?->translatedFormat('d M') ?? '-' }}
-                                        –
-                                        {{ $event->tanggal_selesai?->translatedFormat('d M Y') ?? '-' }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <span class="shrink-0 w-2 h-2 rounded-full bg-[#c99a32] mt-1"></span>
-                                <div>
-                                    <p class="font-semibold text-[#15233d]">Pengumuman Pemenang</p>
-                                    <p class="text-gray-500 mt-0.5">Setelah voting berakhir</p>
-                                </div>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                 </aside>
