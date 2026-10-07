@@ -55,11 +55,13 @@
             box-shadow: 0 12px 28px rgba(0, 0, 0, .16);
         }
 
-         /* Saat container dalam mode list */
+        /* ============================================
+        MODE LIST — Desktop & Mobile
+        ============================================ */
         #event-akan-datang-container.view-list {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 1rem;
         }
 
         #event-akan-datang-container.view-list .event-card {
@@ -78,66 +80,155 @@
             width: 55% !important;
         }
 
-        /* Responsive untuk mobile */
-        @media (max-width: 640px) {
-            #event-akan-datang-container.view-list .event-card {
-                flex-direction: column !important;
-            }
-
-            #event-akan-datang-container.view-list .event-banner-wrapper {
-                width: 100% !important;
-                height: 200px !important;
-            }
-
-            #event-akan-datang-container.view-list .event-card > div:last-child {
-                width: 100% !important;
-            }
-            
-            /* Buttons tetap side by side di mobile */
-            #event-akan-datang-container .flex.gap-2.mt-5 {
-                flex-direction: row !important;
-            }
+    /* ============================================
+       MODE LIST — Mobile (Tetap Horizontal)
+    ============================================ */
+    @media (max-width: 640px) {
+        #event-akan-datang-container.view-list .event-card {
+            flex-direction: row !important; /* JANGAN kembali ke column */
         }
 
-        .gold-shimmer {
-            display: inline-block;
+        #event-akan-datang-container.view-list .event-banner-wrapper {
+            width: 40% !important;
+            height: 260px !important; /* Lebih pendek di mobile */
+        }
 
-            background: linear-gradient(
-                110deg,
-                #8f681c 0%,
-                #c99a32 20%,
-                #f8df8b 40%,
-                #fff1b3 50%,
-                #e0b254 60%,
-                #b88625 80%,
-                #8f681c 100%
-            );
+        #event-akan-datang-container.view-list .event-card > div:last-child {
+            width: 10% !important;
+        }
 
-            background-size: 250% 100%;
+        /* Compact info di mobile */
+        #event-akan-datang-container.view-list .event-card > div:last-child .p-5 {
+            padding: 0.75rem !important;
+        }
+
+        #event-akan-datang-container.view-list .event-card h3 {
+            font-size: 13px !important;
+        }
+
+        #event-akan-datang-container.view-list .event-card p {
+            font-size: 11px !important;
+        }
+
+        #event-akan-datang-container.view-list .event-card .text-\[11px\] {
+            font-size: 10px !important;
+        }
+
+        /* Tombol lebih kecil di mobile */
+        #event-akan-datang-container.view-list .flex.gap-2.mt-5 {
+            margin-top: 0.5rem !important;
+        }
+
+        #event-akan-datang-container.view-list .flex.gap-2.mt-5 a {
+            padding: 0.4rem 0.5rem !important;
+            font-size: 10px !important;
+        }
+    }
+
+    /* ============================================
+       MODE GRID — Default (sudah ada di Tailwind)
+    ============================================ */
+    #event-akan-datang-container:not(.view-list) {
+        display: grid;
+    }
+
+    /* ============================================
+   MODE LIST — Event Sebelumnya (Desktop & Mobile)
+   ============================================ */
+    #event-sebelumnya-container.view-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    #event-sebelumnya-container.view-list .event-card {
+        flex-direction: row !important;
+        height: auto;
+    }
+
+    /* Banner landscape di mode list */
+    #event-sebelumnya-container.view-list .event-banner-wrapper {
+        width: 45% !important;
+        height: 250px !important;
+        flex-shrink: 0;
+    }
+
+    #event-sebelumnya-container.view-list .event-card > div:last-child {
+        width: 55% !important;
+    }
+
+    /* Mode list — Mobile */
+    @media (max-width: 640px) {
+        #event-sebelumnya-container.view-list .event-card {
+            flex-direction: row !important;
+        }
+
+        #event-sebelumnya-container.view-list .event-banner-wrapper {
+            width: 40% !important;
+            height: 260px !important;
+        }
+
+        #event-sebelumnya-container.view-list .event-card > div:last-child {
+            width: 60% !important;
+        }
+
+        #event-sebelumnya-container.view-list .event-card > div:last-child .p-5 {
+            padding: 0.75rem !important;
+        }
+
+        #event-sebelumnya-container.view-list .event-card h3 {
+            font-size: 13px !important;
+        }
+
+        #event-sebelumnya-container.view-list .event-card p {
+            font-size: 11px !important;
+        }
+    }
+
+    /* Mode grid — Default */
+    #event-sebelumnya-container:not(.view-list) {
+        display: grid;
+    }
+
+    .gold-shimmer {
+        display: inline-block;
+
+        background: linear-gradient(
+            110deg,
+            #8f681c 0%,
+            #c99a32 20%,
+            #f8df8b 40%,
+            #fff1b3 50%,
+            #e0b254 60%,
+            #b88625 80%,
+            #8f681c 100%
+        );
+
+        background-size: 250% 100%;
+        background-position: 100% 0;
+
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+
+        animation: goldShimmer 4s ease-in-out infinite;
+
+        filter: drop-shadow(0 2px 6px rgba(201, 154, 50, 0.18));
+    }
+
+    @keyframes goldShimmer {
+        0% {
             background-position: 100% 0;
-
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-
-            animation: goldShimmer 4s ease-in-out infinite;
-
-            filter: drop-shadow(0 2px 6px rgba(201, 154, 50, 0.18));
         }
 
-        @keyframes goldShimmer {
-            0% {
-                background-position: 100% 0;
-            }
-
-            50% {
-                background-position: 0% 0;
-            }
-
-            100% {
-                background-position: 100% 0;
-            }
+        50% {
+            background-position: 0% 0;
         }
+
+        100% {
+            background-position: 100% 0;
+        }
+    }
 
     </style>
 </head>
@@ -303,9 +394,25 @@
             class="relative block h-[320px] sm:h-[400px] md:h-[480px] overflow-hidden bg-[#0a1526]">
             
             @if ($eventHero->banner)
-                <img src="{{ asset('storage/' . $eventHero->banner) }}" alt="{{ $eventHero->nama }}"
-                    class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
+                <div class="relative h-full w-full overflow-hidden group">
+                    <img src="{{ asset('storage/' . $eventHero->banner) }}" 
+                        alt="{{ $eventHero->nama }}"
+                        class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+                    
+                    {{-- Fallback placeholder jika gambar gagal dimuat --}}
+                    <div class="hidden h-full w-full items-center justify-center text-[#a99260] text-sm" 
+                        style="background: linear-gradient(to bottom right, #efe6d3, #d4c4a8) !important; position: relative; z-index: 10;">
+                        <div class="text-center p-4">
+                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="text-xs">Gagal memuat banner</span>
+                        </div>
+                    </div>
+                </div>
             @else
+                {{-- Tampilan jika memang tidak ada banner di database --}}
                 <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0a1526] via-[#11223f] to-[#1a2942]">
                     <div class="text-center px-4">
                         <p class="display-font text-[30px] sm:text-[42px] font-extrabold tracking-wider text-[#c99a32] drop-shadow-md">
@@ -346,13 +453,6 @@
         </span>
     @endif
 </div>
-
-            <!-- Overlay Content inside Banner Top Left -->
-            <div class="absolute bottom-6 left-6 right-6 hidden sm:block text-white">
-                <span class="inline-block rounded-md bg-[#c99a32]/20 border border-[#c99a32]/40 px-3 py-1 text-[11px] uppercase tracking-widest text-[#f5d78e] font-semibold backdrop-blur-sm mb-2">
-                    Featured Event
-                </span>
-            </div>
         </a>
 
         <!-- HERO INFO SECTION -->
@@ -405,7 +505,7 @@
                     </div>
 
                     <a href="{{ $routeDetail($eventHero) }}"
-                        class="mt-4 group/btn relative flex items-center justify-center gap-2.5 w-full rounded-xl bg-gradient-to-r from-[#c99a32] to-[#b88625] py-3.5 text-center text-[13px] font-bold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:from-[#b88625] hover:to-[#a3741d] active:scale-[0.99]">
+                        class="mt-4 group/btn relative flex items-center justify-center gap-2.5 w-full rounded-xl bg-gradient-to-r from-[#c99a32] to-[#b88625] py-3.5 text-center text-[13px] font-bold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:from-[#b88625] hover:to-[#a3741d] active:scale-[0.99]" id="btn-lihat-event">
                         <span>Lihat Event & Vote Peserta</span>
                         <svg class="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -563,7 +663,7 @@
                             @endif
 
                             <a href="{{ $routeDetail($event) }}"
-                                class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-[#e5e1db] bg-white hover:bg-[#faf8f2] hover:border-[#c99a32] px-4 py-2.5 text-[12px] font-semibold text-[#4b463f] transition">
+                                class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-[#e5e1db] bg-white hover:bg-[#faf8f2] hover:border-[#c99a32] px-4 py-2.5 text-[12px] font-semibold text-[#4b463f] transition" id="label-alur-event">
                                 Lihat Syarat &amp; Ketentuan
                             </a>
                         </div>
@@ -576,27 +676,33 @@
 
             <!-- ==================== BAGIAN ALUR EVENT INTERAKTIF ==================== -->
     <section class="mt-12 sm:mt-16">
-        <!-- Section Header -->
-        <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
-                Alur Event
+    <!-- Section Header -->
+    <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
+            Alur Event
+        </span>
+        <h3 class="display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
+            Alur & Langkah Mengikuti Event
+        </h3>
+        <p class="mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
+            Empat langkah mudah untuk berpartisipasi, mendukung kandidat, dan merayakan pemenang.
+        </p>
+    </div>
+
+    <!-- Interactive Flow Cards Grid -->
+    <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+
+        <!-- Connecting Background Line (Desktop Only) -->
+        <div class="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-200 via-[#c99a32] to-amber-200 z-0 opacity-40"></div>
+
+        <!-- STEP 1 -->
+        <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10 overflow-hidden">
+            <!-- WATERMARK ANGKA -->
+            <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">
+                01
             </span>
-            <h3 class="display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
-                Alur & Langkah Mengikuti Event
-            </h3>
-            <p class="mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
-                Empat langkah mudah untuk berpartisipasi, mendukung kandidat, dan merayakan pemenang.
-            </p>
-        </div>
 
-        <!-- Interactive Flow Cards Grid -->
-        <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-
-            <!-- Connecting Background Line (Desktop Only) -->
-            <div class="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-200 via-[#c99a32] to-amber-200 z-0 opacity-40"></div>
-
-            <!-- STEP 1 -->
-            <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10">
+            <div class="relative z-10">
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a1526] text-[#c99a32] font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white">
                         01
@@ -615,9 +721,16 @@
                     <span>Lengkapi Data</span>
                 </div>
             </div>
+        </div>
 
-            <!-- STEP 2 -->
-            <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10">
+        <!-- STEP 2 -->
+        <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10 overflow-hidden">
+            <!-- WATERMARK ANGKA -->
+            <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">
+                02
+            </span>
+
+            <div class="relative z-10">
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a1526] text-[#c99a32] font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white">
                         02
@@ -636,9 +749,16 @@
                     <span>Proses Validasi</span>
                 </div>
             </div>
+        </div>
 
-            <!-- STEP 3 -->
-            <div class="group relative rounded-2xl border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] p-6 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32] z-10">
+        <!-- STEP 3 -->
+        <div class="group relative rounded-2xl border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] p-6 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32] z-10 overflow-hidden">
+            <!-- WATERMARK ANGKA -->
+            <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">
+                03
+            </span>
+
+            <div class="relative z-10">
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#c99a32] text-white font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110">
                         03
@@ -658,9 +778,16 @@
                     <span>Kumpulkan Suara</span>
                 </div>
             </div>
+        </div>
 
-            <!-- STEP 4 -->
-            <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10">
+        <!-- STEP 4 -->
+        <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10 overflow-hidden">
+            <!-- WATERMARK ANGKA -->
+            <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">
+                04
+            </span>
+
+            <div class="relative z-10">
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a1526] text-[#c99a32] font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white">
                         04
@@ -679,9 +806,10 @@
                     <span>Pemenang Event</span>
                 </div>
             </div>
-
         </div>
-    </section>
+
+    </div>
+</section>
 
                         {{-- PERINGKAT --}}
             @php
@@ -863,7 +991,7 @@
                                     </div>
 
                                     {{-- Persentase --}}
-                                    <div class="text-xl font-bold shrink-0">
+                                    <div class="text-xl font-bold shrink-0" id="faq">
                                         {{ number_format($persen, 2, '.', '') }}%
                                     </div>
 
@@ -950,48 +1078,126 @@
             </section>
         @else
             {{-- EVENT SEBELUMNYA --}}
-            <section class="pt-2">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <section class="pt-2">
+            {{-- Header & Filter Switcher --}}
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+                <div>
                     <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">Event Sebelumnya</h2>
-                    <p class="text-[13px] text-[#9a9a9a] md:text-[14px]">Arsip event dan pemenang</p>
+                    <p class="mt-0.5 text-[13px] text-[#9a9a9a] md:text-[14px]">Arsip event dan pemenang</p>
                 </div>
 
                 @if ($eventSebelumnya->count() > 0)
-                    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        @foreach ($eventSebelumnya as $item)
-                            <a href="{{ $routeDetail($item) }}"
-                                class="card-shadow overflow-hidden rounded-[10px] border border-[#ededed] bg-white transition hover:border-[#c99a32] hover:shadow-md block">
-                                <div class="relative h-[220px] bg-[#efe6d3]">
-                                    @if ($item->banner)
-                                        <img src="{{ asset('storage/' . $item->banner) }}" alt="{{ $item->nama }}" class="h-full w-full object-cover">
-                                    @else
-                                        <div class="h-full w-full flex items-center justify-center text-[#a99260] text-sm">Belum ada banner</div>
-                                    @endif
-
-                                    <span class="absolute left-4 top-4 rounded-full bg-black px-3 py-1.5 text-[10px] font-semibold text-white">
-                                        ● Telah Berakhir
-                                    </span>
-                                </div>
-
-                                <div class="p-5">
-                                    <h3 class="text-[17px] font-bold leading-6 text-[#13223a]">{{ $item->nama }}</h3>
-                                    <div class="mt-4 space-y-2 text-[12px] text-[#777]">
-                                        <div class="flex items-center gap-2">
-                                            <span>▣</span>
-                                            <span>{{ $item->tanggal_selesai?->format('d M Y') }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="card-shadow mt-5 rounded-[10px] border border-dashed border-gray-200 bg-white p-10 text-center">
-                        <p class="text-sm font-semibold text-[#15233d]">Belum ada arsip event</p>
-                        <p class="mt-1 text-xs text-gray-400">Event yang sudah selesai akan muncul di sini.</p>
+                    {{-- Filter Toggle List / Grid --}}
+                    <div class="inline-flex items-center gap-1 self-start sm:self-auto rounded-xl bg-[#f5f3ef] p-1 border border-[#ebe7df]">
+                        <button type="button" id="btn-view-grid-prev" title="Tampilan Grid"
+                            class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-200 bg-white text-[#0a1526] shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            <span>Grid</span>
+                        </button>
+                        <button type="button" id="btn-view-list-prev" title="Tampilan List"
+                            class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-200 text-[#777] hover:text-[#0a1526]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                            <span>List</span>
+                        </button>
                     </div>
                 @endif
-            </section>
+            </div>
+
+            @if ($eventSebelumnya->count() > 0)
+                <div id="event-sebelumnya-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 transition-all duration-300">
+                    @foreach ($eventSebelumnya as $item)
+                        <a href="{{ $routeDetail($item) }}"
+                            class="event-card card-shadow overflow-hidden rounded-[16px] border border-[#ededed] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col">
+                            
+                            {{-- Banner --}}
+                            <div class="event-banner-wrapper relative h-[220px] w-full shrink-0 bg-[#efe6d3] overflow-hidden">
+                                @if ($item->banner)
+                                    <img src="{{ asset('storage/' . $item->banner) }}" alt="{{ $item->nama }}" 
+                                        class="h-full w-full object-cover transition duration-500 hover:scale-105"
+                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+
+                                    {{-- Fallback: tampil kalau gambar gagal dimuat (404, storage:link belum jalan, dsb) --}}
+                                    <div class="hidden h-full w-full items-center justify-center text-[#a99260] text-sm bg-gradient-to-br from-[#efe6d3] to-[#d4c4a8]">
+                                        <div class="text-center p-4">
+                                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            <span class="text-xs">Gagal memuat banner</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    {{-- Fallback: tampil kalau memang tidak ada banner di database --}}
+                                    <div class="h-full w-full flex items-center justify-center text-[#a99260] text-sm bg-gradient-to-br from-[#efe6d3] to-[#d4c4a8]">
+                                        <div class="text-center p-4">
+                                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            <span class="text-xs">Belum ada banner</span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <span class="absolute left-4 top-4 rounded-full bg-black/85 backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-white shadow-md">
+                                    ● Telah Berakhir
+                                </span>
+                            </div>
+
+                            {{-- Detail Info --}}
+                            <div class="p-5 flex flex-col justify-between flex-1">
+                                <div>
+                                    <h3 class="text-[16px] font-bold leading-6 text-[#13223a] line-clamp-1">
+                                        {{ $item->nama }}
+                                    </h3>
+                                    <p class="mt-1.5 text-[12px] text-[#777] line-clamp-2">
+                                        {{ \Illuminate\Support\Str::limit($item->deskripsi ?: 'Deskripsi belum diisi.', 100) }}
+                                    </p>
+
+                                    <div class="mt-4 space-y-2 text-[11px] text-[#666] bg-[#fdfcf9] p-3 rounded-xl border border-[#f4f1e9]">
+                                        @if ($item->tanggal_selesai)
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-3.5 h-3.5 text-[#c99a32] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                                <span>Selesai: <strong class="text-[#0a1526]">{{ $item->tanggal_selesai->format('d M Y') }}</strong></span>
+                                            </div>
+                                        @endif
+
+                                        @if ($item->lokasi)
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-3.5 h-3.5 text-[#c99a32] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                </svg>
+                                                <span class="line-clamp-1">{{ $item->lokasi }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Tombol Lihat Arsip --}}
+                                <div class="mt-5">
+                                    <span class="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-[#e5e1db] bg-white hover:bg-[#faf8f2] hover:border-[#c99a32] px-4 py-2.5 text-[12px] font-semibold text-[#4b463f] transition">
+                                        Lihat Arsip Event
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                <div class="card-shadow mt-5 rounded-[10px] border border-dashed border-gray-200 bg-white p-10 text-center">
+                    <p class="text-sm font-semibold text-[#15233d]">Belum ada arsip event</p>
+                    <p class="mt-1 text-xs text-gray-400">Event yang sudah selesai akan muncul di sini.</p>
+                </div>
+            @endif
+        </section>
         @endif
 
     </main>
@@ -1102,6 +1308,97 @@
         }
     });
 
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnGrid = document.getElementById('btn-view-grid');
+        const btnList = document.getElementById('btn-view-list');
+        const container = document.getElementById('event-akan-datang-container');
+
+        if (!btnGrid || !btnList || !container) return;
+
+        // Fungsi untuk menerapkan mode
+        function applyViewMode(mode) {
+            if (mode === 'list') {
+                container.classList.add('view-list');
+                container.classList.remove('grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3');
+                
+                // Update tombol aktif
+                btnList.classList.add('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnList.classList.remove('text-[#777]');
+                btnGrid.classList.remove('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnGrid.classList.add('text-[#777]');
+            } else {
+                container.classList.remove('view-list');
+                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3');
+                
+                // Update tombol aktif
+                btnGrid.classList.add('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnGrid.classList.remove('text-[#777]');
+                btnList.classList.remove('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnList.classList.add('text-[#777]');
+            }
+            
+            // Simpan preferensi
+            localStorage.setItem('eventViewMode', mode);
+        }
+
+        // Load preferensi tersimpan
+        const savedView = localStorage.getItem('eventViewMode') || 'grid';
+        applyViewMode(savedView);
+
+        // Event listener untuk tombol
+        btnGrid.addEventListener('click', function(e) {
+            e.preventDefault();
+            applyViewMode('grid');
+        });
+
+        btnList.addEventListener('click', function(e) {
+            e.preventDefault();
+            applyViewMode('list');
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnGridPrev = document.getElementById('btn-view-grid-prev');
+        const btnListPrev = document.getElementById('btn-view-list-prev');
+        const containerPrev = document.getElementById('event-sebelumnya-container');
+
+        if (!btnGridPrev || !btnListPrev || !containerPrev) return;
+
+        function applyViewModePrev(mode) {
+            if (mode === 'list') {
+                containerPrev.classList.add('view-list');
+                containerPrev.classList.remove('grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3');
+
+                btnListPrev.classList.add('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnListPrev.classList.remove('text-[#777]');
+                btnGridPrev.classList.remove('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnGridPrev.classList.add('text-[#777]');
+            } else {
+                containerPrev.classList.remove('view-list');
+                containerPrev.classList.add('grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3');
+
+                btnGridPrev.classList.add('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnGridPrev.classList.remove('text-[#777]');
+                btnListPrev.classList.remove('bg-white', 'text-[#0a1526]', 'shadow-sm');
+                btnListPrev.classList.add('text-[#777]');
+            }
+
+            localStorage.setItem('eventViewModePrev', mode);
+        }
+
+        const savedViewPrev = localStorage.getItem('eventViewModePrev') || 'grid';
+        applyViewModePrev(savedViewPrev);
+
+        btnGridPrev.addEventListener('click', function(e) {
+            e.preventDefault();
+            applyViewModePrev('grid');
+        });
+
+        btnListPrev.addEventListener('click', function(e) {
+            e.preventDefault();
+            applyViewModePrev('list');
+        });
+    });
     </script>
 
 </body>
