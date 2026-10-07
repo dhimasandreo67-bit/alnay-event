@@ -486,18 +486,46 @@
 
         {{-- EVENT BANNER --}}
         <section
-            class="event-banner relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
+            class="event-banner relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)] group">
+
             @if ($event->banner)
+                {{-- Gambar utama --}}
                 <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
-                    class="block h-[220px] w-full object-cover object-center sm:h-[285px] md:h-[350px]">
+                    class="block h-[220px] w-full object-cover object-center sm:h-[285px] md:h-[350px] transition-transform duration-700 group-hover:scale-[1.02]"
+                    onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+
+                {{-- Fallback: tampil kalau gambar gagal dimuat (404 / file hilang) --}}
+                <div class="hidden h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] via-[#11223f] to-[#1a2942] sm:h-[285px] md:h-[350px]">
+                    <div class="text-center px-4">
+                        <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-[#c99a32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
+                            {{ $event->nama }}
+                        </p>
+                        <p class="mt-2 text-[10px] tracking-[0.3em] text-[#c5b388] uppercase font-semibold">
+                            Alnay Event Center
+                        </p>
+                    </div>
+                </div>
             @else
-                <div
-                    class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] to-[#1a2942] sm:h-[285px] md:h-[350px]">
-                    <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
-                        {{ $event->nama }}
-                    </p>
+                {{-- Fallback: tampil kalau memang tidak ada banner di database --}}
+                <div class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] via-[#11223f] to-[#1a2942] sm:h-[285px] md:h-[350px]">
+                    <div class="text-center px-4">
+                        <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
+                            {{ $event->nama }}
+                        </p>
+                        <p class="mt-2 text-[10px] tracking-[0.3em] text-[#c5b388] uppercase font-semibold">
+                            Alnay Event Center
+                        </p>
+                    </div>
                 </div>
             @endif
+
+            {{-- Overlay gradient tipis di bawah — bikin transisi ke card di bawahnya lebih halus --}}
+            <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0a1526]/40 to-transparent pointer-events-none"></div>
         </section>
 
         {{-- EVENT INFORMATION --}}
