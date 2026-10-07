@@ -20,7 +20,6 @@
 
         <div class="mb-6">
             @php
-                // Tombol back — admin: ke form builder. User: history back + fallback.
                 $backLabel = $isPreview ? 'Kembali ke Form Builder' : 'Kembali';
             @endphp
 
@@ -67,6 +66,7 @@
             <p class="text-sm text-[#4B463F]">Isi formulir di bawah untuk mendaftar event ini.</p>
         </div>
 
+        {{-- ================== MODE SUKSES ================== --}}
         @if (session('success'))
             <div class="bg-white border-2 border-green-200 rounded-2xl p-8 text-center mb-6 shadow-sm">
                 <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
@@ -88,126 +88,238 @@
                     Lihat Status Pendaftaran
                 </a>
             </div>
-        @endif
 
-        @if (session('error'))
-            <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 mb-6 text-sm">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 mb-6">
-                <p class="font-bold mb-2">Ada kesalahan pada form:</p>
-                <ul class="list-disc list-inside text-sm space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        @php
-            $sekarang = now();
-            $bukaDaftar = $event->pembukaan_pendaftaran_tanggal;
-            $batasDaftar = $event->batas_pendaftaran_tanggal;
-
-            // Status event dulu
-            if (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {
-                $pendaftaranDitutup = true;
-                $alasanTutup =
-                    'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
-            }
-            // Flag manual admin
-            elseif (!$event->pendaftaran_dibuka) {
-                $pendaftaranDitutup = true;
-                $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
-            }
-            // Waktu belum masuk
-            elseif ($bukaDaftar && $sekarang->lt($bukaDaftar)) {
-                $pendaftaranDitutup = true;
-                $alasanTutup =
-                    'Pendaftaran untuk event ini belum dibuka. Buka pada ' .
-                    $bukaDaftar->translatedFormat('d F Y') .
-                    ' pukul ' .
-                    ($event->pembukaan_pendaftaran_waktu ?? '00:00') .
-                    ' WIB.';
-            }
-            // Waktu udah lewat
-            elseif ($batasDaftar && $sekarang->gt($batasDaftar)) {
-                $pendaftaranDitutup = true;
-                $alasanTutup =
-                    'Pendaftaran untuk event ini sudah ditutup pada ' . $batasDaftar->translatedFormat('d F Y') . '.';
-            } else {
-                $pendaftaranDitutup = false;
-                $alasanTutup = null;
-            }
-        @endphp
-
-        @if ($pendaftaranDitutup)
-            <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-8 text-center">
-                <div class="w-16 h-16 rounded-full bg-[#FAF3E7] flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-[#7F5700]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.8">
-                        <rect x="4" y="10" width="16" height="11" rx="2" />
-                        <path d="M8 10V7a4 4 0 018 0v3" />
-                    </svg>
-                </div>
-                <h2 class="text-xl font-bold text-black mb-2">Pendaftaran Ditutup</h2>
-                <p class="text-sm text-[#4B463F]">{{ $alasanTutup }}</p>
-            </div>
+        {{-- ================== MODE FORM ================== --}}
         @else
-            {{-- Form Pendaftaran — ini yang muncul kalau pendaftaran dibuka --}}
-            <form method="POST" action="{{ route('public.registration.store', $event) }}"
-                enctype="multipart/form-data" class="space-y-6">
-                @csrf
 
-                {{-- Cek apakah form builder sudah dibuat — pakai relasi pertanyaans --}}
-                @php
-                    $formFields = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
-                @endphp
+            @if (session('error'))
+                <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 mb-6 text-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-                @if ($formFields->count() > 0)
-                    @include('public.partials.dynamic-form-fields', [
-                        'fields' => $formFields,
-                    ])
-                @else
-                    {{-- Form builder belum dibuat — tampilkan notice --}}
-                    <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-8 text-center">
-                        <div class="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.5 0L3.16 16.25A2 2 0 005 19z" />
-                            </svg>
-                        </div>
-                        <h2 class="text-lg font-bold text-black mb-2">Formulir Belum Tersedia</h2>
-                        <p class="text-sm text-[#4B463F]">
-                            @if ($isPreview)
-                                Admin belum membuat formulir pendaftaran untuk event ini.
-                                Buka <strong>Form Builder</strong> untuk mulai mengatur form.
-                            @else
-                                Formulir pendaftaran untuk event ini belum tersedia. Silakan cek kembali nanti.
-                            @endif
-                        </p>
+            @if ($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 mb-6">
+                    <p class="font-bold mb-2">Ada kesalahan pada form:</p>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @php
+                $sekarang = now();
+                $bukaDaftar = $event->pembukaan_pendaftaran_tanggal;
+                $batasDaftar = $event->batas_pendaftaran_tanggal;
+
+                if (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {
+                    $pendaftaranDitutup = true;
+                    $alasanTutup =
+                        'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
+                } elseif (!$event->pendaftaran_dibuka) {
+                    $pendaftaranDitutup = true;
+                    $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
+                } elseif ($bukaDaftar && $sekarang->lt($bukaDaftar)) {
+                    $pendaftaranDitutup = true;
+                    $alasanTutup =
+                        'Pendaftaran untuk event ini belum dibuka. Buka pada ' .
+                        $bukaDaftar->translatedFormat('d F Y') .
+                        ' pukul ' .
+                        ($event->pembukaan_pendaftaran_waktu ?? '00:00') .
+                        ' WIB.';
+                } elseif ($batasDaftar && $sekarang->gt($batasDaftar)) {
+                    $pendaftaranDitutup = true;
+                    $alasanTutup =
+                        'Pendaftaran untuk event ini sudah ditutup pada ' .
+                        $batasDaftar->translatedFormat('d F Y') .
+                        '.';
+                } else {
+                    $pendaftaranDitutup = false;
+                    $alasanTutup = null;
+                }
+            @endphp
+
+            @if ($pendaftaranDitutup)
+                <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-8 text-center">
+                    <div class="w-16 h-16 rounded-full bg-[#FAF3E7] flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-[#7F5700]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.8">
+                            <rect x="4" y="10" width="16" height="11" rx="2" />
+                            <path d="M8 10V7a4 4 0 018 0v3" />
+                        </svg>
                     </div>
-                @endif
-            </form>
+                    <h2 class="text-xl font-bold text-black mb-2">Pendaftaran Ditutup</h2>
+                    <p class="text-sm text-[#4B463F]">{{ $alasanTutup }}</p>
+                </div>
+            @else
+                <form method="POST"
+                    action="{{ route('public.registration.store', $event) }}"
+                    enctype="multipart/form-data">
+                    @csrf
+
+                    @php
+                        $pertanyaans = $questions ?? $event->pertanyaans()->orderBy('urutan')->get();
+                    @endphp
+
+                    @forelse ($pertanyaans as $q)
+                        @php
+                            $tipe = strtolower($q->tipe_input);
+                            $config = is_string($q->konfigurasi)
+                                ? (json_decode($q->konfigurasi, true) ?? [])
+                                : ($q->konfigurasi ?? []);
+                            $options = is_string($q->pilihan_jawaban)
+                                ? (json_decode($q->pilihan_jawaban, true) ?? [])
+                                : ($q->pilihan_jawaban ?? []);
+                            $help = $config['help'] ?? '';
+                            $placeholder = $config['placeholder'] ?? '';
+                            $isRequired = $q->wajib ?? false;
+                        @endphp
+
+                        @if ($tipe === 'heading')
+                            <div class="mt-6 mb-3">
+                                <h2 class="font-display text-2xl font-bold text-[#15233d]">
+                                    {{ $q->label }}
+                                </h2>
+                                @if ($help)
+                                    <p class="mt-1 text-sm text-gray-500">{{ $help }}</p>
+                                @endif
+                            </div>
+                            @continue
+                        @endif
+
+                        @if ($tipe === 'subheading')
+                            <div class="mt-5 mb-2">
+                                <p class="text-sm text-gray-600">
+                                    {{ $q->label }}
+                                </p>
+                                @if ($help)
+                                    <p class="mt-1 text-xs text-gray-400">{{ $help }}</p>
+                                @endif
+                            </div>
+                            @continue
+                        @endif
+
+                        <div class="mb-5 rounded-xl border border-gray-100 bg-white p-4">
+                            <label for="q-{{ $q->id }}" class="mb-2 block text-sm font-semibold text-[#15233d]">
+                                {{ $q->label }}
+                                @if ($isRequired)
+                                    <span class="text-red-500">*</span>
+                                @endif
+                            </label>
+
+                            @if ($help)
+                                <p class="mb-2 text-xs text-gray-500">{{ $help }}</p>
+                            @endif
+
+                            @if ($tipe === 'text' || $tipe === 'email' || $tipe === 'number')
+                                <input type="{{ $tipe === 'number' ? 'text' : $tipe }}"
+                                    id="q-{{ $q->id }}"
+                                    name="answers[{{ $q->id }}]"
+                                    value="{{ old("answers.{$q->id}") }}"
+                                    placeholder="{{ $placeholder ?: '' }}"
+                                    @if ($isRequired) required @endif
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-1 focus:ring-[#c99a32]">
+
+                            @elseif ($tipe === 'textarea')
+                                <textarea id="q-{{ $q->id }}"
+                                    name="answers[{{ $q->id }}]"
+                                    rows="4"
+                                    placeholder="{{ $placeholder ?: '' }}"
+                                    @if ($isRequired) required @endif
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-1 focus:ring-[#c99a32]">{{ old("answers.{$q->id}") }}</textarea>
+
+                            @elseif ($tipe === 'select' || $tipe === 'dropdown')
+                                <select id="q-{{ $q->id }}"
+                                    name="answers[{{ $q->id }}]"
+                                    @if ($isRequired) required @endif
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-1 focus:ring-[#c99a32]">
+                                    <option value="">— Pilih —</option>
+                                    @foreach ((array) $options as $opt)
+                                        <option value="{{ $opt }}"
+                                            @selected(old("answers.{$q->id}") == $opt)>
+                                            {{ $opt }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                            @elseif ($tipe === 'radio')
+                                <div class="space-y-2">
+                                    @foreach ((array) $options as $opt)
+                                        <label class="flex items-center gap-2 text-sm">
+                                            <input type="radio"
+                                                name="answers[{{ $q->id }}]"
+                                                value="{{ $opt }}"
+                                                @checked(old("answers.{$q->id}") == $opt)
+                                                @if ($isRequired) required @endif
+                                                class="text-[#c99a32] focus:ring-[#c99a32]">
+                                            {{ $opt }}
+                                        </label>
+                                    @endforeach
+                                </div>
+
+                            @elseif ($tipe === 'checkbox')
+                                <div class="space-y-2">
+                                    @foreach ((array) $options as $opt)
+                                        <label class="flex items-center gap-2 text-sm">
+                                            <input type="checkbox"
+                                                name="answers[{{ $q->id }}][]"
+                                                value="{{ $opt }}"
+                                                @checked(in_array($opt, (array) old("answers.{$q->id}", [])))
+                                                class="rounded text-[#c99a32] focus:ring-[#c99a32]">
+                                            {{ $opt }}
+                                        </label>
+                                    @endforeach
+                                </div>
+
+                            @elseif ($tipe === 'file')
+                                <input type="file"
+                                    id="q-{{ $q->id }}"
+                                    name="answers[{{ $q->id }}]"
+                                    @if ($isRequired) required @endif
+                                    class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none">
+
+                            @else
+                                <input type="text"
+                                    id="q-{{ $q->id }}"
+                                    name="answers[{{ $q->id }}]"
+                                    value="{{ old("answers.{$q->id}") }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none">
+                            @endif
+
+                            @error("answers.{$q->id}")
+                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @empty
+                        <div class="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center">
+                            <p class="text-sm text-gray-500">
+                                Belum ada pertanyaan untuk event ini.
+                            </p>
+                        </div>
+                    @endforelse
+
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit"
+                            @if ($isPreview) disabled @endif
+                            class="rounded-lg bg-gradient-to-r from-[#c69220] to-[#b58219] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:from-[#b58219] hover:to-[#a06f1a] disabled:opacity-50 disabled:cursor-not-allowed">
+                            Kirim Pendaftaran
+                        </button>
+                    </div>
+                </form>
+            @endif
         @endif
 
     </main>
 
-    {{-- Script untuk mode preview admin — tutup tab --}}
     @if ($isPreview)
         <script>
             function closePreviewTab() {
-                // Coba tutup tab preview
                 window.close();
 
-                // Fallback — kalau browser blokir window.close()
                 setTimeout(function() {
                     if (!window.closed) {
-                        // Redirect ke form builder di tab yang sama
                         window.location.href = '{{ route('admin.form-builder', $event->id) }}';
                     }
                 }, 300);
@@ -215,15 +327,12 @@
         </script>
     @endif
 
-    {{-- Script goBack — history back + fallback ke beranda (untuk user) --}}
     @unless ($isPreview)
         <script>
             function goBack() {
-                // Kalau ada history (user datang dari halaman lain), balik ke sana
                 if (window.history.length > 1 && document.referrer) {
                     window.history.back();
                 } else {
-                    // Fallback: kalau user buka langsung / refresh, balik ke beranda
                     window.location.href = '{{ route('dashboard-user') }}';
                 }
             }

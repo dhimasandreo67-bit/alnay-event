@@ -231,6 +231,22 @@ class EventController extends Controller
         ]);
     }
 
+        // PATCH /admin/events/{event}/toggle-blackout
+    public function toggleBlackout(Event $event)
+    {
+        $event->update([
+            'blackout_h2_voting' => ! $event->blackout_h2_voting,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'blackout_h2_voting' => $event->blackout_h2_voting,
+            'message' => $event->blackout_h2_voting
+                ? 'Mode rahasia diaktifkan — peringkat 1-3 disembunyikan.'
+                : 'Mode rahasia dimatikan — peringkat 1-3 muncul kembali.',
+        ]);
+    }
+
     // PATCH /admin/events/{event}/tampilkan-hasil
     public function toggleTampilkanHasil(Event $event)
     {

@@ -228,6 +228,8 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.events.toggle-status');
     Route::patch('/events/{event}/toggle-pendaftaran', [AdminEventController::class, 'togglePendaftaran'])
         ->name('admin.events.toggle-pendaftaran');
+    Route::patch('/events/{event}/toggle-blackout', [AdminEventController::class, 'toggleBlackout'])
+        ->name('admin.events.toggle-blackout');
     Route::delete('/events/{event}/questions/clear', [AdminPendaftaranController::class, 'clearQuestions'])
         ->name('admin.events.questions.clear');
     Route::get('/events/{event}/peserta/export', [AdminPendaftaranController::class, 'export'])

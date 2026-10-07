@@ -218,32 +218,32 @@ class PendaftaranController extends Controller
     }
 
     public function daftarPeserta($id)
-    {
-        $pesertas = Peserta::with('user:id,nama,foto_url')
-            ->where('event_id', $id)
-            ->where('status', 'diterima')
-            ->get(['id', 'event_id', 'user_id']);
+{
+    $pesertas = Peserta::with('user:id,nama,foto_url,foto_custom')
+        ->where('event_id', $id)
+        ->where('status', 'diterima')
+        ->get(['id', 'event_id', 'user_id']);
 
-        return response()->json($pesertas);
-    }
+    return response()->json($pesertas);
+}
 
     public function show(Request $request, $id)
-    {
-        $peserta = Peserta::with([
-            'user:id,nama,foto_url',
-            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
-            'jawabans.pertanyaan:id,label,tag_tampilan',
-        ])
-            ->select('id', 'event_id', 'user_id', 'galeri_foto')
-            ->findOrFail($id);
+{
+    $peserta = Peserta::with([
+        'user:id,nama,foto_url,foto_custom',   // ← foto_custom ditambah
+        'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
+        'jawabans.pertanyaan:id,label,tag_tampilan,tipe_input',   // ← tipe_input ditambah
+    ])
+        ->select('id', 'event_id', 'user_id', 'galeri_foto')
+        ->findOrFail($id);
 
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json($peserta);
-        }
-
-        return view('voting.index', [
-            'pesertaId' => $id,
-            'peserta' => $peserta,
-        ]);
+    if ($request->wantsJson() || $request->ajax()) {
+        return response()->json($peserta);
     }
+
+    return view('voting.index', [
+        'pesertaId' => $id,
+        'peserta' => $peserta,
+    ]);
+}
 }

@@ -72,6 +72,40 @@
         } else {
             $sisaHari = $sisaJam = $sisaMenit = null;
         }
+
+        // ---- Jadwal Event (otomatis, termasuk Verifikasi Data kalau ada selisih hari) ----
+        $jadwal = [];
+
+        if ($batasDaftar) {
+            $jadwal[] = [
+                'nama'    => 'Pendaftaran Kandidat',
+                'tanggal' => $bukaDaftar
+                    ? $bukaDaftar->translatedFormat('d M Y') . ' – ' . $batasDaftar->translatedFormat('d M Y')
+                    : 'Sampai ' . $batasDaftar->translatedFormat('d M Y'),
+            ];
+
+            if ($event->tanggal_mulai) {
+                $mulaiVoting = \Carbon\Carbon::parse($event->tanggal_mulai)->locale('id');
+                $verifAwal   = $batasDaftar->copy()->addDay()->startOfDay();
+                $verifAkhir  = $mulaiVoting->copy()->subDay()->startOfDay();
+
+                if ($verifAwal->lte($verifAkhir)) {
+                    $jadwal[] = [
+                        'nama'    => 'Verifikasi Data',
+                        'tanggal' => $verifAwal->translatedFormat('d M Y') . ' – ' . $verifAkhir->translatedFormat('d M Y'),
+                    ];
+                }
+            }
+        } else {
+            $jadwal[] = ['nama' => 'Pendaftaran Kandidat', 'tanggal' => '-'];
+        }
+
+        $jadwal[] = [
+            'nama'    => 'Voting Publik',
+            'tanggal' => ($event->tanggal_mulai?->translatedFormat('d M') ?? '-') . ' – ' . ($event->tanggal_selesai?->translatedFormat('d M Y') ?? '-'),
+        ];
+
+        $jadwal[] = ['nama' => 'Pengumuman Pemenang', 'tanggal' => 'Setelah voting berakhir'];
     @endphp
 
     {{-- HEADER --}}
@@ -112,6 +146,7 @@
         </section>
 
         {{-- EVENT INFORMATION --}}
+<<<<<<< HEAD
         <section class="relative z-20 -mt-6 sm:-mt-10 mx-4 lg:mx-8">
     <!-- Main Card Container -->
     <div class="rounded-2xl border border-[#ece5d7] bg-white/95 backdrop-blur-md p-5 sm:p-7 shadow-xl shadow-[#0a1526]/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#0a1526]/10">
@@ -125,6 +160,21 @@
                     <h1 class="display-font text-2xl sm:text-3xl font-extrabold text-[#0a1526] tracking-tight leading-snug">
                         {{ $event->nama }}
                     </h1>
+=======
+        <section class="relative -mt-5 mx-4 bg-white rounded-xl shadow-sm border border-gray-100">
+            <div class="p-4 md:p-5"> 
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr_200px] gap-5">
+
+                    <div>
+                        <!-- Status -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#c99a32] text-white text-[10px] font-semibold uppercase tracking-wider">
+                            Event Belum Dimulai
+                        </span>
+
+                        <h1 class="font-display text-xl md:text-2xl font-bold text-[#111827] mt-2.5">
+                            {{ $event->nama }}
+                        </h1>
+>>>>>>> eed36bdaadcfd1c12aab4d7173249eea18111eae
 
                     <!-- Description (Dipotong maksimal 3 baris) -->
                     <p class="text-[#5c5c5c] text-xs sm:text-sm leading-relaxed mt-2.5 max-w-3xl line-clamp-3">
@@ -222,6 +272,7 @@
                         <span>Voting mulai: <strong class="text-[#0a1526] font-semibold">{{ $event->tanggal_mulai?->translatedFormat('d M Y') ?? '-' }}</strong></span>
                     </div>
 
+<<<<<<< HEAD
                     <!-- Badge 2: Lokasi (Opsional) -->
                     @if ($event->lokasi)
                         <div class="group inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#fcfaf6] border border-[#eee5d2] text-[11px] font-medium text-[#4B463F] transition-all duration-200 hover:border-[#c99a32] hover:bg-white hover:shadow-sm">
@@ -261,6 +312,10 @@
                                 <span class="h-2 w-2 rounded-full bg-rose-500"></span>
                             @endif
 
+=======
+                    <div class="bg-[#faf8f2] border border-[#eee5d2] rounded-lg p-3.5 self-start mt-9">
+                        <p class="text-[10px] uppercase tracking-wider text-[#8a8178] font-semibold text-center">
+>>>>>>> eed36bdaadcfd1c12aab4d7173249eea18111eae
                             @if (!$event->pendaftaran_dibuka)
                                 Pendaftaran Ditutup
                             @elseif ($sisaHari !== null)
@@ -610,12 +665,38 @@
                     </p>
                 </div>
 
+<<<<<<< HEAD
                 <!-- 3. Indikator Langkah di Bawah (Muncul saat Hover) -->
                 <div class="mt-5 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] font-semibold text-[#c99a32] opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 relative z-10">
                     <span>Langkah {{ $nomor }}</span>
                     <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                     </svg>
+=======
+                        <div class="mt-3 space-y-3 text-xs">
+                            @foreach ($jadwal as $tahap)
+                                <div class="flex items-start gap-3">
+                                    <span class="shrink-0 w-2 h-2 rounded-full bg-[#c99a32] mt-1"></span>
+                                    <div>
+                                        <p class="font-semibold text-[#15233d]">{{ $tahap['nama'] }}</p>
+                                        <p class="text-gray-500 mt-0.5">{{ $tahap['tanggal'] }}</p>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </aside>
+
+            </div>
+        </section>
+
+        {{-- ALUR PENDAFTARAN --}}
+        <section class="mt-8">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
+                <div>
+                    <h2 class="font-display text-lg md:text-xl font-bold text-[#15233d]">Alur Pendaftaran</h2>
+                    <p class="text-gray-500 text-xs md:text-sm mt-1">Cara ikut serta sebagai kandidat</p>
+>>>>>>> eed36bdaadcfd1c12aab4d7173249eea18111eae
                 </div>
             </div>
         @endforeach
