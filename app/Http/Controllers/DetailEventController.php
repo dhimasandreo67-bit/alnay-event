@@ -68,13 +68,19 @@ class DetailEventController extends Controller
         ]);
     }
 
-    private function getPesertas(Event $event)
+        private function getPesertas(Event $event)
     {
-        return Peserta::with(['user', 'jawaban.pertanyaan'])
+        $query = Peserta::with(['user', 'jawaban.pertanyaan'])
             ->where('event_id', $event->id)
-            ->where('status', 'diterima')
-            ->orderByDesc('total_vote')
-            ->get();
+            ->where('status', 'diterima');
+
+        // Kalau blackout aktif — acak urutan biar gak bocorin peringkat
+        if ($this->isBlackoutAktif($event)) {
+            return $query->inRandomOrder()->get();
+        }
+
+        // Normal — urut vote terbanyak
+        return $query->orderByDesc('total_vote')->get();
     }
 
     private function getTotalSuara(Event $event)
@@ -89,12 +95,6 @@ class DetailEventController extends Controller
      */
     private function isBlackoutAktif(Event $event): bool
     {
-        if (! $event->blackout_h2_voting || ! $event->voting_selesai) {
-            return false;
-        }
-
-        $selisihJam = now()->diffInHours($event->voting_selesai, false);
-
-        return $selisihJam <= 48 && $selisihJam > 0;
+        return (bool) $event->blackout_h2_voting;
     }
 }

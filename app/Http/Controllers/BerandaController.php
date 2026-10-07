@@ -108,7 +108,7 @@ class BerandaController extends Controller
             ->take(6)
             ->get();
 
-        // ============================================================
+                // ============================================================
         // 7. BLACKOUT H-2 — cek mode rahasia
         // ============================================================
         $blackoutAktif = false;
@@ -117,7 +117,7 @@ class BerandaController extends Controller
         // Cek event berlangsung
         if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting && $eventBerlangsung->voting_selesai) {
             $selisihJam = now()->diffInHours($eventBerlangsung->voting_selesai, false);
-            if ($selisihJam <= 48 && $selisihJam > 0) {
+            if ($selisihJam <= 48) {
                 $blackoutAktif = true;
                 $blackoutEvent = $eventBerlangsung;
             }
@@ -126,7 +126,7 @@ class BerandaController extends Controller
         // Cek event peringkat akhir
         if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting && $eventPeringkatAkhir->voting_selesai) {
             $selisihJam = now()->diffInHours($eventPeringkatAkhir->voting_selesai, false);
-            if ($selisihJam <= 48 && $selisihJam > 0) {
+            if ($selisihJam <= 48) {
                 $blackoutAktif = true;
                 $blackoutEvent = $eventPeringkatAkhir;
             }
@@ -141,9 +141,8 @@ class BerandaController extends Controller
         // Cek event berlangsung
         if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting && $eventBerlangsung->voting_selesai) {
             $selisihJam = now()->diffInHours($eventBerlangsung->voting_selesai, false);
-            if ($selisihJam <= 48 && $selisihJam > 0) {
-                $blackoutAktif = true;
-                $blackoutEvent = $eventBerlangsung;
+            if ($selisihJam <= 48) {
+                 $blackoutAktif = true;
             }
         }
 

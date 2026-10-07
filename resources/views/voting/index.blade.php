@@ -62,7 +62,7 @@
                 <span class="text-[#1D1B17]">Detail Kandidat</span>
             </nav>
 
-            <div id="konten" class="grid grid-cols-1 md:grid-cols-[5fr_7fr] gap-7 lg:gap-10 mt-5">
+            <div id="konten" class="grid grid-cols-1 md:grid-cols-[5fr_7fr] gap-5 md:gap-7 lg:gap-10 mt-5">
                 <p class="text-sm text-[#4B463F] md:col-span-2">Memuat data peserta...</p>
             </div>
         </div>
@@ -252,15 +252,16 @@
                 fotoList = galeri;
 
                 const blokThumbs = fotoList.length > 1 ? `
-                    <div class="grid grid-cols-4 gap-2 mt-2.5">
-                        ${fotoList.map((url,i) => `
-                            <button type="button"
-                                onclick="gantiFoto(${i})"
-                                class="thumb aspect-square overflow-hidden rounded-lg border border-[#D8D0C6] bg-[#EFE7DC] hover:border-[#C28E27]">
-                                <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
-                            </button>
-                        `).join('')}
-                    </div>` : '';
+                      <div class="mt-2.5 grid gap-2 mx-auto w-full max-w-[420px] md:max-w-none"
+                        style="grid-template-columns: repeat(${Math.min(fotoList.length, 5)}, minmax(0, 1fr));">
+                    ${fotoList.map((url,i) => `
+                        <button type="button"
+                            onclick="gantiFoto(${i})"
+                            class="thumb aspect-square overflow-hidden rounded-lg border border-[#D8D0C6] bg-[#EFE7DC] hover:border-[#C28E27]">
+                            <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
+                        </button>
+                    `).join('')}
+                </div>` : '';
 
                 const nomor = String(p.id).padStart(2,'0');
 
@@ -276,7 +277,11 @@
                 const blokProfil = deskripsi ? `
                           <div class="mb-5 text-reveal text-reveal-3">
                         <div class="mb-2 flex items-center gap-2">
-                            <span class="h-px w-5 bg-[#C28E27]"></span>
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C28E27]/10">
+    <svg class="w-3.5 h-3.5 text-[#C28E27]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+    </svg>
+</span>
                             <h3 class="font-display text-lg font-bold text-black">Profil Kandidat</h3>
                         </div>
                         <p class="text-sm leading-7 text-[#4B463F] whitespace-pre-line">${esc(deskripsi)}</p>
@@ -374,7 +379,11 @@
                         <div class="mb-3 flex items-center justify-between">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <span class="h-px w-5 bg-[#C28E27]"></span>
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C28E27]/10">
+                                    <svg class="w-3.5 h-3.5 text-[#C28E27]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </span>
                                     <h3 class="font-display text-lg font-bold text-black">Pendukung Terkini</h3>
                                 </div>
                             </div>
@@ -384,72 +393,76 @@
                     </div>`;
 
                 document.getElementById('konten').innerHTML = `
-                    <div class="content-enter min-w-0">
-                        <div class="photo-frame aspect-[4/5] rounded-2xl shadow-[0_12px_30px_rgba(29,27,23,.08)]">
-                            <img id="foto-utama"
-                                src="${esc(fotoList[0])}"
-                                class="h-full w-full object-cover transition-opacity duration-200"
-                                alt="${esc(nama)}">
-                            <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/25 to-transparent pointer-events-none"></div>
-                            <span class="absolute right-3 top-3 rounded-full bg-[#7F5700] px-3 py-1.5 text-[9px] font-bold tracking-[.15em] text-white shadow-sm">
-                                #${nomor}
-                            </span>
-                        </div>
-                        ${blokThumbs}
-                    </div>
+    {{-- ✅ KOLOM KIRI: Foto --}}
+    <div class="content-enter min-w-0 flex justify-center">
+        <div class="w-full max-w-[420px] md:max-w-none">
+            <div class="photo-frame aspect-square sm:aspect-[4/5] max-h-[60vh] sm:max-h-none rounded-2xl shadow-[0_12px_30px_rgba(29,27,23,.08)]">
+                <img id="foto-utama"
+                    src="${esc(fotoList[0])}"
+                    class="h-full w-full object-cover transition-opacity duration-200"
+                    alt="${esc(nama)}">
+                <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/25 to-transparent pointer-events-none"></div>
+                <span class="absolute right-3 top-3 rounded-full bg-[#7F5700] px-3 py-1.5 text-[9px] font-bold tracking-[.15em] text-white shadow-sm">
+                    #${nomor}
+                </span>
+            </div>
+            ${blokThumbs}
+        </div>
+    </div>
 
-                    <div class="content-enter min-w-0">
-                        <p class="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-[.16em] text-[#7F5700]">
-                            <span>${esc(p.event?.nama ?? '')}</span>
-                            ${
-                                statistik?.blackout
-                                    ? `<span class="normal-case font-semibold tracking-normal">Ranking disembunyikan</span>`
-                                    : statistik?.ranking
-                                        ? `<span class="normal-case font-semibold tracking-normal">&#9734; Ranking: #${statistik.ranking}</span>`
-                                        : ''
-                            }
-                        </p>
+    {{-- ✅ KOLOM KANAN: Info --}}
+    <div class="content-enter min-w-0">
+        <p class="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-[.16em] text-[#7F5700]">
+            <span>${esc(p.event?.nama ?? '')}</span>
+            ${
+                statistik?.blackout
+                    ? `<span class="normal-case font-semibold tracking-normal">Ranking disembunyikan</span>`
+                    : statistik?.ranking
+                        ? `<span class="normal-case font-semibold tracking-normal">&#9734; Ranking: #${statistik.ranking}</span>`
+                        : ''
+            }
+        </p>
 
-                        <h1 class="font-display text-3xl md:text-4xl font-semibold leading-tight text-[#1D1B17] text-reveal text-reveal-1">${nama}</h1>
+        <h1 class="font-display text-3xl md:text-4xl font-semibold leading-tight text-[#1D1B17] text-reveal text-reveal-1">${nama}</h1>
 
-                        ${blokLokasi}
-                        ${blokProfil}
-                        ${blokStatistik}
+        ${blokLokasi}
+        ${blokProfil}
+        ${blokStatistik}
 
-                        ${
-                            (() => {
-                                if (p.event?.voting_mulai && new Date(p.event.voting_mulai) > new Date()) {
-                                    return `
-                                        <div class="block w-full cursor-not-allowed rounded-xl border border-blue-100 bg-blue-50 py-3.5 text-center text-sm font-semibold text-blue-700">
-                                            Voting belum dibuka
-                                        </div>`;
-                                }
+        ${
+            (() => {
+                if (p.event?.voting_mulai && new Date(p.event.voting_mulai) > new Date()) {
+                    return `
+                        <div class="block w-full cursor-not-allowed rounded-xl border border-blue-100 bg-blue-50 py-3.5 text-center text-sm font-semibold text-blue-700">
+                            Voting belum dibuka
+                        </div>`;
+                }
 
-                                if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
-                                    return `
-                                        <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-600">
-                                            Voting Ditutup
-                                        </div>`;
-                                }
+                if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
+                    return `
+                        <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-600">
+                            Voting Ditutup
+                        </div>`;
+                }
 
-                                if (p.event?.status === 'akan_datang') {
-                                    return `
-                                        <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-500">
-                                            Voting belum dibuka
-                                        </div>`;
-                                }
+                if (p.event?.status === 'akan_datang') {
+                    return `
+                        <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-500">
+                            Voting belum dibuka
+                        </div>`;
+                }
 
-                                return `
-    <a href="/peserta/${pesertaId}/checkout"
-        class="vote-button block w-full rounded-xl bg-[#C28E27] py-3.5 text-center text-sm font-semibold tracking-wide text-[#FFF8F1] text-reveal text-reveal-5">
-                                        Rp ${formatAngka(hargaPerVote)} / Vote
-                                    </a>`;
-                            })()
-                        }
+                return `
+                    <a href="/peserta/${pesertaId}/checkout"
+                        class="vote-button block w-full rounded-xl bg-[#C28E27] py-3.5 text-center text-sm font-semibold tracking-wide text-[#FFF8F1] text-reveal text-reveal-5">
+                        Rp ${formatAngka(hargaPerVote)} / Vote
+                    </a>`;
+            })()
+        }
 
-                        ${blokDukungan}
-                    </div>
-                `;
+        ${blokDukungan}
+    </div>
+`;
             } catch (e) {
                 console.error('muatPeserta error:',e);
                 tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');

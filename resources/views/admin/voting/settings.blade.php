@@ -119,9 +119,9 @@
                             <label class="flex items-start gap-2 text-[12px]">
                                 <input type="checkbox" name="blackout_h2_voting" value="1" class="mt-0.5"
                                     {{ $event->blackout_h2_voting ? 'checked' : '' }}>
-                                <span><strong class="block">Mode Rahasia H-2 (Blackout Leaderboard)</strong>
-                                    <span class="text-[#73716c] text-[11px]">Sembunyikan total suara publik 48 jam
-                                        sebelum grand final demi unsur kejutan.</span></span>
+                                <span><strong class="block">Sembunyikan Total Suara</strong>
+                                    <span class="text-[#73716c] text-[11px]">Sembunyikan total suara publik
+                                         demi unsur kejutan.</span></span>
                             </label>
                         </div>
 

@@ -400,7 +400,17 @@
                         </div>
                         <div class="rounded-xl border border-[#ece5d7] bg-[#fcfaf6] p-3 text-center transition-transform hover:-translate-y-0.5 duration-200">
                             <p class="text-[10px] uppercase tracking-wider text-[#8a8178] font-semibold">Total Suara</p>
-                            <p class="mt-1 text-[17px] font-bold text-[#c99a32]">{{ $formatAngka($totalSuara) }}</p>
+                            <p class="mt-1 flex items-center justify-center text-[17px] font-bold text-[#c99a32]">
+                                @if ($blackoutAktif ?? false)
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                    </svg>
+                                @else
+                                    {{ $formatAngka($totalSuara) }}
+                                @endif
+                            </p>
                         </div>
                     </div>
 
