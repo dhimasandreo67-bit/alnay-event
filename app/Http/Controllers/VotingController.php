@@ -327,13 +327,15 @@ class VotingController extends Controller
     /**
      * GET /event/{event}/hasil-voting
      */
-    public function hasilVoting(Event $event)
+        public function hasilVoting(Event $event)
     {
         $adminLogin = Auth::guard('admin')->check();
 
         // Cek tampilkan hasil
         if (! $event->tampilkan_hasil_voting && ! $adminLogin) {
-            return response()->json(['message' => 'Hasil voting untuk event ini belum ditampilkan ke publik.'], 403);
+            return response()->json([
+                'message' => 'Hasil voting untuk event ini belum ditampilkan ke publik.',
+            ], 403);
         }
 
         $pesertaList = Peserta::with('user')
@@ -342,10 +344,43 @@ class VotingController extends Controller
             ->orderBy('total_vote', 'desc')
             ->get();
 
+        // ============================================
+        // Cek blackout H-2
+        // ============================================
+        $blackoutAktif = false;
+        $waktuGrandFinal = null;
+        $message = null;
+
+        if ($event->blackout_h2_voting && $event->voting_selesai) {
+            $selisihJam = now()->diffInHours($event->voting_selesai, false);
+            if ($selisihJam <= 48) {
+                $blackoutAktif = true;
+                $waktuGrandFinal = $event->voting_selesai->translatedFormat('d F Y, H:i');
+                $message = 'Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat ini.';
+            }
+        }
+
+        // ============================================
+        // Kalau blackout — sembunyikan total_vote
+        // ============================================
+        if ($blackoutAktif && ! $adminLogin) {
+            $pesertaList->each(function ($p) {
+                $p->total_vote = null; // sembunyikan angka
+            });
+        }
+
         return response()->json([
-            'event' => $event->only(['id', 'nama', 'tanggal_mulai', 'tanggal_selesai', 'voting_aktif', 'tampilkan_hasil_voting']),
+            'event' => $event->only([
+                'id', 'nama', 'tanggal_mulai', 'tanggal_selesai',
+                'voting_aktif', 'tampilkan_hasil_voting',
+            ]),
             'peserta' => $pesertaList,
-            'hasil_voting' => $pesertaList
+            'hasil_voting' => $pesertaList,
+
+            // ===== BLACKOUT INFO =====
+            'blackout' => $blackoutAktif,
+            'waktu_grand_final' => $waktuGrandFinal,
+            'message' => $message,
         ]);
     }
 

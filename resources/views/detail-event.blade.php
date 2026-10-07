@@ -63,10 +63,20 @@
         }
 
         @keyframes goldLineShimmer {
-            0%, 100% { background-position: 0% 0; }
-            50% { background-position: 100% 0; }
+
+            0%,
+            100% {
+                background-position: 0% 0;
+            }
+
+            50% {
+                background-position: 100% 0;
+            }
         }
 
+        /* ============================================ */
+        /* GOLD SHIMMER TEXT — JUDUL BANNER              */
+        /* ============================================ */
         /* ============================================ */
         /* GOLD SHIMMER TEXT — JUDUL BANNER              */
         /* ============================================ */
@@ -88,8 +98,15 @@
         }
 
         @keyframes goldShimmer {
-            0%, 100% { background-position: 100% 0; }
-            50% { background-position: 0% 0; }
+
+            0%,
+            100% {
+                background-position: 100% 0;
+            }
+
+            50% {
+                background-position: 0% 0;
+            }
         }
 
         /* ============================================ */
@@ -180,8 +197,17 @@
         }
 
         @keyframes pulseSoft {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: .65; transform: scale(1.15); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .65;
+                transform: scale(1.15);
+            }
         }
 
         /* ============================================ */
@@ -196,16 +222,28 @@
                 opacity: 0;
                 transform: translateY(16px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .reveal-up.delay-1 { animation-delay: .05s; }
-        .reveal-up.delay-2 { animation-delay: .12s; }
-        .reveal-up.delay-3 { animation-delay: .19s; }
-        .reveal-up.delay-4 { animation-delay: .26s; }
+        .reveal-up.delay-1 {
+            animation-delay: .05s;
+        }
+
+        .reveal-up.delay-2 {
+            animation-delay: .12s;
+        }
+
+        .reveal-up.delay-3 {
+            animation-delay: .19s;
+        }
+
+        .reveal-up.delay-4 {
+            animation-delay: .26s;
+        }
 
         /* ============================================ */
         /* SECTION REVEAL                                */
@@ -219,6 +257,7 @@
                 opacity: 0;
                 transform: translateY(24px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -237,6 +276,7 @@
                 opacity: 0;
                 transform: translateY(16px) scale(.98);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -248,8 +288,13 @@
         }
 
         @keyframes backdropFade {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* ============================================ */
@@ -269,9 +314,28 @@
         /* REDUCED MOTION                                */
         /* ============================================ */
         @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
+
+            *,
+            *::before,
+            *::after {
                 animation-duration: .01ms !important;
                 transition-duration: .01ms !important;
+            }
+        }
+
+        .event-banner {
+            animation: bannerFadeIn 1s ease-out both;
+        }
+
+        @keyframes bannerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
@@ -425,43 +489,16 @@
             class="event-banner relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
             @if ($event->banner)
                 <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
-                    class="h-[220px] w-full object-cover object-center sm:h-[285px] md:h-[350px]">
-
-                {{-- Overlay judul di atas banner --}}
-                <div class="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
-                    <div class="gold-line mb-2"></div>
-                    <p
-                        class="font-display text-xl font-bold tracking-wide text-white drop-shadow-lg sm:text-2xl md:text-3xl gold-shimmer-text">
-                        {{ $event->nama }}
-                    </p>
-                </div>
+                    class="block h-[220px] w-full object-cover object-center sm:h-[285px] md:h-[350px]">
             @else
-                <div class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] to-[#1a2942] sm:h-[285px] md:h-[350px]">
+                <div
+                    class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] to-[#1a2942] sm:h-[285px] md:h-[350px]">
                     <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
                         {{ $event->nama }}
                     </p>
                 </div>
             @endif
         </section>
-
-        @if (!$event->voting_aktif)
-            <div class="mx-2 mt-3 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 section-reveal">
-                <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.5 0L3.16 16.25A2 2 0 005 19z" />
-                </svg>
-
-                <div>
-                    <p class="m-0 text-[13px] font-bold text-amber-800">
-                        Voting Ditutup
-                    </p>
-                    <p class="mt-0.5 m-0 text-[12px] leading-relaxed text-amber-700">
-                        Admin telah menutup voting untuk event ini. Kamu masih bisa melihat hasil & daftar kandidat.
-                    </p>
-                </div>
-            </div>
-        @endif
 
         {{-- EVENT INFORMATION --}}
         <section
@@ -617,15 +654,15 @@
                     <div class="relative px-6 pt-10 pb-8 text-center md:px-12 md:pt-12 md:pb-10">
                         <div class="mb-5 flex items-center justify-center gap-2">
                             <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
-                            <svg class="h-3.5 w-3.5 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
+                            <svg class="h-4 w-4 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
                             </svg>
                             <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
                         </div>
 
-                        <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-[#c99a32]">
+                        <h2 class="font-display text-xl font-bold tracking-tight text-[#0a1526] md:text-2xl">
                             Peringkat Sementara
-                        </p>
+                        </h2>
                         <h2 class="mb-5 font-display text-2xl font-bold leading-tight text-[#0a1526] md:text-3xl">
                             Siapa yang akan membawa pulang mahkota?
                         </h2>
@@ -640,16 +677,21 @@
             <section class="section-reveal mt-7">
                 <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <div class="mb-1.5 flex items-center gap-2.5">
-                            <span class="inline-block h-px w-6 bg-[#c99a32]"></span>
-                            <span class="text-[9px] font-semibold uppercase tracking-[.22em] text-[#b28a38]">
-                                Top 3
+                        <div class="mb-2 flex items-center gap-3">
+                            <span
+                                class="inline-block h-px w-8 bg-gradient-to-r from-transparent via-[#c99a32]/60 to-[#c99a32]"></span>
+                            <span class="inline-flex items-center gap-1.5">
+                                <span class="inline-block h-1 w-1 rotate-45 bg-[#c99a32]"></span>
+                                <span class="text-[10px] font-bold uppercase tracking-[.24em] text-[#b28a38]">
+                                    Top 3
+                                </span>
+                                <span class="inline-block h-1 w-1 rotate-45 bg-[#c99a32]"></span>
                             </span>
                         </div>
                         <h2 class="font-display text-lg font-bold text-[#15233d] md:text-xl">
                             Peringkat Sementara
                         </h2>
-                        <p class="mt-1 text-xs text-gray-500 md:text-sm">
+                        <p class="mt-1.5 text-[13px] leading-relaxed text-[#8a8178] md:text-sm">
                             Peserta dengan perolehan suara tertinggi saat ini.
                         </p>
                     </div>
@@ -726,25 +768,28 @@
             </section>
         @endif
 
-        {{-- CANDIDATE SECTION --}}
+                {{-- CANDIDATE SECTION --}}
         <section class="section-reveal mt-7">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <div class="flex items-center gap-2.5">
-                        <span class="inline-block h-px w-6 bg-[#c99a32]"></span>
-                        <span class="text-[9px] font-semibold uppercase tracking-[.22em] text-[#b28a38]">
-                            Peserta
+                    <div class="mb-1.5 flex items-center gap-3">
+                        <span class="inline-block h-px w-8 bg-gradient-to-r from-transparent to-[#c99a32]"></span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="inline-block h-1 w-1 rotate-45 bg-[#c99a32]"></span>
+                            <span class="text-[10px] font-bold uppercase tracking-[.24em] text-[#b28a38]">
+                                Peserta
+                            </span>
+                            <span class="inline-block h-1 w-1 rotate-45 bg-[#c99a32]"></span>
                         </span>
-                        <span class="inline-block h-px w-6 bg-[#c99a32]"></span>
                     </div>
-                    <h2 class="mt-1 font-display text-lg font-bold text-[#15233d] md:text-xl">
+                    <h2 class="mt-1.5 font-display text-xl font-bold tracking-tight text-[#0a1526] md:text-2xl">
                         Daftar Kandidat
                     </h2>
                 </div>
 
-                <div class="relative">
+                <div class="relative w-full lg:w-60 shrink-0">
                     <input type="text" id="searchKandidat" placeholder="Cari kandidat..."
-                        class="search-input h-10 w-full rounded-full border border-[#ddd9d0] bg-white pl-9 pr-4 text-xs outline-none focus:border-[#c99a32] focus:ring-0 lg:w-60">
+                        class="search-input h-10 w-full rounded-full border border-[#ddd9d0] bg-white pl-9 pr-4 text-xs outline-none focus:border-[#c99a32] focus:ring-0">
 
                     <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-3 h-4 w-4 text-gray-400"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -782,14 +827,14 @@
                                 </div>
 
                                 @if ($blackoutAktif ?? false)
-                                    {{-- Blackout — nomor diganti ? --}}
-                                    <span class="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 font-display text-[13px] font-bold text-gray-400 shadow-md backdrop-blur ring-1 ring-white/60"
+                                    <span
+                                        class="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 font-display text-[13px] font-bold text-gray-400 shadow-md backdrop-blur ring-1 ring-white/60"
                                         title="Nomor urut dirahasiakan">
                                         ?
                                     </span>
                                 @else
-                                    {{-- Normal — nomor urut --}}
-                                    <span class="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 font-display text-[11px] font-bold text-[#c99a32] shadow-md backdrop-blur ring-1 ring-white/60">
+                                    <span
+                                        class="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 font-display text-[11px] font-bold text-[#c99a32] shadow-md backdrop-blur ring-1 ring-white/60">
                                         {{ $item['nomor'] }}
                                     </span>
                                 @endif
