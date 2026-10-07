@@ -288,7 +288,7 @@
                                         <p class="text-xs text-gray-500 mt-1">Total Vote</p>
                                     @else
                                         <p class="text-lg font-bold">{{ $formatAngka($totalSuara) }}</p>
-                                        <p class="text-xs text-gray-500 mt-1">Total Vote</p>
+                                        <p class="text-xs text-gray-500 mt-1" id="peringkat">Total Vote</p>
                                     @endif
                                 </div>
                             </div>
