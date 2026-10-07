@@ -131,7 +131,7 @@
                         <p class="font-display text-xl sm:text-2xl font-bold text-[#c99a32] tracking-wider mb-1">
                             {{ $event->nama }}
                         </p>
-                        <p class="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest">Gagal memuat banner</p>
+                        <p class="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest">Alnay Event Center</p>
                     </div>
                 </div>
             @else
