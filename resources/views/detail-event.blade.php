@@ -480,6 +480,7 @@
         <section
             class="event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
             @if ($event->banner)
+                {{-- Gambar utama --}}
                 <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
                     class="block h-[220px] w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02] sm:h-[285px] md:h-[350px]"
                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
@@ -492,11 +493,16 @@
                     </div>
                 </div>
             @else
-                <div
-                    class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] to-[#1a2942] sm:h-[285px] md:h-[350px]">
-                    <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
-                        {{ $event->nama }}
-                    </p>
+                {{-- Fallback: tampil kalau memang tidak ada banner di database --}}
+                <div class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] via-[#11223f] to-[#1a2942] sm:h-[285px] md:h-[350px]">
+                    <div class="text-center px-4">
+                        <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
+                            {{ $event->nama }}
+                        </p>
+                        <p class="mt-2 text-[10px] tracking-[0.3em] text-[#c5b388] uppercase font-semibold">
+                            Alnay Event Center
+                        </p>
+                    </div>
                 </div>
             @endif
 
@@ -585,75 +591,82 @@
                     </div>
 
                     {{-- COUNTDOWN --}}
-                    <div class="rounded-xl border border-[#eee5d2] bg-[#faf8f2] p-3.5">
-                        <p class="text-center text-[9px] font-bold uppercase tracking-[.18em] text-gray-500">
-                            {{ $cdLabel }}
-                        </p>
+                    <div class="rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4 relative overflow-hidden">
+                        {{-- Glow gold di pojok --}}
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#c99a32]/20 blur-3xl rounded-full pointer-events-none"></div>
 
-                        @if ($selesai)
-                            <div class="mt-2.5 flex items-center justify-center gap-1.5">
-                                <div
-                                    class="countdown-item min-w-[39px] rounded-lg bg-white px-1.5 py-2 text-center shadow-sm">
-                                    <span class="block text-lg font-bold leading-none text-[#c99a32]">
-                                        {{ sprintf('%02d', $cdHari) }}
-                                    </span>
-                                    <span class="mt-1 block text-[7px] font-semibold uppercase text-gray-400">
-                                        Hari
-                                    </span>
-                                </div>
-
-                                <span class="text-sm font-bold text-[#c99a32]">:</span>
-
-                                <div
-                                    class="countdown-item min-w-[39px] rounded-lg bg-white px-1.5 py-2 text-center shadow-sm">
-                                    <span class="block text-lg font-bold leading-none text-[#c99a32]">
-                                        {{ sprintf('%02d', $cdJam) }}
-                                    </span>
-                                    <span class="mt-1 block text-[7px] font-semibold uppercase text-gray-400">
-                                        Jam
-                                    </span>
-                                </div>
-
-                                <span class="text-sm font-bold text-[#c99a32]">:</span>
-
-                                <div
-                                    class="countdown-item min-w-[39px] rounded-lg bg-white px-1.5 py-2 text-center shadow-sm">
-                                    <span class="block text-lg font-bold leading-none text-[#c99a32]">
-                                        {{ sprintf('%02d', $cdMenit) }}
-                                    </span>
-                                    <span class="mt-1 block text-[7px] font-semibold uppercase text-gray-400">
-                                        Menit
-                                    </span>
-                                </div>
-                            </div>
-                        @endif
-
-                        <div class="mt-3 grid grid-cols-2 gap-2 border-t border-[#e7dfd0] pt-3">
-                            <div class="stat-box rounded-lg px-2 py-1.5 text-center">
-                                <p class="text-base font-bold text-[#15233d]">
-                                    {{ $jumlahPeserta }}
-                                </p>
-                                <p class="mt-0.5 text-[9px] text-gray-500">
-                                    Kandidat
-                                </p>
+                        <div class="relative z-10">
+                            {{-- Header Label Status --}}
+                            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                                <span class="text-[10px] uppercase tracking-wider font-semibold text-[#c5b388] flex items-center gap-1.5">
+                                    <span class="h-2 w-2 rounded-full bg-[#c99a32]"></span>
+                                    {{ $cdLabel }}
+                                </span>
+                                <span class="text-[10px] font-medium text-gray-400">Timer</span>
                             </div>
 
-                            <div class="stat-box rounded-lg px-2 py-1.5 text-center">
-                                <p class="text-base font-bold text-[#15233d]">
+                            {{-- Countdown Display --}}
+                            @if ($selesai)
+                                <div class="mt-4 flex items-center justify-center gap-1.5">
+                                    <div class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                        <span class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
+                                            {{ sprintf('%02d', $cdHari) }}
+                                        </span>
+                                        <span class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
+                                            Hari
+                                        </span>
+                                    </div>
+
+                                    <span class="display-font text-base font-bold text-[#c99a32]">:</span>
+
+                                    <div class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                        <span class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
+                                            {{ sprintf('%02d', $cdJam) }}
+                                        </span>
+                                        <span class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
+                                            Jam
+                                        </span>
+                                    </div>
+
+                                    <span class="display-font text-base font-bold text-[#c99a32]">:</span>
+
+                                    <div class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                        <span class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
+                                            {{ sprintf('%02d', $cdMenit) }}
+                                        </span>
+                                        <span class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
+                                            Menit
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Stat Boxes --}}
+                            <div class="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+                                <div class="rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                    <p class="display-font text-base font-bold text-[#f5d78e]">
+                                        {{ $jumlahPeserta }}
+                                    </p>
+                                    <p class="mt-0.5 text-[9px] font-medium text-gray-400 uppercase tracking-wider">
+                                        Kandidat
+                                    </p>
+                                </div>
+
+                                <div class="rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
                                     @if ($blackoutAktif ?? false)
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-4 w-4 text-[#c99a32]"
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-5 w-5 text-[#f5d78e]"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                 d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                         </svg>
+                                        <p class="mt-0.5 text-[9px] font-medium text-gray-400 uppercase tracking-wider">
+                                            Total Vote
+                                        </p>
                                     @else
                                         <p class="text-lg font-bold">{{ $formatAngka($totalSuara) }}</p>
                                         <p class="text-xs text-gray-500 mt-1" id="peringkat">Total Vote</p>
                                     @endif
-                                </p>
-                                <p class="mt-0.5 text-[9px] text-gray-500">
-                                    Total Vote
-                                </p>
+                                </div>
                             </div>
                         </div>
                     </div>
