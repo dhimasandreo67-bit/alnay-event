@@ -43,14 +43,6 @@
             pointer-events: none;
         }
 
-        .event-banner img {
-            transition: transform 8s ease-out;
-        }
-
-        .event-banner:hover img {
-            transform: scale(1.04);
-        }
-
         /* ============================================ */
         /* GOLD LINE — SHIMMER                           */
         /* ============================================ */
@@ -484,12 +476,21 @@
 
     <main class="mx-auto max-w-5xl px-5 pb-7">
 
-        {{-- EVENT BANNER --}}
+                {{-- EVENT BANNER --}}
         <section
-            class="event-banner relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
+            class="event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
             @if ($event->banner)
                 <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
-                    class="block h-[220px] w-full object-cover object-center sm:h-[285px] md:h-[350px]">
+                    class="block h-[220px] w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02] sm:h-[285px] md:h-[350px]"
+                    onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+
+                {{-- Fallback kalau gambar gagal load --}}
+                <div class="hidden h-[220px] w-full bg-gradient-to-br from-[#0a1526] to-[#1a2942] items-center justify-center sm:h-[285px] md:h-[350px]">
+                    <div class="text-center">
+                        <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wider sm:text-3xl">{{ $event->nama }}</p>
+                        <p class="mt-2 text-[10px] tracking-[0.3em] text-[#c5b388] uppercase font-semibold">Alnay Event Center</p>
+                    </div>
+                </div>
             @else
                 <div
                     class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] to-[#1a2942] sm:h-[285px] md:h-[350px]">
@@ -498,6 +499,26 @@
                     </p>
                 </div>
             @endif
+
+            {{-- Overlay gradient di bawah --}}
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a1526]/40 to-transparent"></div>
+
+            {{-- Badge status — floating glassmorphism --}}
+            <span class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
+                {{ $event->voting_aktif
+                    ? 'border-emerald-400/30 bg-emerald-950/70 text-emerald-300'
+                    : 'border-orange-400/30 bg-orange-950/70 text-orange-300' }}">
+                @if ($event->voting_aktif)
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Sedang Berlangsung
+                @else
+                    <span class="h-2 w-2 rounded-full bg-orange-400"></span>
+                    Telah Berakhir
+                @endif
+            </span>
         </section>
 
         {{-- EVENT INFORMATION --}}
@@ -626,12 +647,8 @@
                                                 d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                         </svg>
                                     @else
-<<<<<<< HEAD
                                         <p class="text-lg font-bold">{{ $formatAngka($totalSuara) }}</p>
                                         <p class="text-xs text-gray-500 mt-1" id="peringkat">Total Vote</p>
-=======
-                                        {{ $formatAngka($totalSuara) }}
->>>>>>> eed36bdaadcfd1c12aab4d7173249eea18111eae
                                     @endif
                                 </p>
                                 <p class="mt-0.5 text-[9px] text-gray-500">
@@ -724,46 +741,54 @@
                                 $juara = $i + 1;
                                 $order = $juara == 1 ? 'sm:order-2' : ($juara == 2 ? 'sm:order-1' : 'sm:order-3');
                                 $border =
-                                    $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-gray-100';
+                                    $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
                                 $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]';
                             @endphp
 
                             <div
-                                class="reveal-up delay-{{ min($i + 1, 4) }} overflow-hidden rounded-xl bg-white shadow-sm {{ $border }} {{ $order }}">
+                                class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }} {{ $order }}">
+
                                 <div class="relative overflow-hidden {{ $height }}">
                                     @if ($fotoP)
                                         <img src="{{ $fotoP }}" alt="{{ $namaP }}"
-                                            class="h-full w-full object-cover">
+                                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                                     @else
-                                        <div class="flex h-full w-full items-center justify-center bg-[#fbf6e9]">
-                                            <span class="font-display text-4xl font-bold text-[#c99a32]">
-                                                {{ $inisialP }}
-                                            </span>
+                                        <div class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
+                                            <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
                                         </div>
                                     @endif
 
-                                    <span
-                                        class="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1.5 text-[10px] font-bold text-[#15233d] shadow-sm backdrop-blur">
+                                    {{-- Nomor --}}
+                                    <span class="absolute top-3 left-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#0a1526] shadow-sm">
                                         {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
                                     </span>
 
-                                    <span
-                                        class="absolute right-2.5 top-2.5 rounded-full bg-[#c99a32] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                    {{-- Badge juara --}}
+                                    <span class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
+                                        @if ($juara == 1)
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                                            </svg>
+                                        @endif
                                         Juara {{ $juara }}
                                     </span>
                                 </div>
 
-                                <div class="p-3.5">
-                                    <h3 class="truncate text-[13px] font-semibold text-[#15233d]">
-                                        {{ $namaP }}
-                                    </h3>
-                                    <p class="mt-1.5 text-base font-bold text-[#15233d]">
-                                        {{ $persenP }}%
-                                        <span class="text-xs font-normal text-gray-400">Vote</span>
-                                    </p>
-                                    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                                        <div class="h-1.5 rounded-full bg-gradient-to-r from-[#c99a32] to-[#e0b254]"
-                                            style="width: {{ $persenP }}%"></div>
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $namaP }}</h3>
+                                        <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">
+                                            {{ $p->asal ?? '-' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-baseline gap-1.5">
+                                        <p class="text-lg font-bold text-[#0a1526]">{{ $persenP }}%</p>
+                                        <span class="text-[11px] text-[#8a8178]">Vote</span>
+                                    </div>
+
+                                    <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full transition-all duration-700" style="width: {{ $persenP }}%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -815,17 +840,14 @@
                             data-nama="{{ strtolower($item['nama']) }}">
 
                             <div class="relative h-[175px] overflow-hidden bg-[#fbf6e9]">
-                                @if ($item['foto'])
-                                    <img src="{{ $item['foto'] }}" alt="{{ $item['nama'] }}"
-                                        class="h-full w-full object-cover">
-                                @else
-                                    <div
-                                        class="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
-                                        <span class="font-display text-4xl font-bold text-[#c99a32]">
-                                            {{ $item['inisial'] }}
-                                        </span>
-                                    </div>
-                                @endif
+                                                               <img src="{{ $item['foto'] ?? '' }}" alt="{{ $item['nama'] }}"
+                                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+                                <div class="hidden h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
+                                    <span class="font-display text-4xl font-bold text-[#c99a32]">
+                                        {{ $item['inisial'] }}
+                                    </span>
+                                </div>
 
                                 <div
                                     class="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/25 to-transparent">
