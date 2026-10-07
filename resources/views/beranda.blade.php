@@ -230,6 +230,97 @@
         }
     }
 
+    /* =========================================================
+    PROPERTY UNTUK ANIMASI SUDUT CONIC-GRADIENT
+    ========================================================= */
+    @property --hero-angle {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+    }
+
+    /* =========================================================
+    HERO GOLD BORDER
+    Cahaya emas mengalir di sepanjang border
+    ========================================================= */
+    .hero-gold-border {
+        position: absolute;
+        inset: -2px;
+        border-radius: 18px;
+        padding: 2px;
+        z-index: 0;
+
+        /* Conic gradient yang sudutnya di-animate */
+        background: conic-gradient(
+            from var(--hero-angle),
+
+            transparent 0deg,
+            transparent 25deg,
+
+            #8b641c 35deg,
+            #c99a32 45deg,
+            #f3cf6b 55deg,
+            #fff4c7 62deg,
+            #c99a32 70deg,
+            #8b641c 80deg,
+
+            transparent 95deg,
+            transparent 180deg,
+
+            #8b641c 195deg,
+            #c99a32 205deg,
+            #f3cf6b 215deg,
+            #fff4c7 222deg,
+            #c99a32 230deg,
+            #8b641c 240deg,
+
+            transparent 255deg,
+            transparent 360deg
+        );
+
+        /* Mask: tampilkan hanya ring 2px */
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+
+        /* Animasi sudut conic-gradient, BUKAN rotate */
+        animation: heroGoldFlow 7s linear infinite;
+
+        filter:
+            drop-shadow(0 0 3px rgba(201, 154, 50, 0.75))
+            drop-shadow(0 0 9px rgba(201, 154, 50, 0.35));
+
+        pointer-events: none;
+    }
+
+    /* =========================================================
+    ANIMASI — animasikan custom property, bukan transform
+    ========================================================= */
+    @keyframes heroGoldFlow {
+        to {
+            --hero-angle: 360deg;
+        }
+    }
+
+    /* Hover: animasi lebih cepat + glow lebih kuat */
+    .hero-event-card:hover .hero-gold-border {
+        animation-duration: 3.5s;
+        filter:
+            drop-shadow(0 0 4px rgba(201, 154, 50, 0.95))
+            drop-shadow(0 0 14px rgba(201, 154, 50, 0.45));
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .hero-gold-border {
+            animation: none;
+        }
+    }
     </style>
 </head>
 
@@ -387,7 +478,11 @@
 
     @if ($eventHero)
     <!-- ==================== HERO BANNER ==================== -->
-    <article class="group relative overflow-hidden rounded-[16px] border border-[#ece5d7] bg-white transition-all duration-300 shadow-md hover:shadow-xl">
+    <article class="hero-event-card group relative rounded-[16px] bg-white transition-all duration-300 shadow-md hover:shadow-xl">
+    {{-- Rotating Gold Border Layer --}}
+    <div class="hero-gold-border absolute -inset-[2px] rounded-[18px] z-0"></div>
+
+    <div class="relative overflow-hidden rounded-[16px] z-10">
 
         <!-- BANNER IMAGE / COVER -->
         <a href="{{ $routeDetail($eventHero) }}"

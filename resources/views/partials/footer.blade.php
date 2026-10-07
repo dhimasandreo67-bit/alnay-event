@@ -228,8 +228,8 @@
                     {{-- Jam Operasional --}}
                     <div class="pt-2 border-t border-[#2a2a2a]">
                         <div class="text-[9px] text-[#626262]">Jam Operasional</div>
-                        <div>Senin - Jumat: 08:00 - 20:00 WIB</div>
-                        <div>Sabtu - Minggu: 09:00 - 18:00 WIB</div>
+                        <div>Senin - Sabtu: 11:00 - 19:00 WIB</div>
+                        <div>Minggu: Tutup</div>
                     </div>
                 </div>
             </div>
