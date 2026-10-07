@@ -568,20 +568,37 @@
 
                         <div class="space-y-3">
 
-                            @forelse ($peserta->jawabans as $jawaban)
-                                @continue(in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true))
-
+                                                        @forelse ($peserta->jawabans as $jawaban)
                                 @php
+                                    // Skip heading / subheading
+                                    if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
+                                        continue;
+                                    }
+
+                                    // ============================================
+                                    // FIX: Skip field "nama" — udah tampil di header
+                                    // ============================================
+                                    $labelLower = strtolower(trim($jawaban->pertanyaan?->label ?? ''));
+                                    $namaKeywords = [
+                                        'nama',
+                                        'nama lengkap',
+                                        'nama pendaftaran',
+                                        'nama tampilan',
+                                        'name',
+                                    ];
+
+                                    if (in_array($labelLower, $namaKeywords, true)) {
+                                        continue;
+                                    }
+
                                     $tipeInput = strtolower($jawaban->pertanyaan?->tipe_input ?? '');
                                     $filePath = is_array($jawaban->jawaban)
                                         ? $jawaban->jawaban[0] ?? ''
                                         : (string) $jawaban->jawaban;
 
-                                    // Bersihkan query string jika ada, lalu ambil ekstensi file
                                     $cleanPath = parse_url($filePath, PHP_URL_PATH) ?? '';
                                     $extension = strtolower(pathinfo($cleanPath, PATHINFO_EXTENSION));
 
-                                    // Cek apakah tipe inputnya gambar ATAU ekstensi filenya adalah gambar
                                     $isImage =
                                         in_array(
                                             $tipeInput,
@@ -599,32 +616,25 @@
 
                                             {{-- Question --}}
                                             <div>
-
                                                 <p
                                                     class="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-1">
                                                     Pertanyaan
                                                 </p>
-
                                                 <p class="text-xs sm:text-sm font-medium text-slate-600">
                                                     {{ $jawaban->pertanyaan?->label ?? 'Pertanyaan dihapus' }}
                                                 </p>
-
                                             </div>
-
 
                                             {{-- Answer --}}
                                             <div class="sm:col-span-2">
-
                                                 <p
                                                     class="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">
                                                     Jawaban
                                                 </p>
 
-
                                                 {{-- IMAGE --}}
                                                 @if ($isImage)
                                                     @php
-                                                        // File ada di disk public → akses langsung via symlink storage
                                                         $imageSrc = asset('storage/' . $filePath);
                                                     @endphp
 
@@ -649,7 +659,7 @@
                                                         </div>
                                                     </div>
 
-                                                    {{-- FILE --}}
+                                                {{-- FILE --}}
                                                 @elseif ($tipeInput === 'file')
                                                     <a href="{{ route('admin.jawaban.file', $jawaban) }}"
                                                         target="_blank" rel="noopener noreferrer"
@@ -666,25 +676,19 @@
 
                                                     </a>
 
-                                                    {{-- TEXT --}}
+                                                {{-- TEXT --}}
                                                 @else
                                                     <div
                                                         class="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2.5">
-
                                                         <p
                                                             class="text-sm text-slate-700 whitespace-pre-line break-words">
                                                             {{ $jawaban->jawaban ?: '-' }}
                                                         </p>
-
                                                     </div>
                                                 @endif
-
                                             </div>
-
                                         </div>
-
                                     </div>
-
                                 </div>
 
                             @empty
@@ -924,7 +928,7 @@
                         </div>
                     </form>
 
-                                        <script>
+                    <script>
                         function cekCatatan(e) {
                             const catatan = document.getElementById('catatan_admin').value.trim();
                             if (!catatan) {

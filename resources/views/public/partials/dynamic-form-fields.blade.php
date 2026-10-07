@@ -11,8 +11,11 @@
 {{-- ===== FORM DINAMIS DARI FORM BUILDER ===== --}}
 @foreach ($fields as $field)
     @php
-        $tipe = strtolower($field->tipe_input);
+        $tipe = strtolower(trim($field->tipe_input ?? 'text'));
         $konfig = $field->konfigurasi ?? [];
+        if (is_string($konfig)) {
+            $konfig = json_decode($konfig, true) ?? [];
+        }
         $help = $konfig['help'] ?? null;
         $placeholder = $konfig['placeholder'] ?? '';
         $options = $field->pilihan_jawaban ?? [];
@@ -21,6 +24,17 @@
         }
         $fieldName = "answers[{$field->id}]";
         $oldValue = old($fieldName);
+
+        // ============================================
+        // FIX: Deteksi field "nama" — paksa jadi text
+        // ============================================
+        $labelLower = strtolower(trim($field->label ?? ''));
+        $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
+        $isNamaField = in_array($labelLower, $namaKeywords, true);
+
+        if ($isNamaField) {
+            $tipe = 'text';
+        }
     @endphp
 
     {{-- Heading --}}
@@ -52,36 +66,41 @@
             <p class="text-xs text-[#7A756D] -mt-1 mb-2">{{ $help }}</p>
         @endif
 
-        {{-- TEXT / EMAIL / NUMBER / TEL --}}
+        {{-- TEXT / TEKS --}}
         @if (in_array($tipe, ['text', 'teks']))
             <input type="text" name="{{ $fieldName }}" value="{{ $oldValue }}"
                 placeholder="{{ $placeholder }}" @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition">
+
+        {{-- EMAIL --}}
         @elseif ($tipe === 'email')
             <input type="email" name="{{ $fieldName }}" value="{{ $oldValue }}"
                 placeholder="{{ $placeholder ?: 'nama@email.com' }}" @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition">
+
+        {{-- NUMBER --}}
         @elseif (in_array($tipe, ['number', 'angka']))
             <input type="number" name="{{ $fieldName }}" value="{{ $oldValue }}"
                 placeholder="{{ $placeholder }}" @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition">
-        @elseif ($tipe === 'textarea' || $tipe === 'teks_panjang')
+
+        {{-- TEXTAREA --}}
+        @elseif (in_array($tipe, ['textarea', 'teks_panjang']))
             <textarea name="{{ $fieldName }}" rows="4" placeholder="{{ $placeholder }}"
                 @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition">{{ $oldValue }}</textarea>
 
-            {{-- DROPDOWN --}}
+        {{-- DROPDOWN --}}
         @elseif (in_array($tipe, ['select', 'dropdown']))
             <select name="{{ $fieldName }}" @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition bg-white">
                 <option value="">— Pilih —</option>
                 @foreach ($options as $opt)
-                    <option value="{{ $opt }}" {{ $oldValue == $opt ? 'selected' : '' }}>{{ $opt }}
-                    </option>
+                    <option value="{{ $opt }}" {{ $oldValue == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                 @endforeach
             </select>
 
-            {{-- RADIO --}}
+        {{-- RADIO --}}
         @elseif ($tipe === 'radio')
             <div class="space-y-2">
                 @foreach ($options as $opt)
@@ -94,7 +113,7 @@
                 @endforeach
             </div>
 
-            {{-- CHECKBOX --}}
+        {{-- CHECKBOX --}}
         @elseif ($tipe === 'checkbox')
             <div class="space-y-2">
                 @foreach ($options as $opt)
@@ -107,18 +126,18 @@
                 @endforeach
             </div>
 
-            {{-- FILE --}}
+        {{-- FILE --}}
         @elseif ($tipe === 'file')
             <input type="file" name="{{ $fieldName }}" @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition file:mr-3 file:rounded file:border-0 file:bg-[#C28E27] file:px-3 file:py-1.5 file:text-white file:text-xs file:font-bold">
 
-            {{-- DATE --}}
+        {{-- DATE --}}
         @elseif ($tipe === 'date')
             <input type="date" name="{{ $fieldName }}" value="{{ $oldValue }}"
                 @if ($field->wajib) required @endif
                 class="w-full border border-[#CDC5BC]/40 rounded-lg px-4 py-2.5 focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none transition">
 
-            {{-- FALLBACK --}}
+        {{-- FALLBACK --}}
         @else
             <input type="text" name="{{ $fieldName }}" value="{{ $oldValue }}"
                 placeholder="{{ $placeholder }}" @if ($field->wajib) required @endif
@@ -130,6 +149,19 @@
         @enderror
     </div>
 @endforeach
+
+{{-- TOMBOL SUBMIT --}}
+@if ($isPreview)
+    <div class="bg-amber-50 border-2 border-dashed border-amber-300 rounded-xl p-4 text-center">
+        <p class="text-sm font-semibold text-amber-800">Mode Preview — Tombol Submit Dinonaktifkan</p>
+        <p class="text-xs text-amber-700 mt-1">Ini hanya tampilan. User akan melihat tombol aktif di halaman publik.</p>
+    </div>
+@else
+    <button type="submit"
+        class="w-full bg-[#C28E27] hover:bg-[#a97b1f] text-white font-bold py-3.5 rounded-lg transition">
+        Kirim Pendaftaran
+    </button>
+@endif
 
 {{-- ===== TOMBOL SUBMIT ===== --}}
 @if ($isPreview)

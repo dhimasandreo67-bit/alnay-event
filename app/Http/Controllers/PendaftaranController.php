@@ -58,7 +58,6 @@ class PendaftaranController extends Controller
                 ->with('error', 'Kamu sudah pernah mendaftar di event ini.');
         }
 
-        // 3. Validasi nama pendaftaran
         // 3. Nama pendaftaran otomatis dari akun user (Google)
         $namaDefault = $user->nama_custom ?: $user->nama;
 
@@ -70,15 +69,28 @@ class PendaftaranController extends Controller
 
         // 4. Bangun aturan validasi dari pertanyaan dinamis
         $questions = $event->pertanyaans()->get();
+
         $rules = [
             'answers' => ['nullable', 'array'],
         ];
 
         foreach ($questions as $question) {
-            $type = strtolower($question->tipe_input);
+            $type = strtolower(trim($question->tipe_input ?? 'text'));
 
             if (in_array($type, ['heading', 'subheading'], true)) {
                 continue;
+            }
+
+            // ============================================
+            // FIX: Deteksi field "nama" — paksa jadi string
+            // biar gak divalidasi sebagai email
+            // ============================================
+            $labelLower = strtolower(trim($question->label ?? ''));
+            $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
+            $isNamaField = in_array($labelLower, $namaKeywords, true);
+
+            if ($isNamaField) {
+                $type = 'text';
             }
 
             $field = "answers.{$question->id}";
@@ -101,7 +113,7 @@ class PendaftaranController extends Controller
             } elseif ($type === 'checkbox') {
                 $fieldRules[] = 'array';
                 if (! empty($cleanOptions)) {
-                    $rules["{$field}. *"] = ['string', Rule::in($cleanOptions)];
+                    $rules["{$field}.*"] = ['string', Rule::in($cleanOptions)];
                 }
             } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
                 if (! empty($cleanOptions)) {
@@ -117,47 +129,48 @@ class PendaftaranController extends Controller
             $rules[$field] = $fieldRules;
         }
 
-            $data = $request->validate($rules);
-    \Log::info('=== DEBUG JAWABAN ===', [
-        'request_all' => $request->except(['_token']),
-        'data_answers' => $data['answers'] ?? 'NULL',
-        'rules_keys' => array_keys($rules),
-    ]);
+        $data = $request->validate($rules);
 
-        // 5. Simpan peserta + jawaban
-            DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
-        $peserta = Peserta::create([
-            'event_id'         => $event->id,
-            'user_id'          => $user->id,
-            'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
-            'status'           => 'menunggu_review',
+        \Log::info('=== DEBUG JAWABAN ===', [
+            'request_all' => $request->except(['_token']),
+            'data_answers' => $data['answers'] ?? 'NULL',
+            'rules_keys' => array_keys($rules),
         ]);
 
-        $answers = $data['answers'] ?? [];
-
-        foreach ($questions as $question) {
-            if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
-                continue;
-            }
-
-            $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
-            $answer ??= $answers[$question->id] ?? null;
-
-            if ($answer === null || $answer === '') {
-                continue;
-            }
-
-            if (is_array($answer)) {
-                $answer = json_encode($answer, JSON_THROW_ON_ERROR);
-            }
-
-            JawabanPeserta::create([
-                'peserta_id'    => $peserta->id,
-                'pertanyaan_id' => $question->id,
-                'jawaban'       => $answer,
+        // 5. Simpan peserta + jawaban
+        DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
+            $peserta = Peserta::create([
+                'event_id'         => $event->id,
+                'user_id'          => $user->id,
+                'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
+                'status'           => 'menunggu_review',
             ]);
-        }
-    });
+
+            $answers = $data['answers'] ?? [];
+
+            foreach ($questions as $question) {
+                if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
+                    continue;
+                }
+
+                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
+                $answer ??= $answers[$question->id] ?? null;
+
+                if ($answer === null || $answer === '') {
+                    continue;
+                }
+
+                if (is_array($answer)) {
+                    $answer = json_encode($answer, JSON_THROW_ON_ERROR);
+                }
+
+                JawabanPeserta::create([
+                    'peserta_id'    => $peserta->id,
+                    'pertanyaan_id' => $question->id,
+                    'jawaban'       => $answer,
+                ]);
+            }
+        });
 
         // 6. Redirect dengan flash message
         return redirect()
@@ -218,32 +231,32 @@ class PendaftaranController extends Controller
     }
 
     public function daftarPeserta($id)
-{
-    $pesertas = Peserta::with('user:id,nama,foto_url,foto_custom')
-        ->where('event_id', $id)
-        ->where('status', 'diterima')
-        ->get(['id', 'event_id', 'user_id']);
+    {
+        $pesertas = Peserta::with('user:id,nama,foto_url,foto_custom')
+            ->where('event_id', $id)
+            ->where('status', 'diterima')
+            ->get(['id', 'event_id', 'user_id']);
 
-    return response()->json($pesertas);
-}
-
-    public function show(Request $request, $id)
-{
-    $peserta = Peserta::with([
-        'user:id,nama,foto_url,foto_custom',   // ← foto_custom ditambah
-        'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
-        'jawabans.pertanyaan:id,label,tag_tampilan,tipe_input',   // ← tipe_input ditambah
-    ])
-        ->select('id', 'event_id', 'user_id', 'galeri_foto')
-        ->findOrFail($id);
-
-    if ($request->wantsJson() || $request->ajax()) {
-        return response()->json($peserta);
+        return response()->json($pesertas);
     }
 
-    return view('voting.index', [
-        'pesertaId' => $id,
-        'peserta' => $peserta,
-    ]);
-}
+    public function show(Request $request, $id)
+    {
+        $peserta = Peserta::with([
+            'user:id,nama,foto_url,foto_custom',
+            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
+            'jawabans.pertanyaan:id,label,tag_tampilan,tipe_input',
+        ])
+            ->select('id', 'event_id', 'user_id', 'galeri_foto')
+            ->findOrFail($id);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($peserta);
+        }
+
+        return view('voting.index', [
+            'pesertaId' => $id,
+            'peserta' => $peserta,
+        ]);
+    }
 }

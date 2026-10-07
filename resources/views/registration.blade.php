@@ -18,6 +18,7 @@
 
     <main class="max-w-3xl mx-auto px-6 py-8">
 
+        {{-- ================== TOMBOL KEMBALI ================== --}}
         <div class="mb-6">
             @php
                 $backLabel = $isPreview ? 'Kembali ke Form Builder' : 'Kembali';
@@ -42,6 +43,7 @@
             @endif
         </div>
 
+        {{-- ================== MODE PREVIEW (ADMIN) ================== --}}
         @if ($isPreview)
             <div class="mb-6 bg-amber-50 border-2 border-amber-300 rounded-xl p-4 flex items-start gap-3">
                 <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
@@ -61,6 +63,7 @@
             </div>
         @endif
 
+        {{-- ================== JUDUL EVENT ================== --}}
         <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-6 mb-6">
             <h1 class="text-2xl font-bold text-black mb-1">{{ $event->nama }}</h1>
             <p class="text-sm text-[#4B463F]">Isi formulir di bawah untuk mendaftar event ini.</p>
@@ -91,7 +94,6 @@
 
         {{-- ================== MODE FORM ================== --}}
         @else
-
             @if (session('error'))
                 <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 mb-6 text-sm">
                     {{ session('error') }}
@@ -142,6 +144,7 @@
             @endphp
 
             @if ($pendaftaranDitutup)
+                {{-- ================== PENDAFTARAN DITUTUP ================== --}}
                 <div class="bg-white border border-[#CDC5BC]/30 rounded-xl p-8 text-center">
                     <div class="w-16 h-16 rounded-full bg-[#FAF3E7] flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-[#7F5700]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -154,8 +157,8 @@
                     <p class="text-sm text-[#4B463F]">{{ $alasanTutup }}</p>
                 </div>
             @else
-                <form method="POST"
-                    action="{{ route('public.registration.store', $event) }}"
+                {{-- ================== FORM PENDAFTARAN ================== --}}
+                <form method="POST" action="{{ route('public.registration.store', $event) }}"
                     enctype="multipart/form-data">
                     @csrf
 
@@ -165,18 +168,19 @@
 
                     @forelse ($pertanyaans as $q)
                         @php
-                            $tipe = strtolower($q->tipe_input);
+                            $tipe = strtolower(trim($q->tipe_input ?? 'text'));
                             $config = is_string($q->konfigurasi)
-                                ? (json_decode($q->konfigurasi, true) ?? [])
-                                : ($q->konfigurasi ?? []);
+                                ? json_decode($q->konfigurasi, true) ?? []
+                                : $q->konfigurasi ?? [];
                             $options = is_string($q->pilihan_jawaban)
-                                ? (json_decode($q->pilihan_jawaban, true) ?? [])
-                                : ($q->pilihan_jawaban ?? []);
+                                ? json_decode($q->pilihan_jawaban, true) ?? []
+                                : $q->pilihan_jawaban ?? [];
                             $help = $config['help'] ?? '';
                             $placeholder = $config['placeholder'] ?? '';
                             $isRequired = $q->wajib ?? false;
                         @endphp
 
+                        {{-- ========== HEADING ========== --}}
                         @if ($tipe === 'heading')
                             <div class="mt-6 mb-3">
                                 <h2 class="font-display text-2xl font-bold text-[#15233d]">
@@ -189,6 +193,7 @@
                             @continue
                         @endif
 
+                        {{-- ========== SUBHEADING ========== --}}
                         @if ($tipe === 'subheading')
                             <div class="mt-5 mb-2">
                                 <p class="text-sm text-gray-600">
@@ -213,8 +218,33 @@
                                 <p class="mb-2 text-xs text-gray-500">{{ $help }}</p>
                             @endif
 
-                            @if ($tipe === 'text' || $tipe === 'email' || $tipe === 'number')
-                                <input type="{{ $tipe === 'number' ? 'text' : $tipe }}"
+                            @php
+                                // ============================================
+                                // LOGIKA TYPE INPUT — WHITELIST + PAKSA NAMA TEXT
+                                // ============================================
+
+                                // 1. Deteksi field "nama" — paksa jadi text
+                                $labelLower = strtolower(trim($q->label));
+                                $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
+                                $isNamaField = in_array($labelLower, $namaKeywords, true);
+
+                                // 2. Whitelist type HTML yang diizinkan
+                                $allowedTypes = ['text', 'email', 'number', 'tel', 'url', 'date', 'time'];
+
+                                // 3. Tentukan input type final
+                                $inputType = $isNamaField
+                                    ? 'text'
+                                    : (in_array($tipe, $allowedTypes, true) ? $tipe : 'text');
+
+                                // 4. Flag — apakah field ini input single (bukan textarea/select/file/dll)
+                                $isSingleInput =
+                                    in_array($tipe, ['text', 'email', 'number', 'tel', 'url', 'date', 'time'], true) ||
+                                    $isNamaField;
+                            @endphp
+
+                            {{-- ========== SINGLE INPUT (text / email / number / tel / url / date / time) ========== --}}
+                            @if ($isSingleInput)
+                                <input type="{{ $inputType }}"
                                     id="q-{{ $q->id }}"
                                     name="answers[{{ $q->id }}]"
                                     value="{{ old("answers.{$q->id}") }}"
@@ -222,6 +252,7 @@
                                     @if ($isRequired) required @endif
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-1 focus:ring-[#c99a32]">
 
+                            {{-- ========== TEXTAREA ========== --}}
                             @elseif ($tipe === 'textarea')
                                 <textarea id="q-{{ $q->id }}"
                                     name="answers[{{ $q->id }}]"
@@ -230,6 +261,7 @@
                                     @if ($isRequired) required @endif
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-1 focus:ring-[#c99a32]">{{ old("answers.{$q->id}") }}</textarea>
 
+                            {{-- ========== SELECT / DROPDOWN ========== --}}
                             @elseif ($tipe === 'select' || $tipe === 'dropdown')
                                 <select id="q-{{ $q->id }}"
                                     name="answers[{{ $q->id }}]"
@@ -244,6 +276,7 @@
                                     @endforeach
                                 </select>
 
+                            {{-- ========== RADIO ========== --}}
                             @elseif ($tipe === 'radio')
                                 <div class="space-y-2">
                                     @foreach ((array) $options as $opt)
@@ -259,6 +292,7 @@
                                     @endforeach
                                 </div>
 
+                            {{-- ========== CHECKBOX ========== --}}
                             @elseif ($tipe === 'checkbox')
                                 <div class="space-y-2">
                                     @foreach ((array) $options as $opt)
@@ -273,6 +307,7 @@
                                     @endforeach
                                 </div>
 
+                            {{-- ========== FILE ========== --}}
                             @elseif ($tipe === 'file')
                                 <input type="file"
                                     id="q-{{ $q->id }}"
@@ -280,12 +315,15 @@
                                     @if ($isRequired) required @endif
                                     class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none">
 
+                            {{-- ========== FALLBACK — apapun yang gak dikenal → text ========== --}}
                             @else
                                 <input type="text"
                                     id="q-{{ $q->id }}"
                                     name="answers[{{ $q->id }}]"
                                     value="{{ old("answers.{$q->id}") }}"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none">
+                                    placeholder="{{ $placeholder ?: '' }}"
+                                    @if ($isRequired) required @endif
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-1 focus:ring-[#c99a32]">
                             @endif
 
                             @error("answers.{$q->id}")
@@ -300,6 +338,7 @@
                         </div>
                     @endforelse
 
+                    {{-- ========== TOMBOL SUBMIT ========== --}}
                     <div class="mt-6 flex justify-end">
                         <button type="submit"
                             @if ($isPreview) disabled @endif
@@ -313,6 +352,7 @@
 
     </main>
 
+    {{-- ========== SCRIPT PREVIEW ADMIN ========== --}}
     @if ($isPreview)
         <script>
             function closePreviewTab() {
@@ -327,6 +367,7 @@
         </script>
     @endif
 
+    {{-- ========== SCRIPT GO BACK (USER) ========== --}}
     @unless ($isPreview)
         <script>
             function goBack() {

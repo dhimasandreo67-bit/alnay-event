@@ -215,12 +215,39 @@ class PendaftaranController extends Controller
     }
 
     public function show($id)
-    {
-        $peserta = Peserta::with(['user', 'event', 'jawaban.pertanyaan', 'pembayaran'])
-            ->findOrFail($id);
+{
+    $peserta = Peserta::with([
+        'user',
+        'event',
+        'pembayaran',
+        'jawabans.pertanyaan',
+    ])->findOrFail($id);
 
-        return view('admin.peserta.show', compact('peserta'));
-    }
+    // ============================================
+    // FILTER: skip field "nama" & heading/subheading
+    // ============================================
+    $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
+
+    $peserta->setRelation(
+        'jawabans',
+        $peserta->jawabans
+            ->filter(function ($jawaban) use ($namaKeywords) {
+                // Skip heading / subheading
+                if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
+                    return false;
+                }
+                // Skip field "nama"
+                $label = strtolower(trim($jawaban->pertanyaan?->label ?? ''));
+                if (in_array($label, $namaKeywords, true)) {
+                    return false;
+                }
+                return true;
+            })
+            ->values()
+    );
+
+    return view('admin.peserta.show', compact('peserta'));
+}
 
     public function updateStatus(Request $request, $id)
     {

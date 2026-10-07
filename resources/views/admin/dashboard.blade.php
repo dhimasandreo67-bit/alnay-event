@@ -708,10 +708,33 @@
                                                     @endif
                                                 </li>
                                                 <li><strong>Email:</strong> {{ $peserta->emailTampil() }}</li>
-                                                @foreach ($peserta->jawabans as $jawaban)
-                                                    @continue(in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true))
+                                                                                                @foreach ($peserta->jawabans as $jawaban)
+                                                    @php
+                                                        // Skip heading / subheading
+                                                        if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
+                                                            continue;
+                                                        }
+
+                                                        // ============================================
+                                                        // FIX: Skip field "nama" — udah tampil di header
+                                                        // ============================================
+                                                        $labelLower = strtolower(trim($jawaban->pertanyaan?->label ?? ''));
+                                                        $namaKeywords = [
+                                                            'nama',
+                                                            'nama lengkap',
+                                                            'nama pendaftaran',
+                                                            'nama tampilan',
+                                                            'name',
+                                                        ];
+
+                                                        if (in_array($labelLower, $namaKeywords, true)) {
+                                                            continue;
+                                                        }
+                                                    @endphp
+
                                                     <li>
                                                         <strong>{{ $jawaban->pertanyaan?->label ?? 'Jawaban' }}:</strong>
+
                                                         @if ($jawaban->pertanyaan?->tipe_input === 'file')
                                                             <a href="{{ route('admin.jawaban.file', $jawaban) }}"
                                                                 target="_blank">Lihat file</a>
