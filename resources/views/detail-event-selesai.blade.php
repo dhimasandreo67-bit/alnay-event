@@ -214,13 +214,6 @@
             $pemenangArr[] = $k;
         }
 
-        $peringkatLainArr = [];
-        foreach (array_slice($kandidat, 3, 3) as $i => $k) {
-            $k['peringkat'] = sprintf('%02d', $i + 4);
-            $k['inisial'] = $inisial($k['nama']);
-            $peringkatLainArr[] = $k;
-        }
-
         $jumlahKandidat = count($kandidat);
     @endphp
 
@@ -391,16 +384,24 @@
                     </p>
                 </div>
 
-                @if (count($pemenangArr) > 0)
+                                @if (count($pemenangArr) > 0)
                     {{-- KARTU TIGA BESAR --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 items-end">
                         @foreach ($pemenangArr as $p)
-                            <div
-                                class="reveal-up delay-{{ $p['juara'] + 2 }} group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl
-                            {{ $p['juara'] == 1 ? 'border-2 border-[#c99a32] shadow-md sm:order-2' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40 ' . ($p['juara'] == 2 ? 'sm:order-1' : 'sm:order-3') }}">
+                            @php
+                                $juara = $p['juara'];
+                                $order = $juara == 1 ? 'sm:order-2' : ($juara == 2 ? 'sm:order-1' : 'sm:order-3');
+                                $border =
+                                    $juara == 1
+                                        ? 'border-2 border-[#c99a32] shadow-md'
+                                        : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
+                                $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]';
+                            @endphp
 
-                                <div
-                                    class="relative overflow-hidden {{ $p['juara'] == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]' }}">
+                            <div
+                                class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }} {{ $order }}">
+
+                                <div class="relative overflow-hidden {{ $height }}">
                                     @if ($p['foto'])
                                         <img src="{{ $p['foto'] }}" alt="{{ $p['nama'] }}"
                                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -427,13 +428,13 @@
                                     {{-- Badge juara --}}
                                     <span
                                         class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
-                                        @if ($p['juara'] == 1)
+                                        @if ($juara == 1)
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                                                 <path
                                                     d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                                             </svg>
                                         @endif
-                                        Juara {{ $p['juara'] }}
+                                        Juara {{ $juara }}
                                     </span>
                                 </div>
 
@@ -452,7 +453,7 @@
                                         <span class="text-[11px] text-[#8a8178]">Vote</span>
                                     </div>
 
-                                                                        <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
+                                    <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
                                         <div class="progress-fill h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full"
                                             style="width: {{ $p['persen'] }}%"></div>
                                     </div>
@@ -460,46 +461,6 @@
                             </div>
                         @endforeach
                     </div>
-
-                    @if (count($peringkatLainArr) > 0)
-                        {{-- PERINGKAT 4-6 --}}
-                        <div
-                            class="reveal-up delay-4 mt-5 bg-white rounded-2xl border border-[#ece5d7] shadow-sm overflow-hidden divide-y divide-[#f4f1e9]">
-                            <p class="text-[10px] uppercase tracking-widest text-[#8a8178] font-bold">Peringkat
-                                Lanjutan</p>
-                        </div>
-
-                        @foreach ($peringkatLainArr as $r)
-                            <div
-                                class="group flex items-center gap-3 px-5 py-3.5 hover:bg-[#fdfcf9] transition-colors duration-200">
-                                <span class="font-display text-[15px] font-bold text-[#c99a32] w-7 shrink-0">
-                                    {{ $r['peringkat'] }}
-                                </span>
-
-                                <div
-                                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] text-[#c99a32] text-[12px] font-bold flex items-center justify-center shrink-0 border border-[#eee5d2]">
-                                    {{ $r['inisial'] }}
-                                </div>
-
-                                <p class="text-[13px] font-bold text-[#0a1526] w-40 truncate">{{ $r['nama'] }}
-                                </p>
-
-                                <span
-                                    class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">
-                                    {{ $r['asal'] }}
-                                </span>
-
-                                <div class="flex-1 h-1.5 bg-[#f0ece2] rounded-full mx-2 overflow-hidden">
-                                    <div class="progress-fill h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full"
-                                        style="width: {{ $r['persen'] }}%"></div>
-                                </div>
-
-                                <span
-                                    class="font-bold text-[13px] text-[#0a1526] whitespace-nowrap tabular-nums">{{ $r['persen'] }}%</span>
-                            </div>
-                        @endforeach
-                        </div>
-                    @endif
                 @else
                     <div class="bg-white rounded-2xl border border-dashed border-[#e5e1db] p-12 text-center mt-4">
                         <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#fdf8ec] flex items-center justify-center">
@@ -513,7 +474,7 @@
                         <p class="mt-1 text-xs text-[#8a8178]">Event ini belum memiliki peserta yang diterima.</p>
                     </div>
                 @endif
-            </section>
+        </section>
         @endif
 
         {{-- DAFTAR KANDIDAT --}}
@@ -547,9 +508,13 @@
 
             @if (count($kandidat) > 0)
                 <div id="gridKandidat" class="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
-                    @foreach ($kandidat as $k)
-                        <div class="kandidat-card reveal-up delay-{{ (($loop->iteration - 1) % 4) + 1 }} group bg-white rounded-2xl overflow-hidden border border-[#ece5d7] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[#c99a32]/40"
-                            data-nama="{{ strtolower($k['nama']) }}">
+                    @foreach ($kandidat as $index => $k)
+                        @php
+                            $delayClass = 'delay-' . (($index % 4) + 1);
+                            $isHidden = $index >= 8;
+                        @endphp
+                        <div class="kandidat-card {{ $isHidden ? 'hidden' : '' }} reveal-up {{ $delayClass }} group bg-white rounded-2xl overflow-hidden border border-[#ece5d7] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[#c99a32]/40"
+                            data-nama="{{ strtolower($k['nama']) }}" data-index="{{ $index }}">
                             <div
                                 class="relative h-[180px] md:h-[200px] overflow-hidden bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0]">
                                 @if ($k['foto'])
@@ -585,6 +550,24 @@
                         </div>
                     @endforeach
                 </div>
+                {{-- Empty state kalau search gak ketemu --}}
+
+                {{-- TOMBOL LIHAT SEMUA — muncul kalau kandidat > 8 --}}
+                @if (count($kandidat) > 8)
+                    <div class="mt-5 text-center" id="wrapBtnLihatSemua">
+                        <button type="button" id="btnLihatSemua"
+                            class="inline-flex items-center gap-2 rounded-full border border-[#c99a32]/40 bg-white px-6 py-3 text-xs font-semibold text-[#a37b2a] shadow-sm transition-all duration-300 hover:border-[#c99a32] hover:bg-[#faf8f2] hover:shadow-md">
+                            <span id="btnLihatSemuaText">
+                                Lihat Semua {{ count($kandidat) }} Kandidat
+                            </span>
+                            <svg id="btnLihatSemuaIcon" class="h-3.5 w-3.5 transition-transform duration-300"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                @endif
+
                 {{-- Empty state kalau search gak ketemu --}}
                 <div id="emptySearch"
                     class="hidden mt-4 rounded-2xl border border-dashed border-[#ddd8cc] bg-white p-10 text-center">
@@ -622,23 +605,84 @@
     @include('partials.footer')
 
     <script>
-        // Search kandidat
+        // ============================================
+        // SEARCH + LIHAT SEMUA — TOGGLE
+        // ============================================
         (function() {
             var input = document.getElementById('searchKandidat');
             var cards = document.querySelectorAll('.kandidat-card');
             var empty = document.getElementById('emptySearch');
+            var btn = document.getElementById('btnLihatSemua');
+            var btnText = document.getElementById('btnLihatSemuaText');
+            var btnIcon = document.getElementById('btnLihatSemuaIcon');
+            var wrapBtn = document.getElementById('wrapBtnLihatSemua');
 
             if (!input) return;
 
+            var isExpanded = false;
+            var batasAwal = 8;
+            var totalKandidat = cards.length;
+
+            // === Toggle Lihat Semua ===
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    isExpanded = !isExpanded;
+                    var q = input.value.toLowerCase().trim();
+
+                    cards.forEach(function(card) {
+                        var idx = parseInt(card.dataset.index);
+
+                        if (q.length > 0) return;
+
+                        if (isExpanded) {
+                            card.classList.remove('hidden');
+                        } else {
+                            if (idx >= batasAwal) {
+                                card.classList.add('hidden');
+                            }
+                        }
+                    });
+
+                    if (isExpanded) {
+                        btnText.textContent = 'Tampilkan Lebih Sedikit';
+                        btnIcon.style.transform = 'rotate(180deg)';
+                    } else {
+                        btnText.textContent = 'Lihat Semua ' + totalKandidat + ' Kandidat';
+                        btnIcon.style.transform = 'rotate(0)';
+                    }
+                });
+            }
+
+            // === Search ===
             input.addEventListener('input', function() {
                 var q = this.value.toLowerCase().trim();
                 var visible = 0;
+                var isSearching = q.length > 0;
 
                 cards.forEach(function(card) {
+                    var idx = parseInt(card.dataset.index);
                     var match = card.dataset.nama.includes(q);
-                    card.style.display = match ? '' : 'none';
-                    if (match) visible++;
+
+                    if (isSearching) {
+                        if (match) {
+                            card.classList.remove('hidden');
+                            visible++;
+                        } else {
+                            card.classList.add('hidden');
+                        }
+                    } else {
+                        if (idx >= batasAwal && !isExpanded) {
+                            card.classList.add('hidden');
+                        } else {
+                            card.classList.remove('hidden');
+                        }
+                        visible++;
+                    }
                 });
+
+                if (wrapBtn) {
+                    wrapBtn.style.display = isSearching ? 'none' : '';
+                }
 
                 if (empty) {
                     empty.classList.toggle('hidden', visible > 0);
