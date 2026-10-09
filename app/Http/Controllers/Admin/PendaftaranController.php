@@ -86,7 +86,7 @@ class PendaftaranController extends Controller
             $pesertaData = [
                 'user_id'          => $user->id,
                 'nama_pendaftaran' => $data['nama'],
-                'status'           => 'diterima',
+                'status'           => 'menunggu_review',
             ];
 
             // Tambah updated_at kalau kolomnya ada
