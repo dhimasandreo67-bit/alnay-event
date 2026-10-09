@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-
     <title>Leaderboard Suara Voting | ALNAY.ID</title>
-
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet"
@@ -37,17 +35,7 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
                     Live
                 </span>
-
             </div>
-
-            <button
-                onclick="toggleAutoRefresh()"
-                id="btn-refresh"
-                class="px-3 py-2 bg-white border border-[#e3ded6] rounded-lg text-[12px] font-semibold hover:bg-[#faf8f4] transition"
-            >
-                ⏸️ Jeda Live Update
-            </button>
-
         </div>
 
         <p class="text-[#73716c] text-[12px] mb-5">
@@ -394,60 +382,6 @@
     </main>
 
 </div>
-
-
-<script>
-    let autoRefresh = true;
-    let refreshTimer = null;
-
-    const refreshButton = document.getElementById('btn-refresh');
-
-    function startAutoRefresh() {
-        clearTimeout(refreshTimer);
-
-        refreshTimer = setTimeout(() => {
-
-            if (autoRefresh) {
-                window.location.reload();
-            }
-
-        }, 20000);
-    }
-
-    function stopAutoRefresh() {
-        clearTimeout(refreshTimer);
-        refreshTimer = null;
-    }
-
-    function toggleAutoRefresh() {
-
-        autoRefresh = !autoRefresh;
-
-        if (!refreshButton) {
-            return;
-        }
-
-        if (autoRefresh) {
-
-            refreshButton.innerHTML = '⏸️ Jeda Live Update';
-
-            startAutoRefresh();
-
-        } else {
-
-            refreshButton.innerHTML = '▶️ Lanjutkan Update';
-
-            stopAutoRefresh();
-
-        }
-    }
-
-    startAutoRefresh();
-
-    window.addEventListener('beforeunload', () => {
-        stopAutoRefresh();
-    });
-</script>
 
 </body>
 </html>
