@@ -568,7 +568,8 @@ class VotingController extends Controller
     public function voters(?Event $event = null): View
     {
         $event ??= Event::query()->latest('id')->first();
-
+        
+        // Query voting yang sudah settlement
         $votingQuery = Voting::where('event_id', $event?->id ?? 0)
             ->where('status_midtrans', 'settlement')
             ->with(['peserta.user', 'voter']);
@@ -591,6 +592,10 @@ class VotingController extends Controller
             ->get();
 
         $pesertaList = Peserta::where('event_id', $event?->id ?? 0)
+            ->where('status', 'diterima')
+            ->whereHas('pembayaran', function ($q) {
+                $q->where('status_midtrans', 'settlement');
+            })
             ->with('user:id,nama')
             ->orderBy('user_id')
             ->get(['id', 'user_id']);
@@ -739,20 +744,28 @@ class VotingController extends Controller
      */
     public function destroy($id)
     {
-        $voting = \App\Models\Voting::findOrFail($id);
-
-        DB::transaction(function () use ($voting) {
+        try {
+            $voting = Voting::findOrFail($id);
+            
             // Kurangi total_vote peserta
             if ($voting->peserta) {
                 $voting->peserta->decrement('total_vote', $voting->jumlah_vote);
             }
-
+            
             $voting->delete();
-        });
-
-        return redirect()
-            ->back()
-            ->with('success', 'Data voting berhasil dihapus.');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Vote berhasil dihapus.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Delete Vote Failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus vote: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -778,7 +791,7 @@ class VotingController extends Controller
                 'event_id'          => $event->id,
                 'peserta_id'        => $peserta->id,
                 'user_id'           => null,
-                'nama_voter'        => $data['nama_voter'] ?? 'Juri',          
+                'nama_voter'        => $data['nama_voter'] ?? 'Seseorang',          
                 'email_voter'       => $data['email_voter'] ?? null,            
                 'nama_tampilan'     => $data['nama_voter'] ?? 'Nilai Juri',     
                 'jumlah_vote'       => $data['jumlah_vote'],
