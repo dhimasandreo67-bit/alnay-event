@@ -560,6 +560,7 @@
             'menungguReview' => $menungguReview,
         ])
         @include('admin.partials.header', ['variant' => 'dashboard', 'event' => $event])
+        @include('admin.partials.pwa-head')
 
         <main class="main">
             <section class="content">
@@ -708,7 +709,7 @@
                                                     @endif
                                                 </li>
                                                 <li><strong>Email:</strong> {{ $peserta->emailTampil() }}</li>
-                                                                                                @foreach ($peserta->jawabans as $jawaban)
+                                                    @foreach ($peserta->jawabans as $jawaban)
                                                     @php
                                                         // Skip heading / subheading
                                                         if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
