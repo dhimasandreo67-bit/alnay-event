@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="id">
 
     <head>
@@ -217,11 +217,24 @@
                 min-height: calc(100vh - 115px)
             }
 
-            .library {
-                background: #faf9f7;
-                border-right: 1px solid var(--line);
-                padding: 18px 12px
-            }
+            .builder {
+    --hdr: 75px;  /* satu-satunya angka jarak atas, atur di sini saja */
+}
+
+.library {
+    background: #faf9f7;
+    border-right: 1px solid var(--line);
+    padding: 0;
+}
+
+.library-scroll {
+    position: sticky;
+    top: var(--hdr);
+    height: calc(100vh - var(--hdr));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 12px;
+}
 
             .pane-title {
                 display: flex;
@@ -645,15 +658,17 @@
 
             <main class="workspace">
                 <div class="builder">
-                    <aside class="library" style="padding-top: 50px">
-                        <p class="pane-title">Fields <span class="count">10 Komponen</span></p>
+                    <aside class="library">
+    <div class="library-scroll">
+        <p class="pane-title">Fields <span class="count">10 Komponen</span></p>
 
-                        @foreach ([['text', 'Judul', 'Header / Nama Section'], ['textarea', 'Sub Judul', 'Deskripsi teks panduan'], ['text', 'Text', 'Input teks satu baris'], ['text', 'Email', 'Validasi alamat email'], ['number', 'Angka', 'WhatsApp, Usia, Ukuran'], ['textarea', 'Teks Panjang', 'Textarea / Catatan Khusus'], ['select', 'Dropdown', 'Pilihan Kategori Lomba'], ['radio', 'Radio Option', 'Pilihan tunggal opsional'], ['file', 'Upload Gambar', 'Foto Peserta / Kostum'], ['file', 'Upload Dokumen', 'KTP / KK / Portofolio (PDF)']] as $item)
-                            <div class="field-item" draggable="true" data-type="{{ $item[0] }}" data-label="{{ $item[1] }}" data-hint="{{ $item[2] }}">
-                                <span class="drag">⠿</span><strong>{{ $item[1] }}</strong><small>{{ $item[2] }}</small>
-                            </div>
-                        @endforeach
-                    </aside>
+        @foreach ([['text', 'Judul', 'Header / Nama Section'], ['textarea', 'Sub Judul', 'Deskripsi teks panduan'], ['text', 'Text', 'Input teks satu baris'], ['text', 'Email', 'Validasi alamat email'], ['number', 'Angka', 'WhatsApp, Usia, Ukuran'], ['textarea', 'Teks Panjang', 'Textarea / Catatan Khusus'], ['select', 'Dropdown', 'Pilihan Kategori Lomba'], ['radio', 'Radio Option', 'Pilihan tunggal opsional'], ['file', 'Upload Gambar', 'Foto Peserta / Kostum'], ['file', 'Upload Dokumen', 'KTP / KK / Portofolio (PDF)']] as $item)
+            <div class="field-item" draggable="true" data-type="{{ $item[0] }}" data-label="{{ $item[1] }}" data-hint="{{ $item[2] }}">
+                <span class="drag">⠿</span><strong>{{ $item[1] }}</strong><small>{{ $item[2] }}</small>
+            </div>
+        @endforeach
+    </div>
+</aside>
 
                     <section class="canvas">
                         <div class="canvas-bar"><span>CANVAS &nbsp;</span></div>
@@ -1168,7 +1183,7 @@
         </script>
 
         @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
-        @include('partials.swal')
+        @include('admin.partials.pwa-head')
     </body>
 
     </html>
