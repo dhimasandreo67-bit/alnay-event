@@ -65,6 +65,9 @@ class Event extends Model
         'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
         'form_fields' => 'array',
+        'pendaftaran_dibuka' => 'boolean',
+        'pembukaan_pendaftaran_tanggal' => 'datetime',
+        'batas_pendaftaran_tanggal' => 'datetime',
     ];
 
     // protected $appends = ['status', 'status_label'];
