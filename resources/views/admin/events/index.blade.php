@@ -13,6 +13,7 @@
 </head>
 
 <body class="bg-cream text-ink font-sans text-[13px]">
+    @include('admin.partials.pwa-head')
     <div class="flex min-h-screen w-full">
         <main class="flex-1 min-w-0 ml-[235px]">
             {{-- HEADER --}}
