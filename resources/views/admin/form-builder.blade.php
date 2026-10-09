@@ -37,6 +37,10 @@
                 min-height: 100vh
             }
 
+            .field-item * {
+                pointer-events: none;
+            }
+
             .side {
                 width: 220px;
                 background: var(--dark);
@@ -220,7 +224,13 @@
             .library {
                 background: #faf9f7;
                 border-right: 1px solid var(--line);
-                padding: 18px 12px
+                padding: 18px 12px;
+                position: sticky;
+                top: 0;
+                align-self: start;
+                max-height: 100vh;
+                overflow-y: auto;
+                padding-top: 50px;
             }
 
             .pane-title {
@@ -279,10 +289,9 @@
 
             .canvas {
                 padding: 60px 30px 70px;
-                overflow-y: auto;
-                overflow-x: hidden;
                 background: #f5f4f1;
                 min-width: 0;
+                overflow: visible;
             }
 
             .canvas-bar {
@@ -323,7 +332,7 @@
                 cursor: text
             }
 
-            .question-head > div:first-child {
+            .question-head>div:first-child {
                 min-width: 0;
                 flex: 1;
             }
@@ -631,9 +640,12 @@
                 <div class="brand">ALNAY<span>.ID</span></div>
                 <div class="nav">
                     <p class="section">Event & Peserta</p>
-                    <a href="{{ route('admin.dashboard') }}"><span class="step">1</span><span>Buat Event Baru</span></a>
-                    <a class="active" href="{{ route('admin.form-builder', $event?->id) }}"><span class="step">2</span><span>Buat Form Pendaftaran Event</span></a>
-                    <a href="#"><span class="step">3</span><span>Verifikasi Pendaftaran Peserta</span><b class="badge">6</b></a>
+                    <a href="{{ route('admin.dashboard') }}"><span class="step">1</span><span>Buat Event
+                            Baru</span></a>
+                    <a class="active" href="{{ route('admin.form-builder', $event?->id) }}"><span
+                            class="step">2</span><span>Buat Form Pendaftaran Event</span></a>
+                    <a href="#"><span class="step">3</span><span>Verifikasi Pendaftaran Peserta</span><b
+                            class="badge">6</b></a>
                     <a href="#"><span class="step">4</span><span>Aktivasi Akun Peserta</span></a>
                 </div>
 
@@ -645,12 +657,14 @@
 
             <main class="workspace">
                 <div class="builder">
-                    <aside class="library" style="padding-top: 50px">
+                    <aside class="library">
                         <p class="pane-title">Fields <span class="count">10 Komponen</span></p>
 
                         @foreach ([['text', 'Judul', 'Header / Nama Section'], ['textarea', 'Sub Judul', 'Deskripsi teks panduan'], ['text', 'Text', 'Input teks satu baris'], ['text', 'Email', 'Validasi alamat email'], ['number', 'Angka', 'WhatsApp, Usia, Ukuran'], ['textarea', 'Teks Panjang', 'Textarea / Catatan Khusus'], ['select', 'Dropdown', 'Pilihan Kategori Lomba'], ['radio', 'Radio Option', 'Pilihan tunggal opsional'], ['file', 'Upload Gambar', 'Foto Peserta / Kostum'], ['file', 'Upload Dokumen', 'KTP / KK / Portofolio (PDF)']] as $item)
-                            <div class="field-item" draggable="true" data-type="{{ $item[0] }}" data-label="{{ $item[1] }}" data-hint="{{ $item[2] }}">
-                                <span class="drag">⠿</span><strong>{{ $item[1] }}</strong><small>{{ $item[2] }}</small>
+                            <div class="field-item" draggable="true" data-type="{{ $item[0] }}"
+                                data-label="{{ $item[1] }}" data-hint="{{ $item[2] }}">
+                                <span
+                                    class="drag">⠿</span><strong>{{ $item[1] }}</strong><small>{{ $item[2] }}</small>
                             </div>
                         @endforeach
                     </aside>
@@ -666,15 +680,20 @@
                                     data-config='@json($question->konfigurasi ?? [])'>
                                     <div class="question-head">
                                         <div>
-                                            <div class="question-label" contenteditable="true" data-role="label" spellcheck="false"></div>
-                                            <div class="question-meta" contenteditable="true" data-role="help" spellcheck="false"></div>
+                                            <div class="question-label" contenteditable="true" data-role="label"
+                                                spellcheck="false"></div>
+                                            <div class="question-meta" contenteditable="true" data-role="help"
+                                                spellcheck="false"></div>
                                         </div>
                                         <div class="question-actions">
-                                            <label class="required-switch" data-role="toggle-required" title="Wajib diisi">
-                                                <span class="required-switch-track"><span class="required-switch-thumb"></span></span>
+                                            <label class="required-switch" data-role="toggle-required"
+                                                title="Wajib diisi">
+                                                <span class="required-switch-track"><span
+                                                        class="required-switch-thumb"></span></span>
                                                 <span class="required-switch-label">Wajib</span>
                                             </label>
-                                            <button class="remove" type="button" title="Hapus elemen" aria-label="Hapus elemen">
+                                            <button class="remove" type="button" title="Hapus elemen"
+                                                aria-label="Hapus elemen">
                                                 <span class="trash-icon">🗑</span>
                                             </button>
                                             <span class="grip">⠿</span>
@@ -683,7 +702,8 @@
                                     <div class="preview"></div>
                                 </article>
                             @empty
-                                <div class="empty" id="emptyState">Tarik komponen dari panel kiri ke sini<br><small>atau klik komponen untuk menambahkannya</small></div>
+                                <div class="empty" id="emptyState">Tarik komponen dari panel kiri ke
+                                    sini<br><small>atau klik komponen untuk menambahkannya</small></div>
                             @endforelse
                         </div>
                         <div class="dropzone" id="dropzone">+ Tarik field ke sini untuk menambah</div>
@@ -779,46 +799,47 @@
                 }
 
                 function renderField(element, force = false) {
-                const type = element.dataset.type;
-                const options = getOptions(element);
-                const config = getConfig(element);
+                    const type = element.dataset.type;
+                    const options = getOptions(element);
+                    const config = getConfig(element);
 
-                const preview = element.querySelector('.preview');
-                const labelElement = element.querySelector('.question-label');
+                    const preview = element.querySelector('.preview');
+                    const labelElement = element.querySelector('.question-label');
 
-                if (!preview || !labelElement) return;
+                    if (!preview || !labelElement) return;
 
-                element.classList.remove('heading', 'subheading', 'text-field', 'email-field', 'choice-field', 'file-field');
+                    element.classList.remove('heading', 'subheading', 'text-field', 'email-field', 'choice-field',
+                        'file-field');
 
-                if (type === 'heading') element.classList.add('heading');
-                if (type === 'subheading') element.classList.add('subheading');
-                if (['radio', 'checkbox', 'select'].includes(type)) element.classList.add('choice-field');
-                if (type === 'file') element.classList.add('file-field');
+                    if (type === 'heading') element.classList.add('heading');
+                    if (type === 'subheading') element.classList.add('subheading');
+                    if (['radio', 'checkbox', 'select'].includes(type)) element.classList.add('choice-field');
+                    if (type === 'file') element.classList.add('file-field');
 
-                if (document.activeElement !== labelElement) {
-                    labelElement.textContent = element.dataset.label || '';
-                }
+                    if (document.activeElement !== labelElement) {
+                        labelElement.textContent = element.dataset.label || '';
+                    }
 
-                const metaElement = element.querySelector('.question-meta');
-                if (metaElement && document.activeElement !== metaElement) {
-                    metaElement.textContent = config.help || '';
-                }
+                    const metaElement = element.querySelector('.question-meta');
+                    if (metaElement && document.activeElement !== metaElement) {
+                        metaElement.textContent = config.help || '';
+                    }
 
-                const requiredToggle = element.querySelector('[data-role="toggle-required"]');
-                if (requiredToggle) {
-                    requiredToggle.classList.toggle('active', element.dataset.required === 'true');
-                }
+                    const requiredToggle = element.querySelector('[data-role="toggle-required"]');
+                    if (requiredToggle) {
+                        requiredToggle.classList.toggle('active', element.dataset.required === 'true');
+                    }
 
-                // 1. Heading / Subheading
-                if (type === 'heading' || type === 'subheading') {
-                    preview.innerHTML = '';
-                    return;
-                }
+                    // 1. Heading / Subheading
+                    if (type === 'heading' || type === 'subheading') {
+                        preview.innerHTML = '';
+                        return;
+                    }
 
-                // 2. Radio & Checkbox
-                if (type === 'radio' || type === 'checkbox') {
-                    if (force || !preview.contains(document.activeElement)) {
-                        const optionsHtml = options.map((option, index) => `
+                    // 2. Radio & Checkbox
+                    if (type === 'radio' || type === 'checkbox') {
+                        if (force || !preview.contains(document.activeElement)) {
+                            const optionsHtml = options.map((option, index) => `
                             <label class="choice-option">
                                 <input type="${type}" disabled>
                                 <span class="option-text" contenteditable="true" data-role="option" data-index="${index}">${escapeHTML(option)}</span>
@@ -826,30 +847,32 @@
                             </label>
                         `).join('');
 
-                        preview.innerHTML = optionsHtml + `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
+                            preview.innerHTML = optionsHtml +
+                                `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
+                        }
+                        return;
                     }
-                    return;
-                }
 
-                // 3. Dropdown Select
-                if (type === 'select') {
-                    if (force || !preview.contains(document.activeElement)) {
-                        const optionsHtml = options.length ?
-                            options.map((option, index) => `
+                    // 3. Dropdown Select
+                    if (type === 'select') {
+                        if (force || !preview.contains(document.activeElement)) {
+                            const optionsHtml = options.length ?
+                                options.map((option, index) => `
                                 <div class="choice-option">
                                     <span class="option-text" contenteditable="true" data-role="option" data-index="${index}">${escapeHTML(option)}</span>
                                     <button type="button" class="option-remove" data-role="remove-option" data-index="${index}" title="Hapus opsi">×</button>
                                 </div>
                             `).join('') : '<div class="choice-option" style="color:#aaa">Belum ada pilihan</div>';
 
-                        preview.innerHTML = optionsHtml + `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
+                            preview.innerHTML = optionsHtml +
+                                `<button type="button" class="add-option" data-role="add-option">+ Tambah opsi</button>`;
+                        }
+                        return;
                     }
-                    return;
-                }
 
-                // 4. File Upload (PERBAIKAN TAMPILAN UPLOAD)
-                if (type === 'file') {
-                    preview.innerHTML = `
+                    // 4. File Upload (PERBAIKAN TAMPILAN UPLOAD)
+                    if (type === 'file') {
+                        preview.innerHTML = `
                         <div class="file-preview" style="padding: 16px; border: 2px dashed #d5cbbd; border-radius: 8px; background: #fcfbf9; text-align: center;">
                             <div class="file-icon" style="font-size: 24px; color: #c38b22; margin-bottom: 6px;">📁</div>
                             <div class="file-drop-text" style="font-size: 13px; font-weight: 500; color: #555;">
@@ -857,20 +880,21 @@
                             </div>
                         </div>
                     `;
-                    return;
-                }
+                        return;
+                    }
 
-                // 5. Input Text / Number / Email / Textarea Biasa
-                if (force || !preview.contains(document.activeElement)) {
-                    const defaultText = {
-                        email: 'Masukkan alamat email (contoh: nama@email.com)',
-                        number: 'Masukkan angka',
-                        textarea: 'Masukkan jawaban peserta',
-                    }[type] || 'Masukkan jawaban peserta';
+                    // 5. Input Text / Number / Email / Textarea Biasa
+                    if (force || !preview.contains(document.activeElement)) {
+                        const defaultText = {
+                            email: 'Masukkan alamat email (contoh: nama@email.com)',
+                            number: 'Masukkan angka',
+                            textarea: 'Masukkan jawaban peserta',
+                        } [type] || 'Masukkan jawaban peserta';
 
-                    preview.innerHTML = `<div class="preview-input" contenteditable="true" data-role="placeholder">${escapeHTML(config.placeholder || defaultText)}</div>`;
+                        preview.innerHTML =
+                            `<div class="preview-input" contenteditable="true" data-role="placeholder">${escapeHTML(config.placeholder || defaultText)}</div>`;
+                    }
                 }
-            }
 
                 function selectQuestion(questionEl) {
                     if (selected) {
@@ -882,10 +906,15 @@
                     }
                 }
 
+                let isAddingField = false; // ← tambah variable di atas function
+
                 function addField(type, label) {
                     if (!type) return;
+                    if (isAddingField) return; // ← guard
+                    isAddingField = true;
 
-                    document.getElementById('emptyState')?.remove();
+                    try {
+                        document.getElementById('emptyState')?.remove();
 
                     let finalLabel = label;
                     if (type === 'heading') finalLabel = 'Pendaftaran Event Alnay.ID';
@@ -904,7 +933,10 @@
                     element.dataset.label = finalLabel;
                     element.dataset.required = 'false';
                     element.dataset.options = JSON.stringify(options);
-                    element.dataset.config = JSON.stringify({ help: '', placeholder: '' });
+                    element.dataset.config = JSON.stringify({
+                        help: '',
+                        placeholder: ''
+                    });
 
                     element.innerHTML = `
                         <div class="question-head">
@@ -933,9 +965,12 @@
                     selectQuestion(element);
 
                     saveDraftNow();
+                } finally {
+                    isAddingField = false;
                 }
+            }
 
-                function bindQuestion(element) {
+            function bindQuestion(element) {
                     element.addEventListener('click', function(event) {
                         if (event.target.closest('.remove')) return;
                         selectQuestion(element);
@@ -960,11 +995,13 @@
                             element.remove();
                             saveDraftNow();
 
-                            if (!list.querySelector('.question') && !document.getElementById('emptyState')) {
+                            if (!list.querySelector('.question') && !document.getElementById(
+                                'emptyState')) {
                                 const emptyElement = document.createElement('div');
                                 emptyElement.id = 'emptyState';
                                 emptyElement.className = 'empty';
-                                emptyElement.innerHTML = 'Tarik komponen dari panel kiri ke sini<br><small>atau klik komponen untuk menambahkannya</small>';
+                                emptyElement.innerHTML =
+                                    'Tarik komponen dari panel kiri ke sini<br><small>atau klik komponen untuk menambahkannya</small>';
                                 list.prepend(emptyElement);
                             }
                         });
@@ -1009,16 +1046,67 @@
                     }
                 });
 
-                list.addEventListener('drop', function(event) {
-                    event.preventDefault();
-                    const type = event.dataTransfer.getData('text/field-type');
-                    const label = event.dataTransfer.getData('text/field-label');
+                // Drop di canvas luar questionList juga bisa
+                const canvas = document.querySelector('.canvas');
+                if (canvas) {
+                    canvas.addEventListener('dragover', function(event) {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'copy';
+                    });
 
-                    if (type && label && !draggedQuestion) {
-                        addField(type, label);
+                    canvas.addEventListener('drop', function(event) {
+                        event.preventDefault();
+                        // Jangan stopPropagation di sini — biarkan list & dropzone handle
+                        // Kalau yang target adalah list atau dropzone, mereka udah stopPropagation
+                        const target = event.target;
+                        if (target.closest('#questionList') || target.closest('#dropzone')) return;
+
+                        const type = event.dataTransfer.getData('text/field-type');
+                        const label = event.dataTransfer.getData('text/field-label');
+                        if (type && label && !draggedQuestion) {
+                            addField(type, label);
+                            saveDraftNow();
+                        }
+                    });
+                    list.addEventListener('drop', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation(); // ← TAMBAH INI
+                        const type = event.dataTransfer.getData('text/field-type');
+                        const label = event.dataTransfer.getData('text/field-label');
+
+                        if (type && label && !draggedQuestion) {
+                            addField(type, label);
+                            saveDraftNow();
+                        }
+                    });
+
+                    // ← TAMBAHKAN DI SINI
+
+                    if (dropzone) {
+                        dropzone.addEventListener('dragover', function(event) {
+                            event.preventDefault();
+                            event.dataTransfer.dropEffect = 'copy';
+                            dropzone.classList.add('dragging');
+                        });
+
+                        dropzone.addEventListener('dragleave', function() {
+                            dropzone.classList.remove('dragging');
+                        });
+
+                        dropzone.addEventListener('drop', function(event) {
+                            event.preventDefault();
+                            event.stopPropagation(); // ← TAMBAH INI
+                            dropzone.classList.remove('dragging');
+                            const type = event.dataTransfer.getData('text/field-type');
+                            const label = event.dataTransfer.getData('text/field-label');
+                            if (type && label && !draggedQuestion) {
+                                addField(type, label);
+                                saveDraftNow();
+                            }
+                        });
                     }
-                    saveDraftNow();
-                });
+
+                }
 
                 list.addEventListener('click', function(event) {
                     const addBtn = event.target.closest('[data-role="add-option"]');
@@ -1057,7 +1145,7 @@
                 // canvas (label, keterangan tambahan, placeholder, teks opsi)
                 // lalu menyimpannya ke dataset element - tanpa ini, isian di
                 // canvas cuma tampil sementara tapi tidak pernah ke-simpan.
-                list.addEventListener('input', function (event) {
+                list.addEventListener('input', function(event) {
                     const target = event.target;
                     const question = target.closest('.question');
                     if (!question) return;
@@ -1100,7 +1188,8 @@
                         if (!eventId) return toast('Pilih event terlebih dahulu.', 'warning');
 
                         const fields = getFieldsFromCanvas();
-                        if (!fields.length) return toast('Tambahkan minimal satu field.', 'warning');
+                        if (!fields.length) return toast('Tambahkan minimal satu field.',
+                            'warning');
 
                         allSaveButtons.forEach(b => {
                             b.disabled = true;
@@ -1108,18 +1197,22 @@
                         });
 
                         try {
-                            const response = await fetch('{{ $event ? route("admin.form-builder.save", $event) : "#" }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({ fields: fields })
-                            });
+                            const response = await fetch(
+                                '{{ $event ? route('admin.form-builder.save', $event) : '#' }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        fields: fields
+                                    })
+                                });
 
                             const data = await response.json();
-                            if (!response.ok) throw new Error(data.message || 'Gagal menyimpan.');
+                            if (!response.ok) throw new Error(data.message ||
+                                'Gagal menyimpan.');
 
                             clearDraft();
                             toast(data.message || 'Formulir berhasil disimpan.', 'success');
@@ -1136,35 +1229,35 @@
             });
 
             // Contoh fungsi pengumpul data dari DOM sebelum dikirim via AJAX:
-    function collectFormData() {
-        const questions = [];
-        document.querySelectorAll('.field-item').forEach((el, index) => {
-            // Ambil nilai help/keterangan tambahan
-            const helpInput = el.querySelector('.input-keterangan, [name="help"], .help-text');
-            const helpValue = helpInput ? helpInput.value.trim() : '';
+            function collectFormData() {
+                const questions = [];
+                document.querySelectorAll('.field-item').forEach((el, index) => {
+                    // Ambil nilai help/keterangan tambahan
+                    const helpInput = el.querySelector('.input-keterangan, [name="help"], .help-text');
+                    const helpValue = helpInput ? helpInput.value.trim() : '';
 
-            // Ambil opsi-opsi jawaban (untuk Dropdown/Radio/Checkbox)
-            const optionInputs = el.querySelectorAll('.option-input, .opsi-item input');
-            const options = Array.from(optionInputs)
-                .map(opt => opt.value.trim())
-                .filter(opt => opt !== ''); // buang yang kosong
+                    // Ambil opsi-opsi jawaban (untuk Dropdown/Radio/Checkbox)
+                    const optionInputs = el.querySelectorAll('.option-input, .opsi-item input');
+                    const options = Array.from(optionInputs)
+                        .map(opt => opt.value.trim())
+                        .filter(opt => opt !== ''); // buang yang kosong
 
-            questions.push({
-                id: el.dataset.id || null,
-                label: el.querySelector('.label-input').value,
-                tipe_input: el.dataset.tipe,
-                wajib: el.querySelector('.switch-wajib').checked,
-                // PERBAIKAN: Masukkan help ke dalam konfigurasi
-                konfigurasi: {
-                    help: helpValue,
-                    placeholder: el.querySelector('.placeholder-input')?.value || ''
-                },
-                // PERBAIKAN: Masukkan opsi jawaban ke pilihan_jawaban
-                pilihan_jawaban: options
-            });
-        });
-        return questions;
-        }
+                    questions.push({
+                        id: el.dataset.id || null,
+                        label: el.querySelector('.label-input').value,
+                        tipe_input: el.dataset.tipe,
+                        wajib: el.querySelector('.switch-wajib').checked,
+                        // PERBAIKAN: Masukkan help ke dalam konfigurasi
+                        konfigurasi: {
+                            help: helpValue,
+                            placeholder: el.querySelector('.placeholder-input')?.value || ''
+                        },
+                        // PERBAIKAN: Masukkan opsi jawaban ke pilihan_jawaban
+                        pilihan_jawaban: options
+                    });
+                });
+                return questions;
+            }
         </script>
 
         @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
