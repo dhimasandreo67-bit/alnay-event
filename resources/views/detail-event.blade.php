@@ -476,7 +476,7 @@
 
     <main class="mx-auto max-w-5xl px-5 pb-7">
 
-                {{-- EVENT BANNER --}}
+        {{-- EVENT BANNER --}}
         <section
             class="event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
             @if ($event->banner)
@@ -486,15 +486,19 @@
                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
 
                 {{-- Fallback kalau gambar gagal load --}}
-                <div class="hidden h-[220px] w-full bg-gradient-to-br from-[#0a1526] to-[#1a2942] items-center justify-center sm:h-[285px] md:h-[350px]">
+                <div
+                    class="hidden h-[220px] w-full bg-gradient-to-br from-[#0a1526] to-[#1a2942] items-center justify-center sm:h-[285px] md:h-[350px]">
                     <div class="text-center">
-                        <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wider sm:text-3xl">{{ $event->nama }}</p>
-                        <p class="mt-2 text-[10px] tracking-[0.3em] text-[#c5b388] uppercase font-semibold">Alnay Event Center</p>
+                        <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wider sm:text-3xl">
+                            {{ $event->nama }}</p>
+                        <p class="mt-2 text-[10px] tracking-[0.3em] text-[#c5b388] uppercase font-semibold">Alnay Event
+                            Center</p>
                     </div>
                 </div>
             @else
                 {{-- Fallback: tampil kalau memang tidak ada banner di database --}}
-                <div class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] via-[#11223f] to-[#1a2942] sm:h-[285px] md:h-[350px]">
+                <div
+                    class="flex h-[220px] w-full items-center justify-center bg-gradient-to-br from-[#0a1526] via-[#11223f] to-[#1a2942] sm:h-[285px] md:h-[350px]">
                     <div class="text-center px-4">
                         <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wide md:text-3xl">
                             {{ $event->nama }}
@@ -507,16 +511,20 @@
             @endif
 
             {{-- Overlay gradient di bawah --}}
-            <div class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a1526]/40 to-transparent"></div>
+            <div
+                class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a1526]/40 to-transparent">
+            </div>
 
             {{-- Badge status — floating glassmorphism --}}
-            <span class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
+            <span
+                class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
                 {{ $event->voting_aktif
                     ? 'border-emerald-400/30 bg-emerald-950/70 text-emerald-300'
                     : 'border-orange-400/30 bg-orange-950/70 text-orange-300' }}">
                 @if ($event->voting_aktif)
                     <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                     Sedang Berlangsung
@@ -592,13 +600,17 @@
 
                     {{-- COUNTDOWN --}}
                     <div class="rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4 relative overflow-hidden self-start mt-8">
+
                         {{-- Glow gold di pojok --}}
-                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#c99a32]/20 blur-3xl rounded-full pointer-events-none"></div>
+                        <div
+                            class="absolute -top-10 -right-10 w-32 h-32 bg-[#c99a32]/20 blur-3xl rounded-full pointer-events-none">
+                        </div>
 
                         <div class="relative z-10">
                             {{-- Header Label Status --}}
                             <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                                <span class="text-[10px] uppercase tracking-wider font-semibold text-[#c5b388] flex items-center gap-1.5">
+                                <span
+                                    class="text-[10px] uppercase tracking-wider font-semibold text-[#c5b388] flex items-center gap-1.5">
                                     <span class="h-2 w-2 rounded-full bg-[#c99a32]"></span>
                                     {{ $cdLabel }}
                                 </span>
@@ -608,33 +620,42 @@
                             {{-- Countdown Display --}}
                             @if ($selesai)
                                 <div class="mt-4 flex items-center justify-center gap-1.5">
-                                    <div class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
-                                        <span class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
+                                    <div
+                                        class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                        <span
+                                            class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
                                             {{ sprintf('%02d', $cdHari) }}
                                         </span>
-                                        <span class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
+                                        <span
+                                            class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
                                             Hari
                                         </span>
                                     </div>
 
                                     <span class="display-font text-base font-bold text-[#c99a32]">:</span>
 
-                                    <div class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
-                                        <span class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
+                                    <div
+                                        class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                        <span
+                                            class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
                                             {{ sprintf('%02d', $cdJam) }}
                                         </span>
-                                        <span class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
+                                        <span
+                                            class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
                                             Jam
                                         </span>
                                     </div>
 
                                     <span class="display-font text-base font-bold text-[#c99a32]">:</span>
 
-                                    <div class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
-                                        <span class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
+                                    <div
+                                        class="countdown-item min-w-[44px] rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                        <span
+                                            class="display-font block text-lg font-bold leading-none text-[#f5d78e] tracking-tight">
                                             {{ sprintf('%02d', $cdMenit) }}
                                         </span>
-                                        <span class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
+                                        <span
+                                            class="mt-1 block text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
                                             Menit
                                         </span>
                                     </div>
@@ -643,7 +664,8 @@
 
                             {{-- Stat Boxes --}}
                             <div class="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
-                                <div class="rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                <div
+                                    class="rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
                                     <p class="display-font text-base font-bold text-[#f5d78e]">
                                         {{ $jumlahPeserta }}
                                     </p>
@@ -652,7 +674,8 @@
                                     </p>
                                 </div>
 
-                                <div class="rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                <div
+                                    class="rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm px-2 py-2.5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/10">
                                     @if ($blackoutAktif ?? false)
                                         <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-5 w-5 text-[#f5d78e]"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -754,7 +777,9 @@
                                 $juara = $i + 1;
                                 $order = $juara == 1 ? 'sm:order-2' : ($juara == 2 ? 'sm:order-1' : 'sm:order-3');
                                 $border =
-                                    $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
+                                    $juara == 1
+                                        ? 'border-2 border-[#c99a32] shadow-md'
+                                        : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
                                 $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]';
                             @endphp
 
@@ -766,21 +791,26 @@
                                         <img src="{{ $fotoP }}" alt="{{ $namaP }}"
                                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                                     @else
-                                        <div class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
-                                            <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
+                                        <div
+                                            class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
+                                            <span
+                                                class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
                                         </div>
                                     @endif
 
                                     {{-- Nomor --}}
-                                    <span class="absolute top-3 left-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#0a1526] shadow-sm">
+                                    <span
+                                        class="absolute top-3 left-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#0a1526] shadow-sm">
                                         {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
                                     </span>
 
                                     {{-- Badge juara --}}
-                                    <span class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
+                                    <span
+                                        class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
                                         @if ($juara == 1)
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                                                <path
+                                                    d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                                             </svg>
                                         @endif
                                         Juara {{ $juara }}
@@ -789,8 +819,10 @@
 
                                 <div class="p-4">
                                     <div class="flex items-center justify-between gap-2 mb-2">
-                                        <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $namaP }}</h3>
-                                        <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">
+                                        <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $namaP }}
+                                        </h3>
+                                        <span
+                                            class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">
                                             {{ $p->asal ?? '-' }}
                                         </span>
                                     </div>
@@ -801,7 +833,8 @@
                                     </div>
 
                                     <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full transition-all duration-700" style="width: {{ $persenP }}%"></div>
+                                        <div class="h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full transition-all duration-700"
+                                            style="width: {{ $persenP }}%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -811,7 +844,7 @@
             </section>
         @endif
 
-                {{-- CANDIDATE SECTION --}}
+        {{-- CANDIDATE SECTION --}}
         <section class="section-reveal mt-7">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
@@ -845,18 +878,20 @@
             @if (count($kandidat) > 0)
                 <div id="gridKandidat" class="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
 
-                    @foreach ($kandidat as $item)
+                    @foreach ($kandidat as $index => $item)
                         @php
-                            $delayClass = 'delay-' . min($loop->iteration, 4);
+                            $delayClass = 'delay-' . (($index % 4) + 1);
+                            $isHidden = $index >= 8;
                         @endphp
-                        <div class="kandidat-card reveal-up {{ $delayClass }} group overflow-hidden rounded-xl border border-[#ebe8e1] bg-white"
-                            data-nama="{{ strtolower($item['nama']) }}">
+                        <div class="kandidat-card {{ $isHidden ? 'hidden' : '' }} reveal-up {{ $delayClass }} group overflow-hidden rounded-xl border border-[#ebe8e1] bg-white"
+                            data-nama="{{ strtolower($item['nama']) }}" data-index="{{ $index }}">
 
                             <div class="relative h-[175px] overflow-hidden bg-[#fbf6e9]">
-                                                               <img src="{{ $item['foto'] ?? '' }}" alt="{{ $item['nama'] }}"
+                                <img src="{{ $item['foto'] ?? '' }}" alt="{{ $item['nama'] }}"
                                     class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
-                                <div class="hidden h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
+                                <div
+                                    class="hidden h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
                                     <span class="font-display text-4xl font-bold text-[#c99a32]">
                                         {{ $item['inisial'] }}
                                     </span>
@@ -920,6 +955,21 @@
                         </div>
                     @endforeach
                 </div>
+
+                @if (count($kandidat) > 8)
+                    <div class="mt-5 text-center" id="wrapBtnLihatSemua">
+                        <button type="button" id="btnLihatSemua"
+                            class="inline-flex items-center gap-2 rounded-full border border-[#c99a32]/40 bg-white px-6 py-3 text-xs font-semibold text-[#a37b2a] shadow-sm transition-all duration-300 hover:border-[#c99a32] hover:bg-[#faf8f2] hover:shadow-md">
+                            <span id="btnLihatSemuaText">
+                                Lihat Semua {{ count($kandidat) }} Kandidat
+                            </span>
+                            <svg id="btnLihatSemuaIcon" class="h-3.5 w-3.5 transition-transform duration-300"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                @endif
 
                 <div id="emptySearch"
                     class="hidden mt-3.5 rounded-xl border border-dashed border-[#ddd8cc] bg-white p-8 text-center">
@@ -1131,25 +1181,84 @@
             });
         })();
 
-        // Search kandidat
+        // ============================================
+        // SEARCH + LIHAT SEMUA — TOGGLE
+        // ============================================
         (function() {
             var input = document.getElementById('searchKandidat');
             var cards = document.querySelectorAll('.kandidat-card');
             var empty = document.getElementById('emptySearch');
+            var btn = document.getElementById('btnLihatSemua');
+            var btnText = document.getElementById('btnLihatSemuaText');
+            var btnIcon = document.getElementById('btnLihatSemuaIcon');
+            var wrapBtn = document.getElementById('wrapBtnLihatSemua');
 
             if (!input) return;
 
+            var isExpanded = false;
+            var batasAwal = 8;
+            var totalKandidat = cards.length;
+
+            // === Toggle Lihat Semua ===
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    isExpanded = !isExpanded;
+                    var q = input.value.toLowerCase().trim();
+
+                    cards.forEach(function(card) {
+                        var idx = parseInt(card.dataset.index);
+
+                        if (q.length > 0) return;
+
+                        if (isExpanded) {
+                            card.classList.remove('hidden');
+                        } else {
+                            if (idx >= batasAwal) {
+                                card.classList.add('hidden');
+                            }
+                        }
+                    });
+
+                    if (isExpanded) {
+                        btnText.textContent = 'Tampilkan Lebih Sedikit';
+                        btnIcon.style.transform = 'rotate(180deg)';
+                    } else {
+                        btnText.textContent = 'Lihat Semua ' + totalKandidat + ' Kandidat';
+                        btnIcon.style.transform = 'rotate(0)';
+                    }
+                });
+            }
+
+            // === Search ===
             input.addEventListener('input', function() {
                 var q = this.value.toLowerCase().trim();
                 var visible = 0;
+                var isSearching = q.length > 0;
 
                 cards.forEach(function(card) {
+                    var idx = parseInt(card.dataset.index);
                     var match = card.dataset.nama.includes(q);
 
-                    card.style.display = match ? '' : 'none';
-
-                    if (match) visible++;
+                    if (isSearching) {
+                        if (match) {
+                            card.classList.remove('hidden');
+                            visible++;
+                        } else {
+                            card.classList.add('hidden');
+                        }
+                    } else {
+                        if (idx >= batasAwal && !isExpanded) {
+                            card.classList.add('hidden');
+                        } else {
+                            card.classList.remove('hidden');
+                        }
+                        visible++;
+                    }
                 });
+
+                if (wrapBtn) {
+                    wrapBtn.style.display = isSearching ? 'none' : '';
+                }
 
                 if (empty) {
                     empty.classList.toggle('hidden', visible > 0);

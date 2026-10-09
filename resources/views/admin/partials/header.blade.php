@@ -19,7 +19,7 @@
         <div class="flex min-w-0 flex-col gap-1 text-[11px] text-[#91959a]">
             <span class="text-[9px] text-[#ba8320]">Atelier Event › {{ $event?->nama ?? 'Pilih Event' }} › Atur Formulir
                 Pendaftaran</span>
-            <strong class="truncate text-[17px] text-[#1e2530]">Formulir Pendaftaran —
+            <strong class="truncate text-[17px] text-[#1e2530]">Formulir Pendaftaran 
                 {{ $event?->nama ?? 'Event Baru' }}</strong>
             <small class="text-[9px] text-[#91959a]">Atur data & persyaratan yang wajib diisi peserta fashion show
                 busana adat</small>

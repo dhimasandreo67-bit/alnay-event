@@ -14,12 +14,12 @@
 <body class="bg-cream text-ink font-sans text-[13px]">
     <div class="flex min-h-screen w-full">
 
-        <main class="flex-1 min-w-0 ml-[235px] p-6">
+        <main class="flex-1 min-w-0 ml-[235px] px-6 py-6 max-w-full">
 
             {{-- ============================================ --}}
             {{-- HEADER                                        --}}
             {{-- ============================================ --}}
-            <div class="flex items-center justify-between mb-6 max-w-6xl">
+            <div class="flex items-center justify-between mb-6">
                 <div>
                     <h1 class="font-bold text-[18px] text-ink">Edit Data Event</h1>
                     <p class="text-[11px] text-[#8a8984]">Perbarui informasi event {{ $event->nama }}</p>
@@ -34,7 +34,7 @@
             {{-- FORM EDIT EVENT                               --}}
             {{-- ============================================ --}}
             <form action="{{ route('admin.events.update', $event->id) }}" method="POST" enctype="multipart/form-data"
-                class="max-w-6xl grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
+    class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start">
                 @csrf
                 @method('PUT')
 

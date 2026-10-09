@@ -957,7 +957,7 @@
                             <div class="flex items-center justify-center gap-2 mb-6">
                                 <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
                                 <svg class="w-3.5 h-3.5 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
                                 </svg>
                                 <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
                             </div>
@@ -1047,7 +1047,7 @@
                         <div class="space-y-4">
                             @foreach ($peringkatData as $i => $p)
                                 @php
-                                    $namaP = $p->user->nama ?? 'Peserta';
+                                    $namaP = $p->namaTampil();
 
                                     $kata = explode(' ', trim($namaP));
                                     $inisial = strtoupper(substr($kata[0] ?? 'P', 0, 1));

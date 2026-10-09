@@ -533,50 +533,34 @@
                 </div>
 
                 {{-- Timeline --}}
-                <div class="relative space-y-5 text-[12px]">
-                    {{-- Vertical connector line --}}
-                    <div class="absolute left-[7px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-[#c99a32]/40 via-[#c99a32]/20 to-transparent"></div>
+<div class="relative space-y-5 text-[12px]">
+    {{-- Vertical connector line --}}
+    <div class="absolute left-[7px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-[#c99a32]/40 via-[#c99a32]/20 to-transparent"></div>
 
-                    {{-- Step 1 --}}
-                    <div class="relative flex items-start gap-3 pl-0">
-                        <span class="shrink-0 relative z-10 w-4 h-4 rounded-full bg-[#c99a32] ring-4 ring-[#fdf8ec] mt-0.5"></span>
-                        <div class="flex-1">
-                            <p class="font-bold text-[#0a1526]">Pendaftaran Kandidat</p>
-                            <p class="text-[11px] text-[#6b6b6b] mt-0.5">
-                                {{ $bukaDaftar ? $bukaDaftar->translatedFormat('d M Y') : '-' }}
-                                <span class="text-[#c99a32] mx-1">→</span>
-                                {{ $batasDaftar ? $batasDaftar->translatedFormat('d M Y') : '-' }}
-                            </p>
-                        </div>
-                    </div>
+    @foreach ($jadwal as $tahap)
+        @php $tgl = explode(' – ', $tahap['tanggal']); @endphp
 
-                    {{-- Step 2 --}}
-                    <div class="relative flex items-start gap-3 pl-0">
-                        <span class="shrink-0 relative z-10 w-4 h-4 rounded-full bg-[#c99a32] ring-4 ring-[#fdf8ec] mt-0.5"></span>
-                        <div class="flex-1">
-                            <p class="font-bold text-[#0a1526]">Voting Publik</p>
-                            <p class="text-[11px] text-[#6b6b6b] mt-0.5">
-                                {{ $event->tanggal_mulai?->translatedFormat('d M') ?? '-' }}
-                                <span class="text-[#c99a32] mx-1">→</span>
-                                {{ $event->tanggal_selesai?->translatedFormat('d M Y') ?? '-' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Step 3 --}}
-                    <div class="relative flex items-start gap-3 pl-0">
-                        <span class="shrink-0 relative z-10 w-4 h-4 rounded-full bg-[#c99a32] ring-4 ring-[#fdf8ec] mt-0.5">
-                            <span class="absolute inset-0 rounded-full bg-[#c99a32] opacity-40"></span>
-                        </span>
-                        <div class="flex-1">
-                            <p class="font-bold text-[#0a1526]">Pengumuman Pemenang</p>
-                            <p class="text-[11px] text-[#6b6b6b] mt-0.5" id="alur-pendaftaran">
-                                Setelah voting berakhir
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <div class="relative flex items-start gap-3 pl-0">
+            <span class="shrink-0 relative z-10 w-4 h-4 rounded-full bg-[#c99a32] ring-4 ring-[#fdf8ec] mt-0.5">
+                @if ($loop->last)
+                    <span class="absolute inset-0 rounded-full bg-[#c99a32] opacity-40"></span>
+                @endif
+            </span>
+            <div class="flex-1">
+                <p class="font-bold text-[#0a1526]">{{ $tahap['nama'] }}</p>
+                <p class="text-[11px] text-[#6b6b6b] mt-0.5" @if ($loop->last) id="alur-pendaftaran" @endif>
+                    @if (count($tgl) === 2)
+                        {{ $tgl[0] }}
+                        <span class="text-[#c99a32] mx-1">→</span>
+                        {{ $tgl[1] }}
+                    @else
+                        {{ $tahap['tanggal'] }}
+                    @endif
+                </p>
             </div>
+        </div>
+    @endforeach
+</div>
 
         </aside>
     </div>
