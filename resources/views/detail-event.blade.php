@@ -534,7 +534,7 @@
             <div class="h-[3px] w-full bg-gradient-to-r from-[#c99a32] via-[#e0b254] to-[#c99a32]"></div>
 
             <div class="p-5 md:p-6">
-                <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_220px]">
+                <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_220px] self-">
 
                     <div>
                         @if (!$event->voting_aktif)
@@ -591,7 +591,7 @@
                     </div>
 
                     {{-- COUNTDOWN --}}
-                    <div class="rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4 relative overflow-hidden">
+                    <div class="rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4 relative overflow-hidden self-start mt-8">
                         {{-- Glow gold di pojok --}}
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#c99a32]/20 blur-3xl rounded-full pointer-events-none"></div>
 
