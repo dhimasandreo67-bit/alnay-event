@@ -1,3 +1,6 @@
+{{-- Favicon Global (Aman di semua halaman) --}}
+<link rel="icon" type="image/png" href="{{ asset('images/alnaylogo.png') }}">
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -6,17 +9,15 @@
     }
 </style>
 
-{{-- Header dengan efek transparansi dan blur yang lebih premium --}}
+{{-- Header Global --}}
 <header class="sticky top-0 z-50 w-full border-b border-gray-200/60 bg-white/80 backdrop-blur-md shadow-sm transition-all duration-300">
     <div class="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-5 md:px-8">
         
-        {{-- LOGO & BRAND NAME dengan Hover Effect Keren --}}
+        {{-- LOGO & BRAND NAME --}}
         <a href="{{ route('dashboard-user') }}" class="group flex items-center gap-3 transition-transform duration-300 hover:scale-[1.02]">
-            {{-- Logo: Sedikit memutar dan membesar saat di-hover --}}
             <img src="{{ asset('images/alnaylogo.png') }}" alt="ALNAY.ID" 
                  class="h-9 w-9 object-contain transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 drop-shadow-sm">
             
-            {{-- Teks: Berubah warna menjadi emas (gold) brand saat di-hover --}}
             <span class="brand-font text-[17px] font-extrabold tracking-tight text-[#13223a] transition-colors duration-300 group-hover:text-[#c99a32]">
                 EVENT ALNAY.ID
             </span>
@@ -30,7 +31,6 @@
                 $inisialHeader = strtoupper(substr(trim($u->nama_custom ?: $u->nama), 0, 1));
             @endphp
             
-            {{-- Profil: Efek hover mengisi warna emas dan teks jadi putih --}}
             <a href="{{ route('profil-user') }}" aria-label="Profil pengguna"
                 class="group relative flex h-9 w-9 items-center justify-center rounded-full border border-[#c99a32]/40 bg-[#fbf6e9] text-[#c99a32] transition-all duration-300 hover:border-[#c99a32] hover:bg-[#c99a32] hover:text-white hover:shadow-md hover:shadow-[#c99a32]/30 hover:scale-105 overflow-hidden">
                 @if ($fotoHeader)
@@ -43,7 +43,6 @@
                 @endif
             </a>
         @else
-            {{-- Login Button: Efek glow/shadow emas saat di-hover --}}
             <a href="{{ route('auth.google') }}"
                 class="rounded-full bg-[#cf9b32] px-5 py-2.5 text-[12px] font-bold text-white shadow-sm shadow-[#cf9b32]/20 transition-all duration-300 hover:bg-[#b88625] hover:shadow-lg hover:shadow-[#cf9b32]/40 hover:scale-105 active:scale-95">
                 Login

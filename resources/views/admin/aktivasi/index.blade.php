@@ -11,6 +11,7 @@
 <body class="bg-cream font-['Inter'] text-[13px] text-[#22201d]">
 <div class="flex min-h-screen">
     @include('admin.partials.sidebar', ['active' => 'activation', 'event' => $event])
+    @include('admin.partials.pwa-head')
 
     <main class="flex-1 min-w-0 p-6 ml-[235px]">
 

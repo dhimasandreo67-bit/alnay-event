@@ -13,6 +13,7 @@ use App\Models\Voting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
@@ -131,7 +132,7 @@ class EventController extends Controller
     public function update(Request $request, $id)
     {
         $event = Event::findOrFail($id);
-
+        
         $validated = $request->validate([
             'nama'                      => 'required|string|max:255',
             'deskripsi'                 => 'nullable|string',
@@ -154,8 +155,15 @@ class EventController extends Controller
             'batas_pendaftaran_waktu'   => 'nullable',
         ]);
 
-        // Handle toggle pendaftaran manual
-        $validated['pendaftaran_dibuka'] = $request->boolean('pendaftaran_dibuka');
+        // ✅ PERBAIKAN: Pertahankan nilai lama jika checkbox tidak dikirim
+        // Checkbox HTML hanya mengirim value saat DICENTANG.
+        // Jika tidak dicentang, field tidak ada di request → $request->has() = false
+        if ($request->has('pendaftaran_dibuka')) {
+            $validated['pendaftaran_dibuka'] = $request->boolean('pendaftaran_dibuka');
+        } else {
+            // Pertahankan nilai sebelumnya agar tidak berubah jadi false
+            $validated['pendaftaran_dibuka'] = $event->pendaftaran_dibuka;
+        }
 
         if ($request->hasFile('banner')) {
             if ($event->banner && Storage::disk('public')->exists($event->banner)) {
@@ -223,11 +231,12 @@ class EventController extends Controller
     }
 
     // PATCH /admin/events/{event}/toggle-pendaftaran
-    public function togglePendaftaran(Event $event)
+        // PATCH /admin/events/{event}/toggle-pendaftaran
+    public function togglePendaftaran(Event $event): JsonResponse
     {
-        $event->update([
-            'pendaftaran_dibuka' => ! $event->pendaftaran_dibuka,
-        ]);
+        // Balikkan status pendaftaran_dibuka
+        $event->pendaftaran_dibuka = ! (bool) $event->pendaftaran_dibuka;
+        $event->save();
 
         return response()->json([
             'success' => true,
@@ -238,15 +247,14 @@ class EventController extends Controller
         ]);
     }
 
-        // PATCH /admin/events/{event}/toggle-blackout
-        public function toggleBlackout(Event $event)
+    // PATCH /admin/events/{event}/toggle-blackout
+    public function toggleBlackout(Event $event): JsonResponse
     {
         $newState = ! $event->blackout_h2_voting;
 
         $update = ['blackout_h2_voting' => $newState];
 
         // Kalau ON dan voting_selesai kosong → set 24 jam dari sekarang
-        // biar blackout langsung aktif (tanpa nunggu H-2)
         if ($newState && ! $event->voting_selesai) {
             $update['voting_selesai'] = now()->addHours(24);
         }

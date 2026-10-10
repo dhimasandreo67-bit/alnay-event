@@ -12,7 +12,11 @@ class Jawaban extends Model
     // Tentukan nama tabel yang sesuai di database kamu
     protected $table = 'jawaban_peserta'; // <-- Atau 'pendaftaran_jawaban' / nama tabel di database kamu
 
-    protected $guarded = [];
+    protected $fillable = [
+        'peserta_id',
+        'pertanyaan_id',
+        'jawaban', // atau nama field tempat menyimpan isi jawaban
+    ];
 
     public function pertanyaan()
     {

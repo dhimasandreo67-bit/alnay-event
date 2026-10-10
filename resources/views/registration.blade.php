@@ -157,36 +157,37 @@
             @endif
 
             @php
-                $sekarang = now();
-                $bukaDaftar = $event->pembukaan_pendaftaran_tanggal;
-                $batasDaftar = $event->batas_pendaftaran_tanggal;
+    $sekarang = now();
+    $bukaDaftar =$event->pembukaan_pendaftaran_tanggal;
+    $batasDaftar =$event->batas_pendaftaran_tanggal;
 
-                if (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {
-                    $pendaftaranDitutup = true;
-                    $alasanTutup =
-                        'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
-                } elseif (!$event->pendaftaran_dibuka) {
-                    $pendaftaranDitutup = true;
-                    $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
-                } elseif ($bukaDaftar && $sekarang->lt($bukaDaftar)) {
-                    $pendaftaranDitutup = true;
-                    $alasanTutup =
-                        'Pendaftaran untuk event ini belum dibuka. Buka pada ' .
-                        $bukaDaftar->translatedFormat('d F Y') .
-                        ' pukul ' .
-                        ($event->pembukaan_pendaftaran_waktu ?? '00:00') .
-                        ' WIB.';
-                } elseif ($batasDaftar && $sekarang->gt($batasDaftar)) {
-                    $pendaftaranDitutup = true;
-                    $alasanTutup =
-                        'Pendaftaran untuk event ini sudah ditutup pada ' .
-                        $batasDaftar->translatedFormat('d F Y') .
-                        '.';
-                } else {
-                    $pendaftaranDitutup = false;
-                    $alasanTutup = null;
-                }
-            @endphp
+    // 1. KHUSUS MODE PREVIEW (ADMIN)
+    // Abaikan pembatasan tanggal & status event, cukup ikuti toggle `pendaftaran_dibuka`
+    if ($isPreview) {
+        if (!$event->pendaftaran_dibuka) {$pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup (Toggle Pendaftaran Nonaktif).';
+        } else {
+            $pendaftaranDitutup = false;
+            $alasanTutup = null;
+        }
+    } 
+    // 2. TAMPILAN PUBLIK (USER)
+    // Terapkan semua validasi tanggal & status event
+    else {
+        if (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {$pendaftaranDitutup = true;
+            $alasanTutup = 'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
+        } elseif (!$event->pendaftaran_dibuka) {$pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
+        } elseif ($bukaDaftar &&$sekarang->lt($bukaDaftar)) {$pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran untuk event ini belum dibuka. Buka pada ' . $bukaDaftar->translatedFormat('d F Y') . ' pukul ' . ($event->pembukaan_pendaftaran_waktu ?? '00:00') . ' WIB.';
+        } elseif ($batasDaftar &&$sekarang->gt($batasDaftar)) {$pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran untuk event ini sudah ditutup pada ' .$batasDaftar->translatedFormat('d F Y') . '.';
+        } else {
+            $pendaftaranDitutup = false;
+            $alasanTutup = null;
+        }
+    }
+@endphp
 
             @if ($pendaftaranDitutup)
                 {{-- ================== PENDAFTARAN DITUTUP ================== --}}

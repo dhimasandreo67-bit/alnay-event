@@ -18,25 +18,29 @@
 <link rel="apple-touch-icon" href="{{ asset('icons/admin-app.svg') }}">
 <meta name="format-detection" content="telephone=no">
 
-{{-- Toast Notification CSS & JS --}}
+{{-- Toast Notification CSS --}}
 <link rel="stylesheet" href="{{ asset('css/admin-toast.css') }}">
-<script src="{{ asset('js/admin-toast.js') }}" defer></script>
 
-{{-- Custom Modal CSS & JS --}}
+{{-- Custom Modal CSS --}}
 <link rel="stylesheet" href="{{ asset('css/admin-modal.css') }}">
-<script src="{{ asset('js/admin-modal.js') }}" defer></script>
 
-{{-- Flash data dari Laravel session --}}
+{{-- Flash data dari Laravel session (HARUS SEBELUM script) --}}
 @if (session('success') || session('error') || session('warning') || session('info'))
     <script id="flash-data" type="application/json">
-        {
-            "success": {!! json_encode(session('success')) !!},
-            "error": {!! json_encode(session('error')) !!},
-            "warning": {!! json_encode(session('warning')) !!},
-            "info": {!! json_encode(session('info')) !!}
-        }
+    {
+        "success": {!! json_encode(session('success')) !!},
+        "error": {!! json_encode(session('error')) !!},
+        "warning": {!! json_encode(session('warning')) !!},
+        "info": {!! json_encode(session('info')) !!}
+    }
     </script>
 @endif
+
+{{-- Toast Notification JS --}}
+<script src="{{ asset('js/admin-toast.js') }}" defer></script>
+
+{{-- Custom Modal JS --}}
+<script src="{{ asset('js/admin-modal.js') }}" defer></script>
 
 {{-- Service Worker Registration --}}
 <script>
@@ -54,17 +58,17 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 </script>
 
 <style>
-    :root {
-        --sat: env(safe-area-inset-top);
-        --sab: env(safe-area-inset-bottom);
-        --sal: env(safe-area-inset-left);
-        --sar: env(safe-area-inset-right);
-    }
-    
-    body {
-        padding-top: var(--sat);
-        padding-bottom: var(--sab);
-        padding-left: var(--sal);
-        padding-right: var(--sar);
-    }
+:root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+}
+
+body {
+    padding-top: var(--sat);
+    padding-bottom: var(--sab);
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+}
 </style>

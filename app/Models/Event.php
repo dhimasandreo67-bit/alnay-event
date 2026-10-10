@@ -48,28 +48,27 @@ class Event extends Model
     'tampilkan_hasil_voting',
 ];
 
-    protected $casts = [
-    'tanggal_mulai' => 'date',
-    'tanggal_selesai' => 'date',
-    'waktu_mulai' => 'datetime:H:i',
-    'waktu_selesai' => 'datetime:H:i',
-    'pembukaan_pendaftaran_tanggal' => 'date',
-    'pembukaan_pendaftaran_waktu' => 'datetime:H:i',
-    'batas_pendaftaran_tanggal' => 'date',
-    'batas_pendaftaran_waktu' => 'datetime:H:i',
-    'biaya_pendaftaran' => 'float',
-    'harga_per_vote' => 'float',
-    'harga_registrasi' => 'float',         // ← TAMBAH
-    'harga_registrasi_dp' => 'float',      // ← TAMBAH
-    'kuota_peserta' => 'integer',
-    'voting_aktif' => 'boolean',
-    'auto_freeze_voting' => 'boolean',
-    'blackout_h2_voting' => 'boolean',
-    'voting_mulai' => 'datetime',
-    'voting_selesai' => 'datetime',
-    'tampilkan_hasil_voting' => 'boolean',
-    'form_fields' => 'array',
-];
+        protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
+        'form_fields' => 'array',
+        'batas_pendaftaran_tanggal' => 'date',
+        'batas_pendaftaran_waktu' => 'datetime:H:i',
+        'pembukaan_pendaftaran_tanggal' => 'date',
+        'pembukaan_pendaftaran_waktu' => 'datetime:H:i',
+        'biaya_pendaftaran' => 'float',
+        'harga_per_vote' => 'float',
+        'harga_registrasi' => 'float',
+        'harga_registrasi_dp' => 'float',
+        'registrasi_dibuka' => 'boolean',
+        'kuota_peserta' => 'integer',
+        'voting_aktif' => 'boolean',
+        'auto_freeze_voting' => 'boolean',
+        'blackout_h2_voting' => 'boolean',
+        'voting_mulai' => 'datetime',
+        'voting_selesai' => 'datetime',
+        'tampilkan_hasil_voting' => 'boolean',
+    ];
 
     // protected $appends = ['status', 'status_label'];
 
