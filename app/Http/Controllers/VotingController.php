@@ -194,40 +194,36 @@ class VotingController extends Controller
     /**
      * GET /voting/{orderId}/instruksi
      */
-    public function instruksiPembayaran($orderId)
-    {
-        $voting = Voting::with(['peserta.user', 'peserta.event'])
-            ->where('midtrans_order_id', $orderId)
-            ->firstOrFail();
-
-        return view('voting.instruksi', [
-            'voting'  => $voting,
-            'peserta' => $voting->peserta,
-            'event'   => $voting->peserta?->event ?? $voting->event
-        ]);
-    }
     /**
-     * Alias untuk hasilVoting — kompatibilitas route user.php
-     */
-    public function hasilEvent(Event $event)
-    {
-        return $this->hasilVoting($event);
+ * GET /voting/{orderId}/instruksi
+ */
+public function instruksiPembayaran($orderId)
+{
+    $voting = Voting::with(['peserta.user', 'peserta.event'])
+        ->where('midtrans_order_id', $orderId)
+        ->firstOrFail();
+
+    $event = $voting->peserta?->event ?? $voting->event;
+
+    // ============================================
+    // Cek blackout H-2
+    // ============================================
+    $blackoutAktif = false;
+
+    if ($event && $event->blackout_h2_voting && $event->voting_selesai) {
+        $selisihJam = now()->diffInHours($event->voting_selesai, false);
+        if ($selisihJam <= 48) {
+            $blackoutAktif = true;
+        }
     }
 
-    /**
-     * GET /voting/{orderId}/status
-     */
-    public function cekStatus($orderId)
-    {
-        $voting = Voting::where('midtrans_order_id', $orderId)->firstOrFail();
-
-        return response()->json([
-            'status_midtrans' => $voting->status_midtrans,
-            'redirect_url' => $voting->status_midtrans === 'settlement'
-                ? "/peserta/{$voting->peserta_id}"
-                : null,
-        ]);
-    }
+    return view('voting.instruksi', [
+        'voting'          => $voting,
+        'peserta'         => $voting->peserta,
+        'event'           => $event,
+        'blackoutAktif'   => $blackoutAktif,  // ← TAMBAH
+    ]);
+}
 
     /**
      * POST /voting/midtrans/webhook
@@ -351,13 +347,10 @@ class VotingController extends Controller
         $waktuGrandFinal = null;
         $message = null;
 
-        if ($event->blackout_h2_voting && $event->voting_selesai) {
-            $selisihJam = now()->diffInHours($event->voting_selesai, false);
-            if ($selisihJam <= 48) {
-                $blackoutAktif = true;
-                $waktuGrandFinal = $event->voting_selesai->translatedFormat('d F Y, H:i');
-                $message = 'Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat ini.';
-            }
+        if ($event->blackout_h2_voting) {
+            $blackoutAktif = true;
+            $waktuGrandFinal = $event->voting_selesai?->translatedFormat('d F Y, H:i');
+            $message = 'Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat ini.';
         }
 
         // ============================================

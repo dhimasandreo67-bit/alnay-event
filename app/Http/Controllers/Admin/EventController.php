@@ -78,9 +78,12 @@ class EventController extends Controller
 
     // GET /admin/events/create
     public function create()
-    {
-        return view('admin.events.create');
-    }
+{
+    return view('admin.events.create', [
+        'event'          => null,
+        'menungguReview' => 0,
+    ]);
+}
 
     // POST /admin/events
     public function store(Request $request)
@@ -91,6 +94,8 @@ class EventController extends Controller
             'syarat_ketentuan'          => 'nullable|string',
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
+            'harga_registrasi'          => 'nullable|numeric|min:0',
+            'harga_registrasi_dp'       => 'nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
             'waktu_mulai'               => 'nullable',
             'tanggal_selesai'           => 'nullable|date',
@@ -135,6 +140,8 @@ class EventController extends Controller
             'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
+            'harga_registrasi'          => 'sometimes|nullable|numeric|min:0',
+            'harga_registrasi_dp'       => 'sometimes|nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
             'waktu_mulai'               => 'nullable',
             'tanggal_selesai'           => 'nullable|date',
@@ -232,21 +239,28 @@ class EventController extends Controller
     }
 
         // PATCH /admin/events/{event}/toggle-blackout
-    public function toggleBlackout(Event $event)
+        public function toggleBlackout(Event $event)
     {
-        $event->update([
-            'blackout_h2_voting' => ! $event->blackout_h2_voting,
-        ]);
+        $newState = ! $event->blackout_h2_voting;
+
+        $update = ['blackout_h2_voting' => $newState];
+
+        // Kalau ON dan voting_selesai kosong → set 24 jam dari sekarang
+        // biar blackout langsung aktif (tanpa nunggu H-2)
+        if ($newState && ! $event->voting_selesai) {
+            $update['voting_selesai'] = now()->addHours(24);
+        }
+
+        $event->update($update);
 
         return response()->json([
             'success' => true,
             'blackout_h2_voting' => $event->blackout_h2_voting,
             'message' => $event->blackout_h2_voting
-                ? 'Mode rahasia diaktifkan — peringkat 1-3 disembunyikan.'
-                : 'Mode rahasia dimatikan — peringkat 1-3 muncul kembali.',
+                ? 'Mode rahasia diaktifkan — total suara disembunyikan.'
+                : 'Mode rahasia dimatikan — total suara muncul kembali.',
         ]);
     }
-
     // PATCH /admin/events/{event}/tampilkan-hasil
     public function toggleTampilkanHasil(Event $event)
     {

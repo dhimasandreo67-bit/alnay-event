@@ -674,11 +674,7 @@
         <div id="event-akan-datang-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 transition-all duration-300">
             @foreach ($eventAkanDatangLainnya as $event)
                 @php
-                    $bukaPendaftaran =
-                        $event->batas_pendaftaran_tanggal &&
-                        now()->lte($event->batas_pendaftaran_tanggal) &&
-                        (!$event->pembukaan_pendaftaran_tanggal ||
-                            now()->gte($event->pembukaan_pendaftaran_tanggal));
+                    $bukaPendaftaran = (int) ($event->pendaftaran_dibuka ?? 0) === 1;
                 @endphp
 
                 <div class="event-card card-shadow rounded-[16px] border border-[#ededed] bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col">

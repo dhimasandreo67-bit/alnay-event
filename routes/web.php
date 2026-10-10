@@ -269,6 +269,8 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.activation');
     Route::post('/activation/{peserta}/verifikasi', [AktivasiController::class, 'verifikasi'])
         ->name('admin.activation.verifikasi');
+    Route::post('/activation/{peserta}/toggle-audisi', [AktivasiController::class, 'toggleAudisi'])
+        ->name('admin.activation.toggle-audisi');
 
     Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])
         ->name('admin.voting.settings');
