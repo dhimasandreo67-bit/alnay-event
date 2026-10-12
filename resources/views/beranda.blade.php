@@ -321,6 +321,19 @@
             animation: none;
         }
     }
+
+    .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    }
+
+    .line-clamp-none {
+        display: block;
+        -webkit-line-clamp: unset;
+        overflow: visible;
+    }
     </style>
 </head>
 
@@ -462,23 +475,39 @@
         @if ($tab === 'terkini')
 
             @php
-                $eventHero = $eventBerlangsung ?? $eventAkanDatangUtama;
-                $heroIsBerlangsung = $eventHero && $eventHero->status === 'sedang_berlangsung';
+            // Prioritas: event berlangsung (bisa banyak) → fallback ke akan datang
+            $heroEvents = ($eventBerlangsungList ?? collect())->count() > 0
+                ? $eventBerlangsungList
+                : collect([$eventAkanDatangUtama])->filter();
 
-                $formatAngka = function ($angka) {
-                    if ($angka >= 1000000) {
-                        return round($angka / 1000000, 1) . 'M';
-                    }
-                    if ($angka >= 1000) {
-                        return round($angka / 1000, 1) . 'K';
-                    }
-                    return number_format($angka, 0, ',', '.');
-                };
+            $heroIsCarousel = $heroEvents->count() > 1;
+
+            $formatAngka = function ($angka) {
+                if ($angka >= 1000000) return round($angka / 1000000, 1) . 'M';
+                if ($angka >= 1000)    return round($angka / 1000, 1) . 'K';
+                return number_format($angka, 0, ',', '.');
+            };
+        @endphp
+
+                @if ($heroEvents->count() > 0)
+    <div class="hero-carousel-wrapper relative" id="heroCarousel">
+
+        {{-- Viewport — pakai clip-path: atas/bawah keluar 12px (biar gold border kelihatan), kiri/kanan potong pas 0px --}}
+        <div class="hero-carousel-viewport" style="clip-path: inset(-12px 0px -12px 0px round 16px);">
+            <div class="hero-carousel-track flex items-stretch transition-transform duration-500 ease-out" style="will-change: transform;">
+
+        @foreach ($heroEvents as $idx => $eventHero)
+            @php
+                $heroIsBerlangsung = $eventHero->status === 'sedang_berlangsung';
+                $sisaWaktu     = $eventHero->stat_sisa_waktu     ?? ($sisaWaktu ?? 0);
+                $jumlahPeserta = $eventHero->stat_jumlah_peserta ?? ($jumlahPeserta ?? 0);
+                $totalSuara    = $eventHero->stat_total_suara    ?? ($totalSuara ?? 0);
             @endphp
 
-    @if ($eventHero)
+                        <div class="hero-slide flex shrink-0" style="width: 100%; flex: 0 0 100%;" data-slide="{{ $idx }}">
+
     <!-- ==================== HERO BANNER ==================== -->
-    <article class="hero-event-card group relative rounded-[16px] bg-white transition-all duration-300 shadow-md hover:shadow-xl">
+        <article class="hero-event-card group relative rounded-[16px] bg-white transition-all duration-300 shadow-md hover:shadow-xl w-full h-full flex flex-col">
     {{-- Rotating Gold Border Layer --}}
     <div class="hero-gold-border absolute -inset-[2px] rounded-[18px] z-0"></div>
 
@@ -551,7 +580,7 @@
         </a>
 
         <!-- HERO INFO SECTION -->
-        <div class="flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between bg-white relative z-10">
+                <div class="flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-stretch md:justify-between bg-white relative z-10 flex-1">
             <!-- Left Info -->
             <div class="max-w-[580px] flex-1">
                 <a href="{{ $routeDetail($eventHero) }}" class="group/title inline-block">
@@ -560,9 +589,23 @@
                     </h2>
                 </a>
 
-                <p class="mt-3 text-[13px] sm:text-[14px] leading-relaxed text-[#5c5c5c] line-clamp-2">
-                    {{ $eventHero->deskripsi ?: 'Ikuti event bergengsi ini dan berikan dukungan terbaik untuk kandidat favoritmu!' }}
-                </p>
+                @php
+                $deskripsi = $eventHero->deskripsi ?: 'Ikuti event bergengsi ini dan berikan dukungan terbaik untuk kandidat favoritmu!';
+                $deskripsiId = 'desk-' . $eventHero->id;
+            @endphp
+
+            <p id="{{ $deskripsiId }}" 
+            class="mt-3 text-[13px] sm:text-[14px] leading-relaxed text-[#5c5c5c] line-clamp-2 transition-all duration-300">
+                {{ $deskripsi }}
+            </p>
+
+            @if (strlen($deskripsi) > 100)
+                <button type="button" 
+                        onclick="toggleDeskripsi('{{ $deskripsiId }}', this)"
+                        class="mt-2 text-[11px] font-semibold text-[#c99a32] hover:text-[#b88625] hover:underline transition">
+                    Selengkapnya →
+                </button>
+            @endif
 
                 <div class="mt-4 flex flex-wrap items-center gap-4 text-[12px] text-[#554f47]">
                     <div class="flex items-center gap-2 rounded-lg bg-[#fcfaf6] border border-[#f0e8d8] px-3 py-1.5">
@@ -639,6 +682,41 @@
             </div>
         </div>
     </article>
+
+            </div>{{-- /hero-slide --}}
+        @endforeach
+
+            </div>{{-- /hero-carousel-track --}}
+        </div>{{-- /hero-carousel-viewport --}}
+
+    @if ($heroIsCarousel)
+        {{-- Arrow Prev --}}
+        <button type="button" id="heroPrev" aria-label="Sebelumnya"
+            class="absolute top-1/2 -translate-y-1/2 left-3 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-[#e8dcc0] shadow-lg flex items-center justify-center hover:bg-white transition">
+            <svg class="w-5 h-5 text-[#0a1526]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+
+        {{-- Arrow Next --}}
+        <button type="button" id="heroNext" aria-label="Selanjutnya"
+            class="absolute top-1/2 -translate-y-1/2 right-3 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-[#e8dcc0] shadow-lg flex items-center justify-center hover:bg-white transition">
+            <svg class="w-5 h-5 text-[#0a1526]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+
+        {{-- Dots --}}
+        <div class="hero-dots flex justify-center gap-2 mt-4">
+            @foreach ($heroEvents as $idx => $ev)
+                <button type="button" data-dot="{{ $idx }}" aria-label="Slide {{ $idx + 1 }}"
+                    class="hero-dot h-2 rounded-full transition-all duration-300 {{ $idx === 0 ? 'w-6 bg-[#c99a32]' : 'w-2 bg-[#d4c4a8]' }}">
+                </button>
+            @endforeach
+        </div>
+    @endif
+
+</div>{{-- /hero-carousel-wrapper --}}
 @endif
 
             {{-- CARD EVENT AKAN DATANG --}}
@@ -1519,6 +1597,105 @@
             applyViewModePrev('list');
         });
     });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const track = document.querySelector('.hero-carousel-track');
+    if (!track) return;
+
+    const slides = track.querySelectorAll('.hero-slide');
+    const total = slides.length;
+    if (total <= 1) return;
+
+    let current = 0;
+    let timer = null;
+    const INTERVAL = 5000;
+
+    const dots    = document.querySelectorAll('.hero-dot');
+    const btnPrev = document.getElementById('heroPrev');
+    const btnNext = document.getElementById('heroNext');
+
+    function render() {
+        track.style.transform = `translateX(-${current * 100}%)`;
+        dots.forEach((d, i) => {
+            if (i === current) {
+                d.classList.add('bg-[#c99a32]', 'w-6');
+                d.classList.remove('bg-[#d4c4a8]', 'w-2');
+            } else {
+                d.classList.remove('bg-[#c99a32]', 'w-6');
+                d.classList.add('bg-[#d4c4a8]', 'w-2');
+            }
+        });
+    }
+
+    function goTo(idx) {
+        current = (idx + total) % total;
+        render();
+    }
+
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
+
+    function start() {
+        stop();
+        timer = setInterval(next, INTERVAL);
+    }
+    function stop() {
+        if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    btnNext?.addEventListener('click', () => { next(); start(); });
+    btnPrev?.addEventListener('click', () => { prev(); start(); });
+
+    dots.forEach(d => {
+        d.addEventListener('click', () => {
+            goTo(parseInt(d.dataset.dot, 10));
+            start();
+        });
+    });
+
+    const wrapper = document.getElementById('heroCarousel');
+    wrapper?.addEventListener('mouseenter', stop);
+    wrapper?.addEventListener('mouseleave', start);
+
+    let startX = 0;
+    track.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    track.addEventListener('touchend', e => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+            diff > 0 ? next() : prev();
+            start();
+        }
+    }, { passive: true });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft')  { prev(); start(); }
+            if (e.key === 'ArrowRight') { next(); start(); }
+        });
+
+        render();
+        start();
+    });
+
+    function toggleDeskripsi(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const isExpanded = el.classList.contains('line-clamp-none');
+
+    if (isExpanded) {
+        el.classList.remove('line-clamp-none');
+        el.classList.add('line-clamp-2');
+        btn.textContent = 'Selengkapnya →';
+    } else {
+        el.classList.remove('line-clamp-2');
+        el.classList.add('line-clamp-none');
+        btn.textContent = 'Sembunyikan ↑';
+    }
+}
     </script>
 
 </body>
