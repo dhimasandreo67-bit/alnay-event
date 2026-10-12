@@ -138,12 +138,15 @@ class PendaftaranController extends Controller
         ]);
 
         // 5. Simpan peserta + jawaban
-        DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
-            $peserta = Peserta::create([
-                'event_id'         => $event->id,
-                'user_id'          => $user->id,
-                'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
-                'status'           => 'menunggu_review',
+                DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
+                 $peserta = Peserta::create([
+                'event_id'          => $event->id,
+                'user_id'           => $user->id,
+                'nama_pendaftaran'  => $request->nama_pendaftaran ?: $namaDefault,
+                'status'            => 'diterima',      // ← AUTO DITERIMA
+                'sudah_audisi'      => false,           // ← Default belum audisi
+                'tampil_di_publik'  => true,            // ← Default tampil (nanti di-override)
+                'status_registrasi' => 'belum',         // ← Default belum bayar registrasi
             ]);
 
             $answers = $data['answers'] ?? [];
@@ -175,7 +178,7 @@ class PendaftaranController extends Controller
         // 6. Redirect dengan flash message
         return redirect()
             ->route('public.registration', $event)
-            ->with('success', 'Pendaftaran berhasil dikirim. Tunggu review dari admin ya!');
+            ->with('success', 'Pendaftaran berhasil! Data kamu sudah kami terima.');
     }
 
     // =====================================================================

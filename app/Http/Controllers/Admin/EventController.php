@@ -108,8 +108,22 @@ class EventController extends Controller
             'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
+                // Handle banner — file atau base64 (restore)
         if ($request->hasFile('banner')) {
             $validated['banner'] = $request->file('banner')->store('banners', 'public');
+        } elseif ($request->filled('banner_base64')) {
+            $base64 = $request->input('banner_base64');
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $ext = $matches[1];
+                $data = substr($base64, strpos($base64, ',') + 1);
+                $data = base64_decode($data);
+
+                if ($data !== false) {
+                    $filename = 'banners/' . uniqid() . '.' . $ext;
+                    \Storage::disk('public')->put($filename, $data);
+                    $validated['banner'] = $filename;
+                }
+            }
         }
 
         // 3 kolom ini NOT NULL tanpa default di database
@@ -165,11 +179,28 @@ class EventController extends Controller
             $validated['pendaftaran_dibuka'] = $event->pendaftaran_dibuka;
         }
 
+               // Handle banner — file atau base64 (restore)
         if ($request->hasFile('banner')) {
             if ($event->banner && Storage::disk('public')->exists($event->banner)) {
                 Storage::disk('public')->delete($event->banner);
             }
             $validated['banner'] = $request->file('banner')->store('banners', 'public');
+        } elseif ($request->filled('banner_base64')) {
+            $base64 = $request->input('banner_base64');
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $ext = $matches[1];
+                $data = substr($base64, strpos($base64, ',') + 1);
+                $data = base64_decode($data);
+
+                if ($data !== false) {
+                    if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+                        Storage::disk('public')->delete($event->banner);
+                    }
+                    $filename = 'banners/' . uniqid() . '.' . $ext;
+                    \Storage::disk('public')->put($filename, $data);
+                    $validated['banner'] = $filename;
+                }
+            }
         }
 
         $event->update($validated);

@@ -28,9 +28,10 @@ class Peserta extends Model
         'galeri_foto',
         'total_vote',
         'answers',
-        'sudah_audisi',        // ← TAMBAH
-        'tanggal_audisi',      // ← TAMBAH
-        'status_registrasi',   // ← TAMBAH
+        'sudah_audisi',        
+        'tanggal_audisi',      
+        'status_registrasi',
+        'tampil_di_publik',  
     ];
 
     protected $casts = [
@@ -38,8 +39,9 @@ class Peserta extends Model
         'tanggal_daftar' => 'datetime',
         'galeri_foto' => 'array',
         'answers' => 'array',
-        'sudah_audisi' => 'boolean',      // ← TAMBAH
-        'tanggal_audisi' => 'datetime',   // ← TAMBAH
+        'sudah_audisi' => 'boolean',      
+        'tanggal_audisi' => 'datetime',
+        'tampil_di_publik' => 'boolean',
     ];
 
     // ============================================

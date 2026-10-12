@@ -76,6 +76,7 @@
                         <label id="dropZone"
                             class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[#d5cbbd] rounded-xl py-8 cursor-pointer hover:border-gold bg-[#fcfbf9] mb-5 overflow-hidden">
                             <input type="file" name="banner" id="bannerInput" accept="image/*" class="hidden">
+                            <input type="hidden" name="banner_base64" id="bannerBase64" value="{{ old('banner_base64') }}">
                             <div id="dropZoneEmpty" class="flex flex-col items-center gap-2">
                                 <span class="text-[12px]">Tarik & lepas gambar di sini, atau <span
                                         class="text-gold underline">jelajahi file</span></span>
@@ -521,29 +522,73 @@
             inputLokasi, inputBatasTanggal, inputBatasWaktu, inputKuota
         ].forEach(el => el && el.addEventListener('input', updatePreview));
 
-        // Banner preview
+                // Banner preview
+                // Banner preview + simpan base64
         if (bannerInput) {
             bannerInput.addEventListener('change', function() {
                 const file = this.files[0];
                 if (!file) return;
+
+                // Cek size max 5MB
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File terlalu besar. Maksimal 5MB.');
+                    this.value = '';
+                    return;
+                }
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    // Preview kecil
                     if ($('dropZoneEmpty')) $('dropZoneEmpty').classList.add('hidden');
                     const previewImg = $('bannerPreviewImg');
                     if (previewImg) {
                         previewImg.src = e.target.result;
                         previewImg.classList.remove('hidden');
                     }
+
+                    // Preview besar
                     if ($('previewBannerEmpty')) $('previewBannerEmpty').classList.add('hidden');
                     const bigPreview = $('previewBannerImg');
                     if (bigPreview) {
                         bigPreview.src = e.target.result;
                         bigPreview.classList.remove('hidden');
                     }
+
+                    // Simpan base64 ke hidden input
+                    const base64Input = $('bannerBase64');
+                    if (base64Input) {
+                        base64Input.value = e.target.result;
+                    }
                 };
                 reader.readAsDataURL(file);
             });
         }
+
+        // Restore banner dari base64 (kalau validasi gagal)
+        document.addEventListener('DOMContentLoaded', function() {
+            const base64Input = document.getElementById('bannerBase64');
+            const base64Value = base64Input?.value;
+
+            if (base64Value && base64Value.startsWith('data:image')) {
+                const dropZoneEmpty = document.getElementById('dropZoneEmpty');
+                if (dropZoneEmpty) dropZoneEmpty.classList.add('hidden');
+
+                const previewImg = document.getElementById('bannerPreviewImg');
+                if (previewImg) {
+                    previewImg.src = base64Value;
+                    previewImg.classList.remove('hidden');
+                }
+
+                const previewBannerEmpty = document.getElementById('previewBannerEmpty');
+                if (previewBannerEmpty) previewBannerEmpty.classList.add('hidden');
+
+                const bigPreview = document.getElementById('previewBannerImg');
+                if (bigPreview) {
+                    bigPreview.src = base64Value;
+                    bigPreview.classList.remove('hidden');
+                }
+            }
+        });
 
         // Drag & drop
         const dropZone = $('dropZone');

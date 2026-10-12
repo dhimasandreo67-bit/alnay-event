@@ -828,7 +828,20 @@
                                     </div>
 
                                     <div class="flex items-baseline gap-1.5">
+                                        @php
+                                        $formatHasil = $event->format_hasil_voting ?? 'keduanya';
+                                        $voteP = number_format($p->total_vote, 0, ',', '.');
+                                    @endphp
+
+                                    @if ($formatHasil === 'angka')
+                                        <p class="text-lg font-bold text-[#0a1526]">{{ $voteP }}</p>
+                                        <span class="text-[11px] text-[#8a8178]">Suara</span>
+                                    @elseif ($formatHasil === 'persentase')
                                         <p class="text-lg font-bold text-[#0a1526]">{{ $persenP }}%</p>
+                                        <span class="text-[11px] text-[#8a8178]">Vote</span>
+                                    @else
+                                        <p class="text-lg font-bold text-[#0a1526]">{{ $voteP }} <span class="text-sm font-normal text-[#8a8178]">({{ $persenP }}%)</span></p>
+                                    @endif
                                         <span class="text-[11px] text-[#8a8178]">Vote</span>
                                     </div>
 
@@ -943,7 +956,18 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                 d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0" />
                                         </svg>
-                                        <span>{{ $item['vote'] }} suara</span>
+                                        @php
+                                    $formatCard = $event->format_hasil_voting ?? 'keduanya';
+                                    $persenCard = $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 1) : 0;
+                                @endphp
+
+                                @if ($formatCard === 'angka')
+                                    <span>{{ $item['vote'] }} suara</span>
+                                @elseif ($formatCard === 'persentase')
+                                    <span>{{ $persenCard }}%</span>
+                                @else
+                                    <span>{{ $item['vote'] }} ({{ $persenCard }}%)</span>
+                                @endif
                                     </div>
                                 @endif
 
