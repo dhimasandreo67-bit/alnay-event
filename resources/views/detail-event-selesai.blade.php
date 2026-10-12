@@ -8,8 +8,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
         body { font-family: 'Inter', sans-serif; }
         .font-display { font-family: 'Playfair Display', serif; }
         .search-input { transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
@@ -36,6 +41,118 @@
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
+
+               .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ============================================ */
+        /* TOP 3 SWIPER — COVERFLOW (Mobile Only)       */
+        /* ============================================ */
+        .top3Swiper {
+            overflow: hidden !important;
+            padding: 20px 0 50px 0;
+            margin: 0 -12px;
+            width: calc(100% + 24px);
+        }
+
+        .top3Swiper .swiper-wrapper {
+            align-items: center;
+        }
+
+        /* ---- MOBILE: coverflow blur ---- */
+        @media (max-width: 767px) {
+            .top3Swiper .swiper-slide {
+                width: 80%;
+                max-width: none;
+                transition: all .45s cubic-bezier(.22, 1, .36, 1);
+                opacity: 0.35;
+                filter: blur(3px);
+                transform: scale(.85);
+            }
+
+            .top3Swiper .swiper-slide-active {
+                opacity: 1;
+                filter: blur(0);
+                transform: scale(1);
+                z-index: 10;
+            }
+
+            .top3Swiper .swiper-slide-next,
+            .top3Swiper .swiper-slide-prev {
+                opacity: 0.55;
+                filter: blur(1.5px);
+                transform: scale(.9);
+            }
+
+            .top3Swiper .top3Pagination {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    z-index: 100;
+    pointer-events: auto;
+}
+
+.top3Swiper .top3Pagination .swiper-pagination-bullet {
+    width: 6px;
+    height: 6px;
+    background: #d4c4a8;
+    opacity: 1;
+    transition: all .3s ease;
+    margin: 0 !important;
+    z-index: 101;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.top3Swiper .top3Pagination .swiper-pagination-bullet-active {
+    width: 20px;
+    border-radius: 99px;
+    background: #c99a32;
+}
+
+            
+
+        /* ---- DESKTOP/TABLET: 3 kolom biasa, no blur ---- */
+        @media (min-width: 768px) {
+            .top3Swiper {
+                padding: 20px 0 30px 0;
+            }
+
+            .top3Swiper .swiper-slide {
+                width: calc(33.333% - 16px);
+                max-width: none;
+                opacity: 1;
+                filter: none;
+                transform: none;
+                transition: none;
+            }
+
+            .top3Swiper .swiper-slide-active {
+                opacity: 1;
+                filter: none;
+                transform: none;
+            }
+
+            .top3Swiper .swiper-slide-next,
+            .top3Swiper .swiper-slide-prev {
+                opacity: 1;
+                filter: none;
+                transform: none;
+            }
+
+            .top3Swiper .top3Pagination {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -182,29 +299,40 @@
                 </div>
             </section>
         @else
-            <section class="mt-10">
-                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
-                    <div>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[10px] font-bold uppercase tracking-widest text-[#b88625]">Hasil Akhir</span>
-                        <h2 class="font-display mt-2.5 text-[22px] md:text-[26px] font-bold text-[#0a1526]">Peringkat Sekarang</h2>
-                    </div>
-                    <p class="text-[12px] text-[#8a8178] whitespace-nowrap">
-                        Total <strong class="text-[#0a1526]">{{ number_format($totalSuara, 0, ',', '.') }}</strong> suara dari
-                        <strong class="text-[#0a1526]">{{ $jumlahKandidat }}</strong> kandidat
-                    </p>
+            <section class="mt-10 overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 px-5">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[10px] font-bold uppercase tracking-widest text-[#b88625]">Hasil Akhir</span>
+                    <h2 class="font-display mt-2.5 text-[22px] md:text-[26px] font-bold text-[#0a1526]">Peringkat Sekarang</h2>
                 </div>
+                <p class="text-[12px] text-[#8a8178] whitespace-nowrap">
+                    Total <strong class="text-[#0a1526]">{{ number_format($totalSuara, 0, ',', '.') }}</strong> suara dari
+                    <strong class="text-[#0a1526]">{{ $jumlahKandidat }}</strong> kandidat
+                </p>
+            </div>
 
-                @if (count($pemenangArr) > 0)
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 items-end">
-                        @foreach ($pemenangArr as $p)
+            @if (count($pemenangArr) > 0)
+                    @php
+                        // Reorder: 2 - 1 - 3
+                        $pemenangRaw = collect($pemenangArr);
+                        $pemenangSort = collect();
+                        if ($pemenangRaw->count() >= 2) $pemenangSort->push($pemenangRaw[1]);
+                        if ($pemenangRaw->count() >= 1) $pemenangSort->push($pemenangRaw[0]);
+                        if ($pemenangRaw->count() >= 3) $pemenangSort->push($pemenangRaw[2]);
+                    @endphp
+
+                    <div class="swiper top3Swiper mt-4">
+                        <div class="swiper-wrapper">
+
+                        @foreach ($pemenangSort as $p)
                             @php
                                 $juara = $p['juara'];
-                                $order = $juara == 1 ? 'sm:order-2' : ($juara == 2 ? 'sm:order-1' : 'sm:order-3');
                                 $border = $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
-                                $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]';
+                                $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[210px] sm:h-[210px]';
                             @endphp
 
-                            <div class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }} {{ $order }}">
+                            <div class="swiper-slide">
+                                <div class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }}">
                                 <div class="relative overflow-hidden {{ $height }}">
                                     @if ($p['foto'])
                                         <img src="{{ $p['foto'] }}" alt="{{ $p['nama'] }}"
@@ -218,8 +346,6 @@
                                             <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
                                         </div>
                                     @endif
-
-                                    <span class="absolute top-3 left-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#0a1526] shadow-sm">{{ $p['nomor'] }}</span>
 
                                     <span class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
                                         @if ($juara == 1)
@@ -254,9 +380,17 @@
                                         </div>
                                     @endif
                                 </div>
-                            </div>
+                                                        </div>{{-- /card --}}
+                            </div>{{-- /swiper-slide --}}
                         @endforeach
-                    </div>
+
+                        </div>{{-- /swiper-wrapper --}}
+
+                        {{-- Pagination --}}
+                        @if ($pemenangSort->count() > 1)
+                            <div class="top3Pagination"></div>
+                        @endif
+                    </div>{{-- /swiper --}}
                 @else
                     <div class="bg-white rounded-2xl border border-dashed border-[#e5e1db] p-12 text-center mt-4">
                         <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#fdf8ec] flex items-center justify-center">
@@ -372,8 +506,11 @@
     </main>
 
     @include('partials.footer')
-
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script>
+        // ============================================
+        // SEARCH + LIHAT SEMUA — TOGGLE
+        // ============================================
         (function() {
             var input = document.getElementById('searchKandidat');
             var cards = document.querySelectorAll('.kandidat-card');
@@ -444,7 +581,54 @@
                 if (empty) empty.classList.toggle('hidden', visible > 0);
             });
         })();
+
+        // ============================================
+        // TOP 3 — SWIPER COVERFLOW (single init)
+        // ============================================
+        (function() {
+            if (typeof Swiper === 'undefined') return;
+
+            var el = document.querySelector('.top3Swiper');
+            if (!el) return;
+
+            var totalSlides = el.querySelectorAll('.swiper-slide').length;
+            var centerIndex = totalSlides >= 2 ? 1 : 0;
+
+            new Swiper('.top3Swiper', {
+                grabCursor: true,
+                centeredSlides: true,
+                slidesPerView: 'auto',
+                loop: false,
+                initialSlide: centerIndex,
+
+                effect: 'coverflow',
+                coverflowEffect: {
+                    rotate: 0,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 1,
+                    slideShadows: false,
+                },
+
+                pagination: {
+                    el: '.top3Pagination',
+                    clickable: true,
+                },
+                keyboard: { enabled: true },
+                mousewheel: { forceToAxis: true },
+
+                breakpoints: {
+                    768: {
+                        effect: 'slide',
+                        slidesPerView: 3,
+                        spaceBetween: 20,
+                        centeredSlides: true,
+                        coverflowEffect: null,
+                        pagination: false,
+                    },
+                },
+            });
+        })();
     </script>
 </body>
-
 </html>
