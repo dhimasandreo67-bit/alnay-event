@@ -12,15 +12,35 @@ class BerandaController extends Controller
     public function index()
     {
         // ============================================================
-        // 1. EVENT BERLANGSUNG (prioritas utama)
+        // 1. EVENT BERLANGSUNG — semua (untuk carousel)
         // ============================================================
-        $eventBerlangsung = Event::where('tampil_di_beranda', true)
+        $eventBerlangsungList = Event::where('tampil_di_beranda', true)
             ->where('status', 'sedang_berlangsung')
             ->latest('id')
-            ->first();
+            ->get()
+            ->map(function ($ev) {
+                // Stats per-event — untuk carousel
+                $ev->stat_sisa_waktu = $ev->tanggal_selesai
+                    ? max(0, (int) now()->diffInDays($ev->tanggal_selesai, false))
+                    : 0;
+
+                $ev->stat_jumlah_peserta = Peserta::where('event_id', $ev->id)
+                    ->where('status', 'diterima')
+                    ->where('tampil_di_publik', true)
+                    ->count();
+
+                $ev->stat_total_suara = Voting::where('event_id', $ev->id)
+                    ->where('status_midtrans', 'settlement')
+                    ->sum('jumlah_vote');
+
+                return $ev;
+            });
+
+        // Event pertama — untuk backward compat (stats, peringkat, dll)
+        $eventBerlangsung = $eventBerlangsungList->first();
 
         // ============================================================
-        // 2. EVENT BARU SELESAI (≤ 3 hari) — buat tampil peringkat akhir
+        // 2. EVENT BARU SELESAI (≤ 3 hari)
         // ============================================================
         $eventBaruSelesai = Event::where('tampil_di_beranda', true)
             ->where('status', 'telah_berakhir')
@@ -37,16 +57,13 @@ class BerandaController extends Controller
             ->take(3)
             ->get();
 
-        // Event akan datang #1 — HANYA jadi "utama" kalau gak ada event berlangsung
         $eventAkanDatangUtama = $eventBerlangsung ? null : $eventAkanDatangList->first();
-
-        // Event akan datang lainnya — card kecil
         $eventAkanDatangLainnya = $eventBerlangsung
             ? $eventAkanDatangList
             : $eventAkanDatangList->slice(1);
 
         // ============================================================
-        // 4. STATISTIK EVENT BERLANGSUNG
+        // 4. STATISTIK EVENT BERLANGSUNG (yang pertama)
         // ============================================================
         $peringkatTerkini = collect();
         $totalSuara = 0;
@@ -56,26 +73,19 @@ class BerandaController extends Controller
         if ($eventBerlangsung) {
             $peringkatTerkini = Peserta::where('event_id', $eventBerlangsung->id)
                 ->where('status', 'diterima')
+                ->where('tampil_di_publik', true)
                 ->orderByDesc('total_vote')
                 ->take(3)
                 ->with('user')
                 ->get();
 
-            $totalSuara = Voting::where('event_id', $eventBerlangsung->id)
-                ->where('status_midtrans', 'settlement')
-                ->sum('jumlah_vote');
-
-            $jumlahPeserta = Peserta::where('event_id', $eventBerlangsung->id)
-                ->where('status', 'diterima')
-                ->count();
-
-            if ($eventBerlangsung->tanggal_selesai) {
-                $sisaWaktu = (int) now()->diffInDays($eventBerlangsung->tanggal_selesai);
-            }
+            $totalSuara = $eventBerlangsung->stat_total_suara ?? 0;
+            $jumlahPeserta = $eventBerlangsung->stat_jumlah_peserta ?? 0;
+            $sisaWaktu = $eventBerlangsung->stat_sisa_waktu ?? 0;
         }
 
         // ============================================================
-        // 5. PERINGKAT AKHIR — dari event baru selesai (≤ 3 hari)
+        // 5. PERINGKAT AKHIR
         // ============================================================
         $peringkatAkhir = collect();
         $totalSuaraAkhir = 0;
@@ -86,6 +96,7 @@ class BerandaController extends Controller
 
             $peringkatAkhir = Peserta::where('event_id', $eventBaruSelesai->id)
                 ->where('status', 'diterima')
+                ->where('tampil_di_publik', true)
                 ->orderByDesc('total_vote')
                 ->take(3)
                 ->with('user')
@@ -99,64 +110,31 @@ class BerandaController extends Controller
         // ============================================================
         // 6. EVENT SEBELUMNYA (arsip)
         // ============================================================
-                // ============================================================
-        // 6. EVENT SEBELUMNYA (arsip)
-        // ============================================================
         $eventSebelumnya = Event::where('tampil_di_beranda', true)
             ->where('status', 'telah_berakhir')
             ->latest('tanggal_selesai')
             ->take(6)
             ->get();
 
-                // ============================================================
-        // 7. BLACKOUT H-2 — cek mode rahasia
+        // ============================================================
+        // 7. BLACKOUT
         // ============================================================
         $blackoutAktif = false;
         $blackoutEvent = null;
 
-        // Cek event berlangsung
-        if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting && $eventBerlangsung->voting_selesai) {
-            $selisihJam = now()->diffInHours($eventBerlangsung->voting_selesai, false);
-            if ($selisihJam <= 48) {
-                $blackoutAktif = true;
-                $blackoutEvent = $eventBerlangsung;
-            }
+        if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting) {
+            $blackoutAktif = true;
+            $blackoutEvent = $eventBerlangsung;
         }
 
-        // Cek event peringkat akhir
-        if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting && $eventPeringkatAkhir->voting_selesai) {
-            $selisihJam = now()->diffInHours($eventPeringkatAkhir->voting_selesai, false);
-            if ($selisihJam <= 48) {
-                $blackoutAktif = true;
-                $blackoutEvent = $eventPeringkatAkhir;
-            }
-        }
-
-                // ============================================================
-        // 7. BLACKOUT H-2 — cek mode rahasia
-        // ============================================================
-        $blackoutAktif = false;
-        $blackoutEvent = null;
-
-        // Cek event berlangsung
-        if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting && $eventBerlangsung->voting_selesai) {
-            $selisihJam = now()->diffInHours($eventBerlangsung->voting_selesai, false);
-            if ($selisihJam <= 48) {
-                 $blackoutAktif = true;
-            }
-        }
-
-        // Cek event peringkat akhir
-        if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting && $eventPeringkatAkhir->voting_selesai) {
-            $selisihJam = now()->diffInHours($eventPeringkatAkhir->voting_selesai, false);
-            if ($selisihJam <= 48 && $selisihJam > 0) {
-                $blackoutAktif = true;
-                $blackoutEvent = $eventPeringkatAkhir;
-            }
+        if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting) {
+            $blackoutAktif = true;
+            $blackoutEvent = $eventPeringkatAkhir;
         }
 
         return view('beranda', compact(
             'eventBerlangsung',
+            'eventBerlangsungList',      // ← TAMBAH — untuk carousel
             'eventBaruSelesai',
             'eventAkanDatangUtama',
             'eventAkanDatangLainnya',

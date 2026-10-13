@@ -396,10 +396,10 @@
                           <div class="mb-5 text-reveal text-reveal-3">
                         <div class="mb-2 flex items-center gap-2">
                             <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C28E27]/10">
-    <svg class="w-3.5 h-3.5 text-[#C28E27]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-    </svg>
-</span>
+                                <svg class="w-3.5 h-3.5 text-[#C28E27]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </span>
                             <h3 class="font-display text-lg font-bold text-black">Profil Kandidat</h3>
                         </div>
                         <p class="text-sm leading-7 text-[#4B463F] whitespace-pre-line">${esc(deskripsi)}</p>
@@ -408,30 +408,60 @@
             const format = p.event?.format_hasil_voting ?? 'keduanya';
             let blokTotalVote = '';
             let blokPersentase = '';
-
             if (statistik) {
                 if (format === 'angka' || format === 'keduanya') {
-                    blokTotalVote = `
+                    if (statistik.blackout) {
+                        blokTotalVote = `
+                            <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
+                                <p class="mb-1 text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Total Vote</p>
+                                <p class="font-display text-2xl font-bold text-[#C28E27] flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                    </svg>
+                                    Disembunyikan
+                                </p>
+                                <p class="mt-1 text-[10px] text-[#6A6259] italic">Menjaga ketegangan menjelang malam puncak</p>
+                            </div>`;
+                    } else {
+                        blokTotalVote = `
                             <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
                                 <p class="mb-1 text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Total Vote</p>
                                 <p class="font-display text-2xl font-bold text-black">${formatAngka(statistik.totalVoteKu)}</p>
                                 <p class="mt-1 text-[10px] text-[#6A6259]">dari ${formatAngka(statistik.totalSemua)} total</p>
                             </div>`;
+                    }
                 }
 
                 if (format === 'persentase' || format === 'keduanya') {
+                if (statistik.blackout) {
                     blokPersentase = `
-                            <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
-                                <div class="mb-1 flex items-center justify-between">
-                                    <p class="text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Persentase Suara</p>
-                                    <span class="text-[10px] font-bold text-[#7F5700]">${statistik.ranking ? '#' + statistik.ranking : ''}</span>
-                                </div>
-                                <p class="font-display text-2xl font-bold text-black">${statistik.persentase.toFixed(1)}%</p>
-                                <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[#E7DED1]">
-                                    <div class="progress-bar h-full rounded-full bg-[#7F5700]" style="width:${Math.min(100,statistik.persentase)}%"></div>
-                                </div>
-                            </div>`;
+                        <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
+                            <div class="mb-1 flex items-center justify-between">
+                                <p class="text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Persentase Suara</p>
+                                <span class="text-[10px] font-bold text-[#C28E27]">🔒</span>
+                            </div>
+                            <p class="font-display text-2xl font-bold text-[#C28E27] flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                                Disembunyikan
+                            </p>
+                            <p class="mt-1 text-[10px] text-[#6A6259] italic">Menjaga ketegangan</p>
+                        </div>`;
+                } else {
+                    blokPersentase = `
+                        <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
+                            <div class="mb-1 flex items-center justify-between">
+                                <p class="text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Persentase Suara</p>
+                                <span class="text-[10px] font-bold text-[#7F5700]">${statistik.ranking ? '#' + statistik.ranking : ''}</span>
+                            </div>
+                            <p class="font-display text-2xl font-bold text-black">${statistik.persentase.toFixed(1)}%</p>
+                            <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[#E7DED1]">
+                                <div class="progress-bar h-full rounded-full bg-[#7F5700]" style="width:${Math.min(100,statistik.persentase)}%"></div>
+                            </div>
+                        </div>`;
                 }
+            }
             }
 
             const gridCols = format === 'keduanya' ? 'sm:grid-cols-2' : '';
@@ -444,10 +474,12 @@
                             {{-- Shimmer — kilau lembut di sudut --}}
                             <div class="notice-glow pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#C28E27]/15 blur-3xl"></div>
 
-                            {{-- Ornamen atas --}}
+                            {{-- Ornamen atas — mahkota --}}
                             <div class="notice-fade-up delay-1 relative mb-5 flex items-center justify-center gap-2">
                                 <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#C28E27]/40"></span>
-                                <span class="inline-block h-1.5 w-1.5 rotate-45 bg-[#C28E27] notice-pulse"></span>
+                                <svg class="h-4 w-4 text-[#C28E27] notice-pulse" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                                </svg>
                                 <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#C28E27]/40"></span>
                             </div>
 
@@ -496,9 +528,9 @@
                             </div>`;
                 }
 
-                return `
+                                return `
                         <div class="mb-5 rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4 text-xs text-[#4B463F]">
-                            Statistik suara belum tersedia.
+                            🔒 Statistik suara disembunyikan hingga malam puncak.
                         </div>`;
             })();
 
@@ -535,10 +567,10 @@
                             <div>
                                 <div class="flex items-center gap-2">
                                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C28E27]/10">
-                                    <svg class="w-3.5 h-3.5 text-[#C28E27]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    </svg>
-                                </span>
+                                        <svg class="w-3.5 h-3.5 text-[#C28E27]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                    </span>
                                     <h3 class="font-display text-lg font-bold text-black">Pendukung Terkini</h3>
                                 </div>
                             </div>
@@ -593,13 +625,12 @@
                             </div>`;
                 }
 
-                if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
-                    return ` <
-                div class =
-                "block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-600" >
-                Voting Ditutup <
-                /div>`;
-    }
+                                if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
+                    return `
+                            <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-600">
+                                Voting Ditutup
+                            </div>`;
+                }
 
     if (p.event?.status === 'akan_datang') {
         return `

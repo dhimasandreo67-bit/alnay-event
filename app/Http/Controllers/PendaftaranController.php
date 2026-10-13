@@ -145,12 +145,16 @@ class PendaftaranController extends Controller
         ]);
 
         // 5. Simpan peserta + jawaban
-        DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
-            $peserta = Peserta::create([
-                'event_id'         => $event->id,
-                'user_id'          => $user->id,
-                'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
-                'status'           => 'diterima',
+
+                DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
+                 $peserta = Peserta::create([
+                'event_id'          => $event->id,
+                'user_id'           => $user->id,
+                'nama_pendaftaran'  => $request->nama_pendaftaran ?: $namaDefault,
+                'status'            => 'diterima',      // ← AUTO DITERIMA
+                'sudah_audisi'      => false,           // ← Default belum audisi
+                'tampil_di_publik'  => true,            // ← Default tampil (nanti di-override)
+                'status_registrasi' => 'belum',         // ← Default belum bayar registrasi
             ]);
 
             $answers = $data['answers'] ?? [];
@@ -182,7 +186,7 @@ class PendaftaranController extends Controller
         // 6. Redirect dengan flash message
         return redirect()
             ->route('public.registration', $event)
-            ->with('success', 'Pendaftaran berhasil dikirim. Tunggu review dari admin ya!');
+            ->with('success', 'Pendaftaran berhasil! Data kamu sudah kami terima.');
     }
 
     // =====================================================================
@@ -251,8 +255,8 @@ class PendaftaranController extends Controller
     {
         $peserta = Peserta::with([
             'user:id,nama,foto_url,foto_custom',
-            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,tampilkan_hasil_voting,format_hasil_voting',
-            'jawabans.pertanyaan:id,label,tag_tampilan,tipe_input',
+            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,voting_mulai,voting_selesai,auto_freeze_voting,tampilkan_hasil_voting,format_hasil_voting,status',
+            'jawabans.pertanyaan:id,label,tipe_input,tag_tampilan',
         ])
             ->select('id', 'event_id', 'user_id', 'galeri_foto')
             ->findOrFail($id);

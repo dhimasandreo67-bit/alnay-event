@@ -25,11 +25,18 @@ class AktivasiController extends Controller
 
         $finalis = collect();
         if ($event) {
-            $finalis = Peserta::where('event_id', $event->id)
+            $mode = request()->query('mode', 'pendaftaran');
+
+            $query = Peserta::where('event_id', $event->id)
                 ->where('status', 'diterima')
-                ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan'])
-                ->latest('id')
-                ->get()
+                ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan']);
+
+            // Mode Registrasi — cuma tampil yang sudah audisi
+            if ($mode === 'registrasi') {
+                $query->where('sudah_audisi', true);
+            }
+
+            $finalis = $query->latest('id')->get()
                 ->map(fn (Peserta $peserta) => $this->transform($peserta));
         }
 
@@ -149,7 +156,8 @@ class AktivasiController extends Controller
             'dp1'                => $dp1,               
             'dp2'                => $dp2,               
             'lunas'              => $lunas,             
-            'sisaPembayaranDp'   => $sisaPembayaranDp,  
+            'sisaPembayaranDp'   => $sisaPembayaranDp,
+            'tampilDiPublik'     => (bool) ($peserta->tampil_di_publik ?? true),
         ];
     }
 
@@ -162,5 +170,39 @@ class AktivasiController extends Controller
 
         return $pembayaran->where('status_midtrans', 'settlement')->sortByDesc('id')->first()
             ?? $pembayaran->sortByDesc('id')->first();
+    }
+            /**
+     * POST /admin/activation/{peserta}/toggle-tampil
+     * Toggle visibility 1 peserta — return JSON (AJAX)
+     */
+    public function toggleTampil(Request $request, Peserta $peserta): \Illuminate\Http\JsonResponse
+    {
+        $peserta->tampil_di_publik = ! $peserta->tampil_di_publik;
+        $peserta->save();
+
+        return response()->json([
+            'success'         => true,
+            'tampilDiPublik'  => (bool) $peserta->tampil_di_publik,
+            'message'         => $peserta->namaTampil() . ' ' . ($peserta->tampil_di_publik ? 'ditampilkan' : 'disembunyikan') . ' di halaman publik.',
+        ]);
+    }
+
+        public function toggleTampilSemua(Request $request, Event $event): RedirectResponse
+    {
+        $show = $request->boolean('tampil');
+        $mode = $request->input('mode', 'registrasi');
+
+        Peserta::where('event_id', $event->id)
+            ->where('status', 'diterima')
+            ->update(['tampil_di_publik' => $show]);
+
+        return redirect()
+            ->route('admin.activation', ['event' => $event->id, 'mode' => $mode])
+            ->with(
+                'success',
+                $show
+                    ? 'Semua peserta berhasil ditampilkan di halaman publik.'
+                    : 'Semua peserta berhasil disembunyikan dari halaman publik.'
+            );
     }
 }

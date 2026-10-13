@@ -79,9 +79,12 @@ class EventController extends Controller
 
     // GET /admin/events/create
     public function create()
-    {
-        return view('admin.events.create');
-    }
+{
+    return view('admin.events.create', [
+        'event'          => null,
+        'menungguReview' => 0,
+    ]);
+}
 
     // POST /admin/events
     public function store(Request $request)
@@ -92,6 +95,8 @@ class EventController extends Controller
             'syarat_ketentuan'          => 'nullable|string',
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
+            'harga_registrasi'          => 'nullable|numeric|min:0',
+            'harga_registrasi_dp'       => 'nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
             'waktu_mulai'               => 'nullable',
             'tanggal_selesai'           => 'nullable|date',
@@ -103,8 +108,22 @@ class EventController extends Controller
             'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
+                // Handle banner — file atau base64 (restore)
         if ($request->hasFile('banner')) {
             $validated['banner'] = $request->file('banner')->store('banners', 'public');
+        } elseif ($request->filled('banner_base64')) {
+            $base64 = $request->input('banner_base64');
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $ext = $matches[1];
+                $data = substr($base64, strpos($base64, ',') + 1);
+                $data = base64_decode($data);
+
+                if ($data !== false) {
+                    $filename = 'banners/' . uniqid() . '.' . $ext;
+                    \Storage::disk('public')->put($filename, $data);
+                    $validated['banner'] = $filename;
+                }
+            }
         }
 
         // 3 kolom ini NOT NULL tanpa default di database
@@ -136,6 +155,8 @@ class EventController extends Controller
             'status'                    => 'required|in:akan_datang,sedang_berlangsung,telah_berakhir',
             'biaya_pendaftaran'         => 'nullable|numeric|min:0',
             'harga_per_vote'            => 'nullable|numeric|min:0',
+            'harga_registrasi'          => 'sometimes|nullable|numeric|min:0',
+            'harga_registrasi_dp'       => 'sometimes|nullable|numeric|min:0',
             'tanggal_mulai'             => 'required|date',
             'waktu_mulai'               => 'nullable',
             'tanggal_selesai'           => 'nullable|date',
@@ -158,11 +179,28 @@ class EventController extends Controller
             $validated['pendaftaran_dibuka'] = $event->pendaftaran_dibuka;
         }
 
+               // Handle banner — file atau base64 (restore)
         if ($request->hasFile('banner')) {
             if ($event->banner && Storage::disk('public')->exists($event->banner)) {
                 Storage::disk('public')->delete($event->banner);
             }
             $validated['banner'] = $request->file('banner')->store('banners', 'public');
+        } elseif ($request->filled('banner_base64')) {
+            $base64 = $request->input('banner_base64');
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $ext = $matches[1];
+                $data = substr($base64, strpos($base64, ',') + 1);
+                $data = base64_decode($data);
+
+                if ($data !== false) {
+                    if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+                        Storage::disk('public')->delete($event->banner);
+                    }
+                    $filename = 'banners/' . uniqid() . '.' . $ext;
+                    \Storage::disk('public')->put($filename, $data);
+                    $validated['banner'] = $filename;
+                }
+            }
         }
 
         $event->update($validated);
@@ -224,21 +262,44 @@ class EventController extends Controller
     }
 
     // PATCH /admin/events/{event}/toggle-pendaftaran
+        // PATCH /admin/events/{event}/toggle-pendaftaran
     public function togglePendaftaran(Event $event): JsonResponse
     {
-        // Balikkan status pendaftaran_dibuka (true -> false / false -> true)
+        // Balikkan status pendaftaran_dibuka
         $event->pendaftaran_dibuka = ! (bool) $event->pendaftaran_dibuka;
         $event->save();
 
         return response()->json([
             'success' => true,
             'pendaftaran_dibuka' => $event->pendaftaran_dibuka,
-            'message' => $event->pendaftaran_dibuka 
-                ? 'Pendaftaran berhasil diaktifkan.' 
-                : 'Pendaftaran berhasil dinonaktifkan.',
+            'message' => $event->pendaftaran_dibuka
+                ? 'Pendaftaran berhasil dibuka.'
+                : 'Pendaftaran berhasil ditutup.',
         ]);
     }
 
+    // PATCH /admin/events/{event}/toggle-blackout
+    public function toggleBlackout(Event $event): JsonResponse
+    {
+        $newState = ! $event->blackout_h2_voting;
+
+        $update = ['blackout_h2_voting' => $newState];
+
+        // Kalau ON dan voting_selesai kosong → set 24 jam dari sekarang
+        if ($newState && ! $event->voting_selesai) {
+            $update['voting_selesai'] = now()->addHours(24);
+        }
+
+        $event->update($update);
+
+        return response()->json([
+            'success' => true,
+            'blackout_h2_voting' => $event->blackout_h2_voting,
+            'message' => $event->blackout_h2_voting
+                ? 'Mode rahasia diaktifkan — total suara disembunyikan.'
+                : 'Mode rahasia dimatikan — total suara muncul kembali.',
+        ]);
+    }
     // PATCH /admin/events/{event}/tampilkan-hasil
     public function toggleTampilkanHasil(Event $event)
     {

@@ -28,11 +28,10 @@ class Peserta extends Model
         'galeri_foto',
         'total_vote',
         'answers',
-        'sudah_audisi',        // ← TAMBAH
-        'tanggal_audisi',      // ← TAMBAH
-        'status_registrasi',   // ← TAMBAH
-        'hasil_audisi',
-        'kandidat_voting',
+        'sudah_audisi',        
+        'tanggal_audisi',      
+        'status_registrasi',
+        'tampil_di_publik',  
     ];
 
     protected $casts = [
@@ -40,11 +39,9 @@ class Peserta extends Model
         'tanggal_daftar' => 'datetime',
         'galeri_foto' => 'array',
         'answers' => 'array',
-        'sudah_audisi' => 'boolean',      // ← TAMBAH
+        'sudah_audisi' => 'boolean',      
         'tanggal_audisi' => 'datetime',
-        'created_at'      => 'datetime', // ✅ Tambahkan ini
-        'updated_at'      => 'datetime',   // ← TAMBAH
-        'kandidat_voting' => 'boolean',
+        'tampil_di_publik' => 'boolean',
     ];
 
     // ============================================
@@ -74,7 +71,7 @@ class Peserta extends Model
     /** Relasi BARU — pembayaran registrasi */
     public function pembayaranRegistrasi(): HasMany
     {
-        return $this->hasMany(PembayaranEvent::class, 'peserta_id');
+        return $this->hasMany(PembayaranRegistrasi::class, 'peserta_id');
     }
 
     public function votingMasuk(): HasMany

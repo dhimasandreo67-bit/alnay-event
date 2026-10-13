@@ -9,10 +9,16 @@
     <link rel="icon" type="image/png" href="{{ asset('images/alnaylogo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
         * {
             scroll-behavior: smooth;
         }
@@ -330,6 +336,149 @@
                 transform: translateY(0);
             }
         }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ============================================ */
+        /* TOP 3 SWIPER — COVERFLOW                     */
+        /* ============================================ */
+        /* ============================================ */
+        /* TOP 3 SWIPER — COVERFLOW (Mobile Only)       */
+        /* ============================================ */
+        .top3Swiper {
+            overflow: hidden !important;
+            padding: 20px 0 50px 0;
+            margin: 0 -12px;
+            width: calc(100% + 24px);
+        }
+
+        .top3Swiper .swiper-wrapper {
+            align-items: center;
+        }
+
+        /* ---- MOBILE: coverflow blur ---- */
+        @media (max-width: 767px) {
+            .top3Swiper .swiper-slide {
+                width: 80%;
+                max-width: none;
+                transition: all .45s cubic-bezier(.22, 1, .36, 1);
+                opacity: 0.35;
+                filter: blur(3px);
+                transform: scale(.85);
+            }
+
+            .top3Swiper .swiper-slide-active {
+                opacity: 1;
+                filter: blur(0);
+                transform: scale(1);
+                z-index: 10;
+            }
+
+            .top3Swiper .swiper-slide-next,
+            .top3Swiper .swiper-slide-prev {
+                opacity: 0.55;
+                filter: blur(1.5px);
+                transform: scale(.9);
+            }
+        }
+
+        /* ---- DESKTOP/TABLET: 3 kolom biasa, no blur ---- */
+        @media (min-width: 768px) {
+            .top3Swiper {
+                padding: 20px 0 30px 0;
+            }
+
+            .top3Swiper .swiper-slide {
+                width: calc(33.333% - 16px);
+                max-width: none;
+                opacity: 1;
+                filter: none;
+                transform: none;
+                transition: none;
+            }
+
+            .top3Swiper .swiper-slide-active {
+                opacity: 1;
+                filter: none;
+                transform: none;
+            }
+
+            .top3Swiper .swiper-slide-next,
+            .top3Swiper .swiper-slide-prev {
+                opacity: 1;
+                filter: none;
+                transform: none;
+            }
+
+            /* Pagination disembunyikan di desktop */
+            .top3Swiper .top3Pagination {
+                display: none !important;
+            }
+        }
+
+        /* ---- Pagination (mobile only) ---- */
+        @media (max-width: 767px) {
+            .top3Swiper .top3Pagination {
+                position: absolute;
+                bottom: 10px;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .top3Swiper .top3Pagination .swiper-pagination-bullet {
+                width: 6px;
+                height: 6px;
+                background: #d4c4a8;
+                opacity: 1;
+                transition: all .3s ease;
+                margin: 0 !important;
+            }
+
+            .top3Swiper .top3Pagination .swiper-pagination-bullet-active {
+                width: 20px;
+                border-radius: 99px;
+                background: #c99a32;
+            }
+        }
+                /* Mobile — biar card lebih lebar */
+
+        /* Mobile — biar card lebih lebar */
+        @media (max-width: 640px) {
+            .top3Swiper .swiper-slide {
+                width: 82%;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #gridKandidat .kandidat-card .relative.h-\[175px\] {
+                height: 140px !important;
+            }
+
+            #gridKandidat .kandidat-card h3 {
+                font-size: 12px !important;
+            }
+
+            #gridKandidat .kandidat-card .p-3\.5 {
+                padding: 0.6rem !important;
+            }
+
+            #gridKandidat .kandidat-card a.detail-button {
+                padding-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+                font-size: 10px !important;
+            }
+        }
     </style>
 </head>
 
@@ -599,7 +748,8 @@
                     </div>
 
                     {{-- COUNTDOWN --}}
-                    <div class="rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4 relative overflow-hidden self-start mt-8">
+                    <div
+                        class="rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4 relative overflow-hidden self-start mt-8">
 
                         {{-- Glow gold di pojok --}}
                         <div
@@ -701,8 +851,26 @@
         {{-- PERINGKAT SEMENTARA --}}
         {{-- ============================================ --}}
         @php
-            $top3 = $pesertas->take(3);
+            $top3Raw = $pesertas->take(3);
+
+            // Tag juara ASLI sebelum reorder
+            $top3Raw->each(function ($p, $i) {
+                $p->juara_asli = $i + 1;
+            });
+
             $totalUntukPersen = $totalSuara > 0 ? $totalSuara : 1;
+
+            // Reorder: juara 2 - juara 1 - juara 3
+            $top3 = collect();
+            if ($top3Raw->count() >= 2) {
+                $top3->push($top3Raw[1]);
+            }
+            if ($top3Raw->count() >= 1) {
+                $top3->push($top3Raw[0]);
+            }
+            if ($top3Raw->count() >= 3) {
+                $top3->push($top3Raw[2]);
+            }
         @endphp
 
         @if ($blackoutAktif ?? false)
@@ -713,7 +881,8 @@
                         <div class="mb-5 flex items-center justify-center gap-2">
                             <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
                             <svg class="h-4 w-4 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                                <path
+                                    d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                             </svg>
                             <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
                         </div>
@@ -733,7 +902,7 @@
             </section>
         @else
             <section class="section-reveal mt-7">
-                <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between px-5">
                     <div>
                         <div class="mb-2 flex items-center gap-3">
                             <span
@@ -756,89 +925,111 @@
                 </div>
 
                 @if ($top3->count() > 0)
-                    <div class="grid grid-cols-1 items-end gap-3.5 sm:grid-cols-{{ min($top3->count(), 3) }}">
-                        @foreach ($top3 as $i => $p)
-                            @php
-                                $namaP = $p->namaTampil();
-                                $fotoP = $p->user?->foto_custom
-                                    ? asset('storage/' . $p->user->foto_custom)
-                                    : $p->user?->foto_url;
-                                $inisialP = strtoupper(
-                                    implode(
-                                        '',
-                                        array_map(
-                                            fn($kata) => mb_substr($kata, 0, 1),
-                                            array_slice(preg_split('/\s+/', trim($namaP)), 0, 2),
+                    <div class="swiper top3Swiper">
+                        <div class="swiper-wrapper">
+
+                            @foreach ($top3 as $i => $p)
+                                @php
+                                    $namaP = $p->namaTampil();
+                                    $fotoP = $p->user?->foto_custom
+                                        ? asset('storage/' . $p->user->foto_custom)
+                                        : $p->user?->foto_url;
+                                    $inisialP = strtoupper(
+                                        implode(
+                                            '',
+                                            array_map(
+                                                fn($kata) => mb_substr($kata, 0, 1),
+                                                array_slice(preg_split('/\s+/', trim($namaP)), 0, 2),
+                                            ),
                                         ),
-                                    ),
-                                );
-                                $persenP =
-                                    $totalUntukPersen > 0 ? round(($p->total_vote / $totalUntukPersen) * 100, 2) : 0;
-                                $juara = $i + 1;
-                                $order = $juara == 1 ? 'sm:order-2' : ($juara == 2 ? 'sm:order-1' : 'sm:order-3');
-                                $border =
-                                    $juara == 1
-                                        ? 'border-2 border-[#c99a32] shadow-md'
-                                        : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
-                                $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[190px] sm:h-[210px]';
-                            @endphp
+                                    );
+                                    $persenP =
+                                        $totalUntukPersen > 0
+                                            ? round(($p->total_vote / $totalUntukPersen) * 100, 2)
+                                            : 0;
+                                    $juara = $p->id === $top3Raw[0]->id ? 1 : ($p->id === $top3Raw[1]->id ? 2 : 3);
+                                    $border =
+                                        $juara == 1
+                                            ? 'border-2 border-[#c99a32] shadow-md'
+                                            : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
+                                    $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[210px] sm:h-[210px]';
+                                @endphp
 
-                            <div
-                                class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }} {{ $order }}">
+                                <div class="swiper-slide">
+                                    <div
+                                        class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }}">
 
-                                <div class="relative overflow-hidden {{ $height }}">
-                                    @if ($fotoP)
-                                        <img src="{{ $fotoP }}" alt="{{ $namaP }}"
-                                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-                                    @else
-                                        <div
-                                            class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
+                                        <div class="relative overflow-hidden {{ $height }}">
+                                            @if ($fotoP)
+                                                <img src="{{ $fotoP }}" alt="{{ $namaP }}"
+                                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                            @else
+                                                <div
+                                                    class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
+                                                    <span
+                                                        class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
+                                                </div>
+                                            @endif
+
                                             <span
-                                                class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
+                                                class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
+                                                @if ($juara == 1)
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path
+                                                            d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                                                    </svg>
+                                                @endif
+                                                Juara {{ $juara }}
+                                            </span>
                                         </div>
-                                    @endif
 
-                                    {{-- Nomor --}}
-                                    <span
-                                        class="absolute top-3 left-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#0a1526] shadow-sm">
-                                        {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
-                                    </span>
+                                        <div class="p-4">
+                                            <div class="flex items-center justify-between gap-2 mb-2">
+                                                <h3 class="font-bold text-[14px] text-[#0a1526] truncate">
+                                                    {{ $namaP }}</h3>
+                                                <span
+                                                    class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">
+                                                    {{ $p->asal ?? '-' }}
+                                                </span>
+                                            </div>
 
-                                    {{-- Badge juara --}}
-                                    <span
-                                        class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
-                                        @if ($juara == 1)
-                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
-                                            </svg>
-                                        @endif
-                                        Juara {{ $juara }}
-                                    </span>
+                                            <div class="flex items-baseline gap-1.5">
+                                                @php
+                                                    $formatHasil = $event->format_hasil_voting ?? 'keduanya';
+                                                    $voteP = number_format($p->total_vote, 0, ',', '.');
+                                                @endphp
+                                                @if ($formatHasil === 'angka')
+                                                    <p class="text-lg font-bold text-[#0a1526]">{{ $voteP }}
+                                                    </p>
+                                                    <span class="text-[11px] text-[#8a8178]">Suara</span>
+                                                @elseif ($formatHasil === 'persentase')
+                                                    <p class="text-lg font-bold text-[#0a1526]">{{ $persenP }}%
+                                                    </p>
+                                                    <span class="text-[11px] text-[#8a8178]">Vote</span>
+                                                @else
+                                                    <p class="text-lg font-bold text-[#0a1526]">{{ $voteP }}
+                                                        <span
+                                                            class="text-sm font-normal text-[#8a8178]">({{ $persenP }}%)</span>
+                                                    </p>
+                                                @endif
+                                            </div>
+
+                                            <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
+                                                <div class="h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full transition-all duration-700"
+                                                    style="width: {{ $persenP }}%"></div>
+                                            </div>
+                                        </div>
+
+                                    </div>
                                 </div>
+                            @endforeach
 
-                                <div class="p-4">
-                                    <div class="flex items-center justify-between gap-2 mb-2">
-                                        <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $namaP }}
-                                        </h3>
-                                        <span
-                                            class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">
-                                            {{ $p->asal ?? '-' }}
-                                        </span>
-                                    </div>
+                        </div>
 
-                                    <div class="flex items-baseline gap-1.5">
-                                        <p class="text-lg font-bold text-[#0a1526]">{{ $persenP }}%</p>
-                                        <span class="text-[11px] text-[#8a8178]">Vote</span>
-                                    </div>
-
-                                    <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full transition-all duration-700"
-                                            style="width: {{ $persenP }}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
+                        {{-- Pagination dots --}}
+                        @if ($top3->count() > 1)
+                            <div class="top3Pagination"></div>
+                        @endif
                     </div>
                 @endif
             </section>
@@ -876,7 +1067,7 @@
             </div>
 
             @if (count($kandidat) > 0)
-                <div id="gridKandidat" class="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+                <div id="gridKandidat" class="mt-3.5 grid grid-cols-2 gap-3 sm:gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
 
                     @foreach ($kandidat as $index => $item)
                         @php
@@ -943,7 +1134,19 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                 d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0" />
                                         </svg>
-                                        <span>{{ $item['vote'] }} suara</span>
+                                        @php
+                                            $formatCard = $event->format_hasil_voting ?? 'keduanya';
+                                            $persenCard =
+                                                $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 1) : 0;
+                                        @endphp
+
+                                        @if ($formatCard === 'angka')
+                                            <span>{{ $item['vote'] }} suara</span>
+                                        @elseif ($formatCard === 'persentase')
+                                            <span>{{ $persenCard }}%</span>
+                                        @else
+                                            <span>{{ $item['vote'] }} ({{ $persenCard }}%)</span>
+                                        @endif
                                     </div>
                                 @endif
 
@@ -1147,125 +1350,132 @@
         </div>
     </div>
 
+    <!-- Swiper JS — HARUS DI ATAS init -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
     <script>
-        // Buka / tutup popup Syarat & Ketentuan
-        (function() {
-            var modal = document.getElementById('modalSyarat');
+    // ============================================
+    // SEARCH + LIHAT SEMUA — TOGGLE
+    // ============================================
+    (function() {
+        var input = document.getElementById('searchKandidat');
+        var cards = document.querySelectorAll('.kandidat-card');
+        var empty = document.getElementById('emptySearch');
+        var btn = document.getElementById('btnLihatSemua');
+        var btnText = document.getElementById('btnLihatSemuaText');
+        var btnIcon = document.getElementById('btnLihatSemuaIcon');
+        var wrapBtn = document.getElementById('wrapBtnLihatSemua');
 
-            function buka() {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.body.style.overflow = 'hidden';
-            }
+        if (!input) return;
 
-            function tutup() {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                document.body.style.overflow = '';
-            }
+        var isExpanded = false;
+        var batasAwal = 8;
+        var totalKandidat = cards.length;
 
-            document.querySelectorAll('[data-buka-syarat]').forEach(function(el) {
-                el.addEventListener('click', buka);
-            });
-
-            document.querySelectorAll('[data-tutup-syarat]').forEach(function(el) {
-                el.addEventListener('click', tutup);
-            });
-
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) tutup();
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') tutup();
-            });
-        })();
-
-        // ============================================
-        // SEARCH + LIHAT SEMUA — TOGGLE
-        // ============================================
-        (function() {
-            var input = document.getElementById('searchKandidat');
-            var cards = document.querySelectorAll('.kandidat-card');
-            var empty = document.getElementById('emptySearch');
-            var btn = document.getElementById('btnLihatSemua');
-            var btnText = document.getElementById('btnLihatSemuaText');
-            var btnIcon = document.getElementById('btnLihatSemuaIcon');
-            var wrapBtn = document.getElementById('wrapBtnLihatSemua');
-
-            if (!input) return;
-
-            var isExpanded = false;
-            var batasAwal = 8;
-            var totalKandidat = cards.length;
-
-            // === Toggle Lihat Semua ===
-            if (btn) {
-                btn.addEventListener('click', function() {
-                    isExpanded = !isExpanded;
-                    var q = input.value.toLowerCase().trim();
-
-                    cards.forEach(function(card) {
-                        var idx = parseInt(card.dataset.index);
-
-                        if (q.length > 0) return;
-
-                        if (isExpanded) {
-                            card.classList.remove('hidden');
-                        } else {
-                            if (idx >= batasAwal) {
-                                card.classList.add('hidden');
-                            }
-                        }
-                    });
-
-                    if (isExpanded) {
-                        btnText.textContent = 'Tampilkan Lebih Sedikit';
-                        btnIcon.style.transform = 'rotate(180deg)';
-                    } else {
-                        btnText.textContent = 'Lihat Semua ' + totalKandidat + ' Kandidat';
-                        btnIcon.style.transform = 'rotate(0)';
-                    }
-                });
-            }
-
-            // === Search ===
-            input.addEventListener('input', function() {
-                var q = this.value.toLowerCase().trim();
-                var visible = 0;
-                var isSearching = q.length > 0;
+        if (btn) {
+            btn.addEventListener('click', function() {
+                isExpanded = !isExpanded;
+                var q = input.value.toLowerCase().trim();
 
                 cards.forEach(function(card) {
                     var idx = parseInt(card.dataset.index);
-                    var match = card.dataset.nama.includes(q);
-
-                    if (isSearching) {
-                        if (match) {
-                            card.classList.remove('hidden');
-                            visible++;
-                        } else {
-                            card.classList.add('hidden');
-                        }
+                    if (q.length > 0) return;
+                    if (isExpanded) {
+                        card.classList.remove('hidden');
                     } else {
-                        if (idx >= batasAwal && !isExpanded) {
-                            card.classList.add('hidden');
-                        } else {
-                            card.classList.remove('hidden');
-                        }
-                        visible++;
+                        if (idx >= batasAwal) card.classList.add('hidden');
                     }
                 });
 
-                if (wrapBtn) {
-                    wrapBtn.style.display = isSearching ? 'none' : '';
-                }
-
-                if (empty) {
-                    empty.classList.toggle('hidden', visible > 0);
+                if (isExpanded) {
+                    btnText.textContent = 'Tampilkan Lebih Sedikit';
+                    btnIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    btnText.textContent = 'Lihat Semua ' + totalKandidat + ' Kandidat';
+                    btnIcon.style.transform = 'rotate(0)';
                 }
             });
-        })();
-    </script>
+        }
+
+        input.addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            var visible = 0;
+            var isSearching = q.length > 0;
+
+            cards.forEach(function(card) {
+                var idx = parseInt(card.dataset.index);
+                var match = card.dataset.nama.includes(q);
+
+                if (isSearching) {
+                    if (match) {
+                        card.classList.remove('hidden');
+                        visible++;
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                } else {
+                    if (idx >= batasAwal && !isExpanded) {
+                        card.classList.add('hidden');
+                    } else {
+                        card.classList.remove('hidden');
+                    }
+                    visible++;
+                }
+            });
+
+            if (wrapBtn) wrapBtn.style.display = isSearching ? 'none' : '';
+            if (empty) empty.classList.toggle('hidden', visible > 0);
+        });
+    })();
+
+    // ============================================
+    // TOP 3 — SWIPER COVERFLOW (single init)
+    // ============================================
+    (function() {
+        if (typeof Swiper === 'undefined') return;
+
+        var el = document.querySelector('.top3Swiper');
+        if (!el) return;
+
+        var totalSlides = el.querySelectorAll('.swiper-slide').length;
+        var centerIndex = totalSlides >= 2 ? 1 : 0;
+
+        new Swiper('.top3Swiper', {
+            grabCursor: true,
+            centeredSlides: true,
+            slidesPerView: 'auto',
+            loop: false,
+            initialSlide: centerIndex,
+
+            effect: 'coverflow',
+            coverflowEffect: {
+                rotate: 0,
+                stretch: 0,
+                depth: 100,
+                modifier: 1,
+                slideShadows: false,
+            },
+
+            pagination: {
+                el: '.top3Pagination',
+                clickable: true,
+            },
+            keyboard: { enabled: true },
+            mousewheel: { forceToAxis: true },
+
+            breakpoints: {
+                768: {
+                    effect: 'slide',
+                    slidesPerView: 3,
+                    spaceBetween: 20,
+                    centeredSlides: true,
+                    coverflowEffect: null,
+                    pagination: false,
+                },
+            },
+        });
+    })();
+</script>
 </body>
 
 </html>

@@ -290,7 +290,12 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.activation');
     Route::post('/activation/{peserta}/verifikasi', [AktivasiController::class, 'verifikasi'])
         ->name('admin.activation.verifikasi');
-
+    Route::post('/activation/{peserta}/toggle-audisi', [AktivasiController::class, 'toggleAudisi'])
+        ->name('admin.activation.toggle-audisi');
+    Route::post('/activation/event/{event}/toggle-tampil-semua', [AktivasiController::class, 'toggleTampilSemua'])
+        ->name('admin.activation.toggle-tampil-semua');
+    Route::post('/activation/{peserta}/toggle-tampil', [AktivasiController::class, 'toggleTampil'])
+        ->name('admin.activation.toggle-tampil');
     Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])
         ->name('admin.voting.settings');
     Route::post('/voting/settings/{event}', [VotingController::class, 'update'])

@@ -619,23 +619,42 @@
     {{-- ============================================ --}}
     {{-- TOAST                                         --}}
     {{-- ============================================ --}}
-    <div id="toast"
-        data-pesan="{{ session('status') ?? ($errors->first('foto') ?? $errors->first('nama_custom')) }}"
-        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#15233d] to-[#1f3357] text-white text-xs shadow-xl">
-    </div>
+    @if (session('status'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        toast(@json(session('status')), 'success');
+    });
+</script>
+@endif
+
+@if ($errors->first('foto'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        swalAlert(@json($errors->first('foto')), 'error');
+    });
+</script>
+@endif
+
+@if ($errors->first('nama_custom'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        swalAlert(@json($errors->first('nama_custom')), 'error');
+    });
+</script>
+@endif
 
     <script>
         const $ = id => document.getElementById(id);
 
         let toastTimer;
-        const tampilToast = teks => {
-            const t = $('toast');
-            t.textContent = teks;
-            t.classList.remove('hidden');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
-        };
-        if ($('toast').dataset.pesan) tampilToast($('toast').dataset.pesan);
+        // Pakai SweetAlert toast() — global helper
+const tampilToast = (teks) => {
+    if (typeof toast === 'function') {
+        toast(teks, 'info');
+    } else {
+        alert(teks); // fallback
+    }
+};
 
         // Edit nama
         const input = $('inputNama');

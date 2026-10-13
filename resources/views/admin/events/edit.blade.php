@@ -1,3 +1,7 @@
+@php
+    $event = $event ?? null;
+    $menungguReview = $menungguReview ?? 0;
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 
@@ -217,6 +221,46 @@
                         </div>
                     </div>
 
+                                        {{-- ===== SECTION 3B: REGISTRASI ===== --}}
+                    <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
+                        <div class="mb-4 pb-3 border-b border-[#e5e1db]">
+                            <h2 class="font-bold text-slate-800">Registrasi</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Biaya registrasi setelah peserta lolos audisi</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-bold mb-1.5">Harga Registrasi (Lunas)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">Rp</span>
+                                    <input type="text" name="harga_registrasi" id="harga_registrasi"
+                                        value="{{ old('harga_registrasi', $event->harga_registrasi) }}"
+                                        inputmode="numeric" autocomplete="off"
+                                        class="w-full border border-[#e5e1db] rounded-md p-2.5 pl-10 bg-[#fcfbf9] focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition"
+                                        placeholder="0">
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1.5">
+                                    Biaya registrasi penuh jika peserta memilih bayar lunas.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold mb-1.5">Harga Registrasi DP</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">Rp</span>
+                                    <input type="text" name="harga_registrasi_dp" id="harga_registrasi_dp"
+                                        value="{{ old('harga_registrasi_dp', $event->harga_registrasi_dp) }}"
+                                        inputmode="numeric" autocomplete="off"
+                                        class="w-full border border-[#e5e1db] rounded-md p-2.5 pl-10 bg-[#fcfbf9] focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition"
+                                        placeholder="0">
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1.5">
+                                    Biaya DP gelombang pertama. Pelunasan (DP2) = harga lunas − harga DP.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- ===== SECTION 4: JADWAL & LOKASI ===== --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
                         <div class="mb-4 pb-3 border-b border-[#e5e1db]">
@@ -313,7 +357,7 @@
                                 <label class="block font-bold mb-1.5">Batas Pendaftaran (Tanggal)</label>
                                 <input type="date" name="batas_pendaftaran_tanggal"
                                     value="{{ old('batas_pendaftaran_tanggal', $event->batas_pendaftaran_tanggal?->format('Y-m-d')) }}"
-                                    required
+
                                     class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9] focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition">
                                 @error('batas_pendaftaran_tanggal')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
@@ -324,7 +368,7 @@
                                 <label class="block font-bold mb-1.5">Batas Pendaftaran (Waktu)</label>
                                 <input type="time" name="batas_pendaftaran_waktu"
                                     value="{{ old('batas_pendaftaran_waktu', $event->batas_pendaftaran_waktu?->format('H:i')) }}"
-                                    required
+
                                     class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9] focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition">
                                 @error('batas_pendaftaran_waktu')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>

@@ -30,8 +30,10 @@ class DetailEventController extends Controller
 
     public function akanDatang(Event $event)
     {
+        // ✅ Filter tampil_di_publik
         $jumlahPeserta = Peserta::where('event_id', $event->id)
             ->where('status', 'diterima')
+            ->where('tampil_di_publik', true)
             ->count();
 
         $sisaHariPendaftaran = $event->batas_pendaftaran_tanggal
@@ -48,9 +50,11 @@ class DetailEventController extends Controller
 
     public function selesai(Event $event)
     {
+        // ✅ Filter tampil_di_publik
         $pesertas = Peserta::with('user')
             ->where('event_id', $event->id)
             ->where('status', 'diterima')
+            ->where('tampil_di_publik', true)
             ->orderByDesc('total_vote')
             ->get();
 
@@ -68,11 +72,13 @@ class DetailEventController extends Controller
         ]);
     }
 
-        private function getPesertas(Event $event)
+    private function getPesertas(Event $event)
     {
+        // ✅ Filter tampil_di_publik
         $query = Peserta::with(['user', 'jawaban.pertanyaan'])
             ->where('event_id', $event->id)
-            ->where('status', 'diterima');
+            ->where('status', 'diterima')
+            ->where('tampil_di_publik', true);
 
         // Kalau blackout aktif — acak urutan biar gak bocorin peringkat
         if ($this->isBlackoutAktif($event)) {
@@ -92,8 +98,9 @@ class DetailEventController extends Controller
 
     /**
      * Helper — cek blackout H-2 aktif.
+     * Butuh: toggle ON + voting_selesai ≤ 48 jam
      */
-    private function isBlackoutAktif(Event $event): bool
+        private function isBlackoutAktif(Event $event): bool
     {
         return (bool) $event->blackout_h2_voting;
     }
