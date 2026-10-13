@@ -79,4 +79,28 @@ class ProfilUserController extends Controller
 
         return redirect()->route('profil-user')->with('status', 'Foto berhasil dihapus.');
     }
+
+    /**
+     * GET /profil-user/pendaftaran/{peserta}
+     * Lihat data pendaftaran milik user (READ-ONLY)
+     */
+    public function showPendaftaran(Request $request, $pesertaId)
+    {
+        $peserta = Peserta::with(['event', 'jawabans.pertanyaan'])->findOrFail($pesertaId);
+
+        // 🔒 KEAMANAN: hanya pemilik data yang boleh melihat
+        abort_unless($peserta->user_id === $request->user()->id, 403);
+
+        // Urutkan jawaban sesuai urutan pertanyaan & buang heading/subheading
+        $jawabans = $peserta->jawabans
+            ->filter(fn ($j) => $j->pertanyaan && !in_array(strtolower($j->pertanyaan->tipe_input), ['heading', 'subheading'], true))
+            ->sortBy(fn ($j) => $j->pertanyaan->urutan ?? 0)
+            ->values();
+
+        return view('pendaftaran-show', [
+            'event'    => $peserta->event,
+            'peserta'  => $peserta,
+            'jawabans' => $jawabans,
+        ]);
+    }
 }

@@ -154,6 +154,8 @@ Route::middleware('pelanggan')->group(function () {
     Route::put('/profil-user', [ProfilUserController::class, 'update'])->name('profil-user.update');
     Route::post('/profil-user/foto', [ProfilUserController::class, 'uploadFoto'])->name('profil-user.foto');
     Route::delete('/profil-user/foto', [ProfilUserController::class, 'hapusFoto'])->name('profil-user.foto.hapus');
+    Route::get('/profil-user/pendaftaran/{peserta}', [ProfilUserController::class, 'showPendaftaran'])
+    ->name('peserta.pendaftaran.show');
 
     // Logout khusus pelanggan
     Route::post('/profil-user/logout', function () {
