@@ -1760,78 +1760,96 @@
     });
 
     // ==========================================
-    // MODAL TIDAK LOLOS AUDISI
-    // ==========================================
-    function openModalTolak(pesertaId, namaPeserta) {
-        console.log('🔴 Opening tolak modal:', { pesertaId, namaPeserta });
-        
-        document.getElementById('tolak_peserta_id').value = pesertaId;
-        document.getElementById('tolak_nama_peserta').textContent = namaPeserta;
-        document.getElementById('tolak_catatan').value = ''; // Reset catatan
-        
-        // Set action form
-        document.getElementById('formTolakAudisi').action = '/admin/peserta/' + pesertaId + '/hasil-audisi';
-        
-        const modal = document.getElementById('modalTolakAudisi');
+// MODAL TIDAK LOLOS AUDISI
+// ==========================================
+function openModalTolak(pesertaId, namaPeserta, catatanLama = '') {
+    document.getElementById('tolak_peserta_id').value = pesertaId;
+    document.getElementById('tolak_nama_peserta').textContent = namaPeserta;
+    document.getElementById('tolak_catatan').value = catatanLama || '';
+    
+    const form = document.getElementById('formTolakAudisi');
+    if (form) {
+        form.action = '/admin/peserta/' + pesertaId + '/hasil-audisi';
+    }
+    
+    const modal = document.getElementById('modalTolakAudisi');
+    if (modal) {
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
         document.body.classList.add('overflow-hidden');
     }
+}
 
-    function closeModalTolak() {
-        const modal = document.getElementById('modalTolakAudisi');
+function closeModalTolak() {
+    const modal = document.getElementById('modalTolakAudisi');
+    if (modal) {
         modal.classList.add('hidden');
         modal.style.display = 'none';
         document.body.classList.remove('overflow-hidden');
-        
-        const form = document.getElementById('formTolakAudisi');
-        if (form) form.reset();
     }
+    
+    const form = document.getElementById('formTolakAudisi');
+    if (form) form.reset();
+}
 
-    // Handle submit form tolak via AJAX
-    document.addEventListener('DOMContentLoaded', function() {
-        const formTolak = document.getElementById('formTolakAudisi');
-        if (formTolak) {
-            formTolak.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const pesertaId = document.getElementById('tolak_peserta_id').value;
-                const catatan = document.getElementById('tolak_catatan').value; // ✅ Ambil nilai catatan
-                const csrfToken = document.querySelector('meta[name="csrf-token"]');
-                
-                if (!csrfToken) {
-                    alert('CSRF token tidak ditemukan!');
-                    return;
+// Handle submit form tolak via AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    const formTolak = document.getElementById('formTolakAudisi');
+    if (formTolak) {
+        formTolak.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const pesertaId = document.getElementById('tolak_peserta_id').value;
+            const catatan = document.getElementById('tolak_catatan').value;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            
+            if (!csrfToken) {
+                alert('CSRF token tidak ditemukan!');
+                return;
+            }
+
+            fetch('/admin/peserta/' + pesertaId + '/hasil-audisi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken.content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    hasil_audisi: 'tidak_lolos',
+                    catatan_admin: catatan
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeModalTolak();
+                    window.location.reload();
+                } else {
+                    alert('Gagal menyimpan: ' + (data.message || 'Terjadi kesalahan'));
                 }
-
-                fetch('/admin/peserta/' + pesertaId + '/hasil-audisi', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken.content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        hasil_audisi: 'tidak_lolos',
-                        catatan_admin: catatan // ✅ KIRIM CATATAN KE BACKEND
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        closeModalTolak();
-                        window.location.reload();
-                    } else {
-                        alert('Gagal menyimpan: ' + (data.message || 'Terjadi kesalahan'));
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error:', error);
-                    alert('Terjadi kesalahan sistem.');
-                });
+            })
+            .catch(error => {
+                console.error('❌ Error:', error);
+                alert('Terjadi kesalahan sistem.');
             });
-        }
-    });
+        });
+    }
+});
+
+// Close modal on ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModalTolak();
+    }
+});
+
+// Close modal on backdrop click
+document.getElementById('modalTolakAudisi')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModalTolak();
+    }
+});
 
     // ==========================================
     // MODAL CATATAN ADMIN
