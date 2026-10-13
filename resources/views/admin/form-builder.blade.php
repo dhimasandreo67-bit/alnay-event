@@ -8,6 +8,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        @include('admin.partials.pwa-head')
         <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
         <style>
             :root {
@@ -1269,7 +1270,6 @@
 
         @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
         @include('admin.partials.pwa-head')
-        @include('partials.swal')
     </body>
 
     </html>

@@ -19,12 +19,16 @@ use Illuminate\Validation\ValidationException;
 
 class PendaftaranController extends Controller
 {
+    /**
+     * POST /admin/registrations/{event}/manual
+     * Input manual peserta - status langsung 'diterima'
+     */
     public function storeManual(Request $request, Event $event): JsonResponse
     {
         $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
-
+        
         $rules = [
-            'nama' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z\s\.\'\-,]+$/u'],
+            'nama'  => ['required', 'string', 'max:100', 'regex:/^[A-Za-z\s\.\'\-,]+$/u'],
             'email' => ['required', 'email', 'max:255'],
         ];
 
@@ -32,7 +36,6 @@ class PendaftaranController extends Controller
             if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
                 continue;
             }
-
             $field = "answers.{$question->id}";
             $fieldRules = [$question->wajib ? 'required' : 'nullable'];
 
@@ -52,28 +55,28 @@ class PendaftaranController extends Controller
                 $fieldRules[] = 'string';
                 $fieldRules[] = 'max:5000';
             }
-
             $rules[$field] = $fieldRules;
         }
 
         $data = $request->validate($rules);
 
         $peserta = DB::transaction(function () use ($data, $event, $questions, $request): Peserta {
+            // 1. Cari atau buat user
             $user = PenggunaEvent::query()->firstOrCreate(
                 ['email' => $data['email']],
                 [
-                    'google_id' => 'manual-' . Str::uuid(),
-                    'nama' => $data['nama'],
-                ],
+                    'google_id' => 'manual-admin-' . Str::uuid(),
+                    'nama'      => $data['nama'],
+                ]
             );
 
             if ($user->nama !== $data['nama']) {
                 $user->update(['nama' => $data['nama']]);
             }
 
+            // 2. Cek duplikasi
             $sudahDaftar = Peserta::where('event_id', $event->id)
                 ->where('user_id', $user->id)
-                ->whereIn('status', ['menunggu_review', 'diterima'])
                 ->exists();
 
             if ($sudahDaftar) {
@@ -82,20 +85,36 @@ class PendaftaranController extends Controller
                 ]);
             }
 
-            // Simpan peserta + nama_pendaftaran (untuk data lama)
+            // 3. ✅ BUAT PESERTA: Status LANGSUNG 'diterima'
             $pesertaData = [
                 'user_id'          => $user->id,
                 'nama_pendaftaran' => $data['nama'],
-                'status'           => 'menunggu_review',
+                'status'           => 'diterima', // ✅ TIDAK ADA 'menunggu_review'
+                'kandidat_voting'  => false,
             ];
 
-            // Tambah updated_at kalau kolomnya ada
             if (Schema::hasColumn('peserta_event', 'updated_at')) {
                 $pesertaData['updated_at'] = now();
             }
 
             $peserta = $event->pesertas()->create($pesertaData);
 
+            // 4. ✅ BUAT PEMBAYARAN: Langsung 'settlement' (Lunas) agar bisa langsung vote
+            // Karena ini input manual admin, kita bypass proses pembayaran user
+            if ($event->biaya_pendaftaran > 0) {
+                $jumlah = (int) $event->biaya_pendaftaran;
+                \App\Models\PembayaranEvent::create([
+                    'peserta_id'        => $peserta->id,
+                    'jumlah'            => $jumlah,
+                    'tarif_dasar'       => $jumlah,
+                    'metode'            => 'manual_admin',
+                    'midtrans_order_id' => 'ADMIN-MANUAL-' . date('YmdHis') . '-' . $peserta->id,
+                    'status_midtrans'   => 'pending', // ✅ LANGSUNG LUNAS
+                    'tanggal_bayar'     => now(),
+                ]);
+            }
+
+            // 5. Simpan jawaban Form Builder
             foreach ($questions as $question) {
                 if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
                     continue;
@@ -123,21 +142,207 @@ class PendaftaranController extends Controller
         });
 
         return response()->json([
-            'message'    => 'Data peserta berhasil disimpan.',
+            'message'    => 'Data peserta voting berhasil disimpan dan langsung diterima.',
             'peserta_id' => $peserta->id,
         ], 201);
     }
 
-    public function indexPendaftar(Event $event)
+    /**
+     * GET /admin/peserta/{id}
+     * Detail peserta
+     */
+    public function show($id)
     {
-        $pesertas = $event->pesertas()
-            ->with(['user', 'pembayaran', 'jawabans.pertanyaan'])
-            ->latest('id')
-            ->get();
+        $peserta = Peserta::with([
+            'user',
+            'event',
+            'pembayaran',
+            'jawabans.pertanyaan',
+        ])->findOrFail($id);
 
-        return response()->json($pesertas);
+        // Filter: skip field "nama" & heading/subheading
+        $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
+
+        $peserta->setRelation(
+            'jawabans',
+            $peserta->jawabans
+                ->filter(function ($jawaban) use ($namaKeywords) {
+                    if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
+                        return false;
+                    }
+
+                    $label = strtolower(trim($jawaban->pertanyaan?->label ?? ''));
+                    if (in_array($label, $namaKeywords, true)) {
+                        return false;
+                    }
+
+                    return true;
+                })
+                ->values()
+        );
+
+        return view('admin.peserta.show', compact('peserta'));
     }
 
+    /**
+     * GET /admin/peserta/{id}/edit
+     * Form edit data peserta
+     */
+    public function edit($id)
+    {
+        $peserta = Peserta::with([
+            'user',
+            'event',
+            'pembayaran',
+            'jawabans.pertanyaan',
+        ])->findOrFail($id);
+
+        return view('admin.peserta.edit', compact('peserta'));
+    }
+
+    /**
+     * PUT /admin/peserta/{id}
+     * Simpan perubahan data peserta + jawaban formulir
+     */
+    public function update(Request $request, $id)
+    {
+        $peserta = Peserta::with(['user', 'jawabans.pertanyaan'])->findOrFail($id);
+
+        $request->validate([
+            'nama'  => ['required', 'string', 'max:100'],
+            'email' => [
+                'required', 'email', 'max:255',
+                Rule::unique('pengguna_event', 'email')->ignore($peserta->user_id),
+            ],
+        ]);
+
+        DB::transaction(function () use ($request, $peserta) {
+            // 1. Update akun user
+            if ($peserta->user) {
+                $peserta->user->update([
+                    'nama'  => $request->nama,
+                    'email' => $request->email,
+                ]);
+            }
+
+            // 2. Update data peserta (status tetap 'diterima')
+            $peserta->nama_pendaftaran = $request->nama;
+            $peserta->catatan_admin    = $request->input('catatan_admin');
+            $peserta->save();
+
+            // 3. Update setiap jawaban formulir
+            foreach ($peserta->jawabans as $jawaban) {
+                $key  = "answers.{$jawaban->id}";
+                $tipe = strtolower($jawaban->pertanyaan?->tipe_input ?? 'text');
+
+                // FILE / GAMBAR
+                if (in_array($tipe, ['file', 'upload_gambar', 'upload gambar', 'image', 'gambar'], true)) {
+                    if ($request->hasFile($key)) {
+                        $request->validate([$key => ['file', 'max:5120']]);
+
+                        $old = is_array($jawaban->jawaban)
+                            ? ($jawaban->jawaban[0] ?? null)
+                            : $jawaban->jawaban;
+
+                        if ($old && is_string($old) && Storage::disk('public')->exists($old)) {
+                            Storage::disk('public')->delete($old);
+                        }
+
+                        $jawaban->update([
+                            'jawaban' => $request->file($key)->store('peserta', 'public'),
+                        ]);
+                    }
+                    continue;
+                }
+
+                // CHECKBOX
+                if ($tipe === 'checkbox') {
+                    $val = $request->input($key, []);
+                    $jawaban->update([
+                        'jawaban' => is_array($val) ? json_encode($val, JSON_THROW_ON_ERROR) : $val,
+                    ]);
+                    continue;
+                }
+
+                // TEXT / TEXTAREA / SELECT / RADIO
+                if ($request->has($key)) {
+                    $jawaban->update(['jawaban' => $request->input($key)]);
+                }
+            }
+        });
+
+        return redirect()
+            ->route('admin.peserta.show', $peserta->id)
+            ->with('success', 'Data peserta berhasil diperbarui.');
+    }
+
+    /**
+     * DELETE /admin/peserta/{id}
+     * Hapus peserta
+     */
+    public function destroy(Request $request, $id)
+    {
+        $peserta = Peserta::findOrFail($id);
+
+        // Hapus relasi
+        JawabanPeserta::where('peserta_id', $peserta->id)->delete();
+        PembayaranEvent::where('peserta_id', $peserta->id)->delete();
+        $peserta->delete();
+
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('success', 'Data peserta, jawaban, dan pembayaran berhasil dihapus.');
+    }
+
+    /**
+     * POST /admin/peserta/{id}/hasil-audisi
+     * Update hasil audisi + catatan admin (opsional)
+     */
+    public function updateHasilAudisi(Request $request, $id)
+    {
+        // ✅ Validasi: tambahkan catatan_admin sebagai nullable
+        $request->validate([
+            'hasil_audisi'  => 'required|in:lolos,tidak_lolos',
+            'catatan_admin' => 'nullable|string|max:1000', // ✅ TAMBAHKAN INI
+        ]);
+
+        $peserta = Peserta::findOrFail($id);
+
+        // ✅ UPDATE data peserta dengan catatan
+        $updateData = [
+            'hasil_audisi' => $request->hasil_audisi,
+        ];
+
+        // ✅ Simpan catatan_admin jika ada (bahkan string kosong)
+        if ($request->has('catatan_admin')) {
+            $updateData['catatan_admin'] = $request->catatan_admin;
+        }
+
+        $peserta->update($updateData);
+
+        // Return JSON untuk AJAX
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status audisi berhasil diperbarui.',
+                'data'    => [
+                    'id'            => $peserta->id,
+                    'hasil_audisi'  => $peserta->hasil_audisi,
+                    'catatan_admin' => $peserta->catatan_admin,
+                    'nama'          => $peserta->namaTampil(),
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.dashboard', ['event' => $peserta->event_id])
+            ->with('success', 'Status audisi ' . $peserta->namaTampil() . ' berhasil diperbarui.');
+    }
+
+    /**
+     * GET /admin/peserta/jawaban/{jawaban}/file
+     * Download file jawaban
+     */
     public function downloadJawabanFile(JawabanPeserta $jawaban)
     {
         $filePath = $jawaban->jawaban;
@@ -150,198 +355,32 @@ class PendaftaranController extends Controller
             $filePath = parse_url($filePath, PHP_URL_PATH);
         }
 
-        if (! $filePath) {
+        if (!$filePath) {
             abort(404, 'File tidak ditemukan');
         }
 
-        if (! Storage::disk('public')->exists($filePath)) {
+        if (!Storage::disk('public')->exists($filePath)) {
             abort(404, 'File tidak ditemukan di server');
         }
 
-        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-
-        $peserta = $jawaban->peserta;
-        $user = $peserta?->user;
-
+        $extension     = pathinfo($filePath, PATHINFO_EXTENSION);
+        $peserta       = $jawaban->peserta;
+        $user          = $peserta?->user;
         $namaPeserta   = $user?->nama ?? 'Peserta';
         $emailPeserta  = $user?->email ?? 'tanpa-email';
         $tanggalDaftar = $peserta?->created_at?->format('Y-m-d') ?? date('Y-m-d');
 
         $namaSanitized  = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $namaPeserta);
         $emailSanitized = preg_replace('/[^a-zA-Z0-9_\-.@]/', '_', $emailPeserta);
-
-        $newFilename = "{$namaSanitized}_{$emailSanitized}_{$tanggalDaftar}.{$extension}";
+        $newFilename    = "{$namaSanitized}_{$emailSanitized}_{$tanggalDaftar}.{$extension}";
 
         return Storage::disk('public')->download($filePath, $newFilename);
     }
 
-    public function index(Request $request)
-    {
-        $eventId = $request->query('event_id');
-        $event = $eventId
-            ? Event::find($eventId)
-            : Event::query()->latest('id')->first();
-
-        $baseQuery = Peserta::query()
-            ->when($event, fn($q) => $q->where('event_id', $event->id));
-
-        $totalPendaftar = (clone $baseQuery)->count();
-        $menungguReview = (clone $baseQuery)->where('status', 'menunggu_review')->count();
-        $diterima       = (clone $baseQuery)->where('status', 'diterima')->count();
-        $ditolak        = (clone $baseQuery)->where('status', 'ditolak')->count();
-
-        // lastUpdate — cek kolom dulu
-        $lastUpdate = Schema::hasColumn('peserta_event', 'updated_at')
-            ? (clone $baseQuery)->max('updated_at')
-            : null;
-
-        $pesertas = (clone $baseQuery)
-            ->with(['user', 'event', 'jawaban.pertanyaan', 'pembayaran'])
-            ->orderBy('id', 'desc')
-            ->get();
-
-        $events = Event::query()->latest('id')->get(['id', 'nama']);
-
-        return view('admin.dashboard', compact(
-            'event',
-            'events',
-            'pesertas',
-            'totalPendaftar',
-            'menungguReview',
-            'diterima',
-            'ditolak',
-            'lastUpdate'
-        ));
-    }
-
-    public function show($id)
-{
-    $peserta = Peserta::with([
-        'user',
-        'event',
-        'pembayaran',
-        'jawabans.pertanyaan',
-    ])->findOrFail($id);
-
-    // ============================================
-    // FILTER: skip field "nama" & heading/subheading
-    // ============================================
-    $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
-
-    $peserta->setRelation(
-        'jawabans',
-        $peserta->jawabans
-            ->filter(function ($jawaban) use ($namaKeywords) {
-                // Skip heading / subheading
-                if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
-                    return false;
-                }
-                // Skip field "nama"
-                $label = strtolower(trim($jawaban->pertanyaan?->label ?? ''));
-                if (in_array($label, $namaKeywords, true)) {
-                    return false;
-                }
-                return true;
-            })
-            ->values()
-    );
-
-    return view('admin.peserta.show', compact('peserta'));
-}
-
-    public function updateStatus(Request $request, $id)
-    {
-        $peserta = Peserta::findOrFail($id);
-
-        $validStatus = ['diterima', 'ditolak', 'menunggu_review'];
-
-        if (! in_array($request->status, $validStatus, true)) {
-            return redirect()->back()->with('error', 'Status tidak valid.');
-        }
-
-        if ($request->status === 'ditolak') {
-            $request->validate([
-                'catatan_admin' => ['required', 'string', 'max:1000'],
-            ], [
-                'catatan_admin.required' => 'Alasan penolakan wajib diisi.',
-            ]);
-        }
-
-        $peserta->status = $request->status;
-
-        if ($request->filled('catatan_admin')) {
-            $peserta->catatan_admin = $request->catatan_admin;
-        }
-
-        if ($request->status === 'diterima') {
-            $peserta->catatan_admin = null;
-        }
-
-        $peserta->save();
-
-        return redirect()->back()->with('success', 'Status peserta berhasil diperbarui.');
-    }
-
-    public function destroy(Request $request, $id)
-    {
-        $peserta = Peserta::findOrFail($id);
-
-        // Hapus relasi dulu
-        \App\Models\JawabanPeserta::where('peserta_id', $peserta->id)->delete();
-        \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)->delete();
-        $peserta->delete();
-
-        // Redirect ke halaman list peserta (dashboard admin)
-        return redirect()
-            ->route('admin.dashboard')
-            ->with('success', 'Data peserta, jawaban, dan pembayaran berhasil dihapus.');
-    }
-    public function file(JawabanPeserta $jawaban)
-    {
-        $raw = is_array($jawaban->jawaban)
-            ? ($jawaban->jawaban[0] ?? '')
-            : (string) $jawaban->jawaban;
-
-        if ($raw === '') {
-            abort(404, 'Kolom jawaban kosong (tidak ada path file).');
-        }
-
-        $clean = parse_url($raw, PHP_URL_PATH) ?? $raw;
-        $clean = ltrim($clean, '/');
-        $clean = preg_replace('#^(public/|private/|storage/)+#', '', $clean);
-        $basename = basename($clean);
-
-        $candidates = [
-            storage_path('app/private/' . $clean),
-            storage_path('app/public/' . $clean),
-            storage_path('app/' . $clean),
-            public_path('storage/' . $clean),
-            public_path($clean),
-        ];
-
-        foreach ($candidates as $c) {
-            if (is_file($c)) {
-                return response()->file($c);
-            }
-        }
-
-        foreach ([storage_path(), public_path()] as $root) {
-            if (! is_dir($root)) {
-                continue;
-            }
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)
-            );
-            foreach ($iterator as $f) {
-                if ($f->isFile() && $f->getFilename() === $basename) {
-                    return response()->file($f->getPathname());
-                }
-            }
-        }
-
-        abort(404, 'File fisik tidak ditemukan. Path di DB: ' . $raw);
-    }
-
+    /**
+     * DELETE /admin/events/{event}/questions/clear
+     * Hapus semua pertanyaan event
+     */
     public function clearQuestions(Request $request, Event $event)
     {
         $event->pertanyaans()->delete();
@@ -351,5 +390,394 @@ class PendaftaranController extends Controller
         }
 
         return redirect()->back()->with('success', 'Semua pertanyaan berhasil dihapus.');
+    }
+
+    /**
+     * GET /admin/events/{event}/peserta/export
+     * Export data peserta ke CSV
+     */
+    public function export(Event $event)
+    {
+        $pesertas = Peserta::with(['user', 'jawabans.pertanyaan'])
+            ->where('event_id', $event->id)
+            ->latest('id')
+            ->get();
+
+        $filename = 'Data_Peserta_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $event->nama) . '_' . date('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($pesertas) {
+            $file = fopen('php://output', 'w');
+
+            // UTF-8 BOM
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header kolom
+            fputcsv($file, [
+                'No',
+                'Nama Peserta',
+                'Email',
+                'No. WhatsApp',
+                'Status',
+                'Status Pembayaran',
+                'Tanggal Daftar',
+            ]);
+
+            // Data per baris
+            foreach ($pesertas as $index => $peserta) {
+                $nama  = $peserta->nama_pendaftaran ?? $peserta->user?->nama ?? 'Tanpa Nama';
+                $email = $peserta->user?->email ?? 'Tanpa Email';
+
+                // Cari WhatsApp
+                $whatsapp = '-';
+                foreach ($peserta->jawabans as $jawaban) {
+                    $label = strtolower($jawaban->pertanyaan?->label ?? '');
+                    if (str_contains($label, 'whatsapp') || str_contains($label, 'wa') || str_contains($label, 'no. hp') || str_contains($label, 'telepon')) {
+                        $whatsapp = is_array($jawaban->jawaban) ? implode(', ', $jawaban->jawaban) : ($jawaban->jawaban ?? '-');
+                        break;
+                    }
+                }
+
+                $status      = 'Diterima'; // ✅ Hanya ada 1 status
+                $pembayaran  = $peserta->pembayaran->sortByDesc('id')->first();
+                $statusBayar = $pembayaran?->status_midtrans ?? 'Belum Bayar';
+                $tanggal     = $peserta->created_at?->format('d M Y H:i') ?? '-';
+
+                fputcsv($file, [
+                    $index + 1,
+                    $nama,
+                    $email,
+                    $whatsapp,
+                    $status,
+                    ucfirst($statusBayar),
+                    $tanggal,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * GET /admin/events/{event}/peserta/template-csv
+     * Download template CSV untuk import
+     */
+    public function downloadCsvTemplate(Event $event)
+    {
+        $questions = $event->pertanyaans()
+            ->whereNotIn('tipe_input', ['heading', 'subheading'])
+            ->orderBy('urutan')
+            ->get();
+
+        $headers = ['nama', 'email'];
+
+        foreach ($questions as $q) {
+            $label = trim($q->label);
+            if (!in_array(strtolower($label), ['nama', 'nama lengkap', 'email', 'e-mail', 'alamat email'], true)) {
+                $headers[] = $label;
+            }
+        }
+
+        $filename = 'template_import_peserta_' . Str::slug($event->nama) . '.csv';
+
+        $callback = function () use ($headers) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($file, $headers);
+
+            $sampleRow = [];
+            foreach ($headers as $h) {
+                $sampleRow[] = 'Contoh ' . ucfirst($h);
+            }
+            fputcsv($file, $sampleRow);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=' . $filename,
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ]);
+    }
+
+    /**
+     * POST /admin/events/{event}/peserta/import
+     * Import CSV peserta
+     */
+    public function importCsv(Request $request, Event $event)
+    {
+        $file = $request->file('file_csv');
+        $path = $file->getRealPath();
+        $handle = fopen($path, 'r');
+
+        if ($handle === false) {
+            return redirect()->back()->with('error', 'Gagal membaca file CSV.');
+        }
+
+        // Deteksi delimiter
+        $firstLine = fgets($handle);
+        rewind($handle);
+        $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
+
+        $headers = fgetcsv($handle, 1000, $delimiter);
+
+        if (!$headers) {
+            fclose($handle);
+            return redirect()->back()->with('error', 'File CSV kosong atau format tidak valid.');
+        }
+
+        // Bersihkan BOM
+        $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
+        $headers    = array_map(fn ($h) => strtolower(trim($h)), $headers);
+
+        // Petakan pertanyaan
+        $questions = $event->pertanyaans()
+            ->whereNotIn('tipe_input', ['heading', 'subheading'])
+            ->get()
+            ->keyBy(fn ($q) => strtolower(trim($q->label)));
+
+        $importedCount = 0;
+
+        DB::transaction(function () use ($handle, $headers, $questions, $event, &$importedCount, $delimiter) {
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+                if (count($row) !== count($headers)) {
+                    continue;
+                }
+
+                $dataRow   = array_combine($headers, $row);
+                $rowValues = array_values($dataRow);
+
+                $nama  = null;
+                $email = null;
+
+                foreach ($dataRow as $key => $val) {
+                    if (in_array($key, ['nama', 'nama lengkap', 'nama peserta'])) {
+                        $nama = trim($val);
+                    }
+                    if (in_array($key, ['email', 'e-mail', 'alamat email'])) {
+                        $email = trim($val);
+                    }
+                }
+
+                if (empty($nama) && isset($rowValues[0])) {
+                    $nama = trim($rowValues[0]);
+                }
+                if (empty($email) && isset($rowValues[1])) {
+                    $email = trim($rowValues[1]);
+                }
+
+                if (empty($nama) || str_contains(strtolower($nama), 'contoh')) {
+                    $nama = 'Peserta Import';
+                }
+                if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    continue;
+                }
+
+                // Cek user existing
+                $existingUser = PenggunaEvent::where('email', $email)->first();
+                if ($existingUser) {
+                    $sudahDaftar = Peserta::where('event_id', $event->id)
+                        ->where('user_id', $existingUser->id)
+                        ->exists();
+                    if ($sudahDaftar) {
+                        continue;
+                    }
+                }
+
+                // 1. Buat / Ambil Akun
+                $user = PenggunaEvent::firstOrCreate(
+                    ['email' => $email],
+                    [
+                        'google_id' => 'import-' . Str::uuid(),
+                        'nama'      => $nama,
+                    ]
+                );
+
+                if ($user->nama !== $nama && $nama !== 'Peserta Import') {
+                    $user->update(['nama' => $nama]);
+                }
+
+                // 2. Buat Peserta - status langsung 'diterima'
+                $pesertaData = [
+                    'user_id'          => $user->id,
+                    'nama_pendaftaran' => $nama,
+                    'status'           => 'diterima', // ✅ Langsung diterima
+                ];
+
+                if (Schema::hasColumn('peserta_event', 'updated_at')) {
+                    $pesertaData['updated_at'] = now();
+                }
+
+                $peserta = $event->pesertas()->create($pesertaData);
+                $importedCount++;
+
+                // 3. Buat pembayaran otomatis jika ada biaya
+                if ($event->biaya_pendaftaran > 0) {
+                    $jumlah = (int) $event->biaya_pendaftaran;
+
+                    PembayaranEvent::create([
+                        'peserta_id'        => $peserta->id,
+                        'jumlah'            => $jumlah,
+                        'tarif_dasar'       => $jumlah,
+                        'metode'            => 'transfer_bank',
+                        'midtrans_order_id' => 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT),
+                        'status_midtrans'   => 'pending',
+                        'tanggal_bayar'     => null,
+                    ]);
+                }
+
+                // 4. Simpan Jawaban
+                foreach ($dataRow as $columnName => $value) {
+                    if (in_array($columnName, ['nama', 'nama lengkap', 'nama peserta', 'email', 'e-mail', 'alamat email'])) {
+                        continue;
+                    }
+
+                    if (isset($questions[$columnName]) && !empty(trim($value))) {
+                        $question = $questions[$columnName];
+                        JawabanPeserta::create([
+                            'peserta_id'    => $peserta->id,
+                            'pertanyaan_id' => $question->id,
+                            'jawaban'       => trim($value),
+                        ]);
+                    }
+                }
+            }
+        });
+
+        fclose($handle);
+
+        return redirect()->back()->with('success', "Berhasil mengimpor {$importedCount} data peserta baru!");
+    }
+
+    /**
+     * POST /admin/kandidat/{event}
+     * Simpan kandidat voting langsung
+     */
+    public function storeKandidat(Request $request, Event $event)
+    {
+        $request->validate([
+            'nama'  => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $peserta = DB::transaction(function () use ($request, $event) {
+            // 1. Cari atau buat user
+            $user = \App\Models\PenggunaEvent::query()->firstOrCreate(
+                ['email' => $request->email],
+                [
+                    'google_id' => 'kandidat-voting-' . \Illuminate\Support\Str::uuid(),
+                    'nama'      => $request->nama,
+                ]
+            );
+
+            if ($user->nama !== $request->nama) {
+                $user->update(['nama' => $request->nama]);
+            }
+
+            // 2. Cek duplikasi kandidat voting
+            $sudahDaftar = Peserta::where('event_id', $event->id)
+                ->where('user_id', $user->id)
+                ->where('kandidat_voting', true)
+                ->exists();
+
+            if ($sudahDaftar) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'email' => 'Email ini sudah terdaftar sebagai kandidat voting.',
+                ]);
+            }
+
+            // 3. ✅ PERBAIKAN: Buat peserta dengan kandidat_voting = true
+            $pesertaData = [
+                'user_id'          => $user->id,
+                'nama_pendaftaran' => $request->nama, // ✅ Gunakan $request->nama, bukan $data['nama']
+                'status'           => 'diterima',
+                'kandidat_voting'  => true,           // ✅ Gunakan nama kolom 'kandidat_voting' dan set ke true
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('peserta_event', 'updated_at')) {
+                $pesertaData['updated_at'] = now();
+            }
+
+            $peserta = $event->pesertas()->create($pesertaData);
+
+            // 4. Buat pembayaran dengan status PENDING agar admin bisa menginput manual nanti
+            $jumlah = (int) $event->biaya_pendaftaran;
+            if ($jumlah > 0) {
+                \App\Models\PembayaranEvent::create([
+                    'peserta_id'        => $peserta->id,
+                    'jumlah'            => 0, // Mulai dari 0, admin yang isi nominal di modal
+                    'tarif_dasar'       => $jumlah,
+                    'metode'            => null,
+                    'midtrans_order_id' => 'KANDIDAT-' . date('YmdHis') . '-' . $peserta->id,
+                    'status_midtrans'   => 'pending',
+                    'tanggal_bayar'     => null,
+                ]);
+            }
+
+            return $peserta;
+        });
+
+        return redirect()->back()->with('success', 'Kandidat voting "' . $request->nama . '" berhasil ditambahkan.');
+    }
+
+    /**
+     * POST /admin/kandidat/pembayaran
+     * Simpan pembayaran manual untuk kandidat voting
+     */
+    public function storePembayaranManual(Request $request)
+    {
+        $request->validate([
+            'peserta_id'   => 'required|exists:peserta_event,id',
+            'total_biaya'  => 'required|numeric|min:0',
+            'jumlah_bayar' => 'required|numeric|min:1',
+            'metode'       => 'required|in:transfer_bank,tunai,qris',
+            'tanggal_bayar'=> 'required|date',
+        ]);
+
+        $peserta = Peserta::findOrFail($request->peserta_id);
+        $totalBiaya = (int) $request->total_biaya;
+        $jumlahBayar = (int) $request->jumlah_bayar;
+
+        DB::transaction(function () use ($request, $peserta, $totalBiaya, $jumlahBayar) {
+            $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
+                ->orderBy('id', 'desc')
+                ->first();
+            
+            $sudahDibayar = $pembayaran?->jumlah ?? 0;
+            $totalSekarang = $sudahDibayar + $jumlahBayar;
+            
+            $isLunas = $totalSekarang >= $totalBiaya;
+            $status = $isLunas ? 'settlement' : 'pending';
+
+            if ($pembayaran) {
+                $pembayaran->update([
+                    'jumlah'            => $totalSekarang,
+                    'tarif_dasar'       => $totalBiaya,
+                    'metode'            => $request->metode,
+                    'status_midtrans'   => $status,
+                    'tanggal_bayar'     => $isLunas ? $request->tanggal_bayar : ($pembayaran->tanggal_bayar ?? null),
+                ]);
+            } else {
+                PembayaranEvent::create([
+                    'peserta_id'        => $peserta->id,
+                    'jumlah'            => $totalSekarang,
+                    'tarif_dasar'       => $totalBiaya,
+                    'metode'            => $request->metode,
+                    'midtrans_order_id' => 'MANUAL-' . date('YmdHis') . '-' . $peserta->id,
+                    'status_midtrans'   => $status,
+                    'tanggal_bayar'     => $isLunas ? $request->tanggal_bayar : null,
+                ]);
+            }
+        });
+
+        return redirect()->back()->with('success', 'Pembayaran kandidat berhasil disimpan!');
     }
 }

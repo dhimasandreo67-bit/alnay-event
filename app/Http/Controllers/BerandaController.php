@@ -23,16 +23,16 @@ class BerandaController extends Controller
                 $ev->stat_sisa_waktu = $ev->tanggal_selesai
                     ? max(0, (int) now()->diffInDays($ev->tanggal_selesai, false))
                     : 0;
-
+                
+                // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
                 $ev->stat_jumlah_peserta = Peserta::where('event_id', $ev->id)
                     ->where('status', 'diterima')
-                    ->where('tampil_di_publik', true)
                     ->count();
-
+                    
                 $ev->stat_total_suara = Voting::where('event_id', $ev->id)
                     ->where('status_midtrans', 'settlement')
                     ->sum('jumlah_vote');
-
+                    
                 return $ev;
             });
 
@@ -71,9 +71,9 @@ class BerandaController extends Controller
         $sisaWaktu = null;
 
         if ($eventBerlangsung) {
+            // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
             $peringkatTerkini = Peserta::where('event_id', $eventBerlangsung->id)
                 ->where('status', 'diterima')
-                ->where('tampil_di_publik', true)
                 ->orderByDesc('total_vote')
                 ->take(3)
                 ->with('user')
@@ -93,10 +93,10 @@ class BerandaController extends Controller
 
         if (! $eventBerlangsung && $eventBaruSelesai) {
             $eventPeringkatAkhir = $eventBaruSelesai;
-
+            
+            // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
             $peringkatAkhir = Peserta::where('event_id', $eventBaruSelesai->id)
                 ->where('status', 'diterima')
-                ->where('tampil_di_publik', true)
                 ->orderByDesc('total_vote')
                 ->take(3)
                 ->with('user')
@@ -134,7 +134,7 @@ class BerandaController extends Controller
 
         return view('beranda', compact(
             'eventBerlangsung',
-            'eventBerlangsungList',      // ← TAMBAH — untuk carousel
+            'eventBerlangsungList',
             'eventBaruSelesai',
             'eventAkanDatangUtama',
             'eventAkanDatangLainnya',

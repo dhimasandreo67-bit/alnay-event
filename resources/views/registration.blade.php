@@ -26,8 +26,6 @@
         $isPreview = request()->routeIs('admin.preview-form');
     @endphp
 
-    @include('partials.header')
-
     <main class="mx-auto max-w-3xl px-5 pb-10 pt-6 sm:pt-8">
 
         {{-- ================== TOMBOL KEMBALI ================== --}}

@@ -31,7 +31,8 @@ class Peserta extends Model
         'sudah_audisi',        
         'tanggal_audisi',      
         'status_registrasi',
-        'tampil_di_publik',  
+        'tampil_di_publik',
+        'kandidat_voting', 
     ];
 
     protected $casts = [

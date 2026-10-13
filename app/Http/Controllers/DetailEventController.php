@@ -8,12 +8,14 @@ use App\Models\Voting;
 
 class DetailEventController extends Controller
 {
+    /**
+     * GET /detail-event/{event} (Berlangsung)
+     */
     public function berlangsung(Event $event)
     {
         $pesertas = $this->getPesertas($event);
         $totalSuara = $this->getTotalSuara($event);
         $jumlahPeserta = $pesertas->count();
-
         $sisaWaktu = $event->tanggal_selesai
             ? (int) now()->diffInDays($event->tanggal_selesai)
             : 0;
@@ -28,12 +30,14 @@ class DetailEventController extends Controller
         ]);
     }
 
+    /**
+     * GET /detail-event/{event}/akan-datang
+     */
     public function akanDatang(Event $event)
     {
-        // ✅ Filter tampil_di_publik
+        // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
         $jumlahPeserta = Peserta::where('event_id', $event->id)
             ->where('status', 'diterima')
-            ->where('tampil_di_publik', true)
             ->count();
 
         $sisaHariPendaftaran = $event->batas_pendaftaran_tanggal
@@ -48,17 +52,21 @@ class DetailEventController extends Controller
         ]);
     }
 
+    /**
+     * GET /detail-event/{event}/selesai
+     */
     public function selesai(Event $event)
     {
-        // ✅ Filter tampil_di_publik
+        // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
         $pesertas = Peserta::with('user')
             ->where('event_id', $event->id)
             ->where('status', 'diterima')
-            ->where('tampil_di_publik', true)
             ->orderByDesc('total_vote')
             ->get();
 
-        $totalSuara = $pesertas->sum('total_vote');
+        $totalSuara = $this->getTotalSuara($event);
+        $jumlahPeserta = $pesertas->count(); // ✅ TAMBAHKAN INI agar tidak Undefined variable
+        
         $pemenang = $pesertas->take(3);
         $peringkatLain = $pesertas->slice(3, 7);
 
@@ -68,17 +76,21 @@ class DetailEventController extends Controller
             'pemenang'      => $pemenang,
             'peringkatLain' => $peringkatLain,
             'totalSuara'    => $totalSuara,
+            'jumlahPeserta' => $jumlahPeserta, // ✅ KIRIM KE VIEW
             'blackoutAktif' => $this->isBlackoutAktif($event),
         ]);
     }
 
+    // ==========================================
+    // HELPER METHODS
+    // ==========================================
+
     private function getPesertas(Event $event)
     {
-        // ✅ Filter tampil_di_publik
+        // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
         $query = Peserta::with(['user', 'jawaban.pertanyaan'])
             ->where('event_id', $event->id)
-            ->where('status', 'diterima')
-            ->where('tampil_di_publik', true);
+            ->where('status', 'diterima');
 
         // Kalau blackout aktif — acak urutan biar gak bocorin peringkat
         if ($this->isBlackoutAktif($event)) {
@@ -96,11 +108,7 @@ class DetailEventController extends Controller
             ->sum('jumlah_vote');
     }
 
-    /**
-     * Helper — cek blackout H-2 aktif.
-     * Butuh: toggle ON + voting_selesai ≤ 48 jam
-     */
-        private function isBlackoutAktif(Event $event): bool
+    private function isBlackoutAktif(Event $event): bool
     {
         return (bool) $event->blackout_h2_voting;
     }
