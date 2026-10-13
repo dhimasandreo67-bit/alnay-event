@@ -28,12 +28,19 @@ class PendaftaranController extends Controller
         ]);
     }
 
+    /**
+     * Preview form pendaftaran (untuk admin)
+     * GET /admin/preview/{event}
+     */
     public function previewForm(Event $event)
     {
-        // Tandai session — biar view tahu ini preview admin
-        session()->flash('preview_mode', true);
-
-        return $this->showPublicForm($event);
+        $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
+        
+        return view('registration', [
+            'event' => $event,
+            'questions' => $questions,
+            'fields' => $questions, // Alias untuk kompatibilitas dengan partial
+        ]);
     }
 
     public function storePublic(Request $request, Event $event)
@@ -49,7 +56,7 @@ class PendaftaranController extends Controller
         // 2. Cek sudah pernah daftar event ini?
         $sudahDaftar = Peserta::where('event_id', $event->id)
             ->where('user_id', $user->id)
-            ->whereIn('status', ['menunggu_review', 'diterima'])
+            ->whereIn('status', ['diterima'])
             ->exists();
 
         if ($sudahDaftar) {
@@ -143,7 +150,7 @@ class PendaftaranController extends Controller
                 'event_id'         => $event->id,
                 'user_id'          => $user->id,
                 'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
-                'status'           => 'menunggu_review',
+                'status'           => 'diterima',
             ]);
 
             $answers = $data['answers'] ?? [];

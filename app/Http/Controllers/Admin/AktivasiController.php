@@ -14,15 +14,12 @@ class AktivasiController extends Controller
     /**
      * GET /admin/activation/:event?
      */
-
-    public function index(?Event $event = null): View
+        public function index(?Event $event = null): View
     {
-        // Jika tidak ada event di URL, ambil dari session, atau fallback ke terbaru
         if (!$event) {
             $eventId = session('active_event_id');
             $event = $eventId ? Event::find($eventId) : Event::query()->latest('id')->first();
         } else {
-            // Jika ada di URL, simpan ke session agar konsisten
             session(['active_event_id' => $event->id]);
         }
 
@@ -30,7 +27,7 @@ class AktivasiController extends Controller
         if ($event) {
             $finalis = Peserta::where('event_id', $event->id)
                 ->where('status', 'diterima')
-                ->with(['user', 'pembayaran', 'jawabans.pertanyaan'])
+                ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan'])
                 ->latest('id')
                 ->get()
                 ->map(fn (Peserta $peserta) => $this->transform($peserta));
@@ -40,13 +37,27 @@ class AktivasiController extends Controller
         $lunas = $finalis->where('statusAkun', 'aktif')->count();
         $menungguVerifikasi = $totalFinalis - $lunas;
 
+        // ===== DATA UNTUK MODE REGISTRASI =====
+        $sudahAudisi = $finalis->where('sudahAudisi', true)->count();
+        $belumAudisi = $totalFinalis - $sudahAudisi;
+        $registrasiLunas = $finalis->where('statusRegistrasi', 'lunas')->count();
+        $registrasiDp = $finalis->where('statusRegistrasi', 'dp')->count();
+
+        // ===== MODE — dari URL ?mode=xxx =====
+        $mode = request()->query('mode', 'pendaftaran');
+
         return view('admin.aktivasi.index', [
-            'event' => $event,
-            'events' => Event::query()->latest('id')->get(['id', 'nama']),
-            'finalis' => $finalis,
-            'totalFinalis' => $totalFinalis,
-            'lunas' => $lunas,
-            'menungguVerifikasi' => $menungguVerifikasi,
+            'event'                 => $event,
+            'events'                => Event::query()->latest('id')->get(['id', 'nama']),
+            'finalis'               => $finalis,
+            'totalFinalis'          => $totalFinalis,
+            'lunas'                 => $lunas,
+            'menungguVerifikasi'    => $menungguVerifikasi,
+            'sudahAudisi'           => $sudahAudisi,
+            'belumAudisi'           => $belumAudisi,
+            'registrasiLunas'       => $registrasiLunas,
+            'registrasiDp'          => $registrasiDp,
+            'mode'                  => $mode,
         ]);
     }
 
@@ -61,57 +72,95 @@ class AktivasiController extends Controller
             return back()->with('error', 'Peserta ini belum punya transaksi pembayaran.');
         }
 
-        // TODO: panggil Midtrans Status API di sini kalau perlu
-        // \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-        // $status = \Midtrans\Transaction::status($pembayaran->midtrans_order_id);
-        // $pembayaran->update([...]);
-
         return redirect()
             ->route('admin.activation', $peserta->event_id)
             ->with('success', "Status pembayaran " . ($peserta->nama_pendaftaran ?: $peserta->user->nama) . " berhasil disinkronkan.");
     }
 
     /**
-     * Ambil pembayaran terbaik:
-     * 1. Kalau ada yang 'settlement' → pakai itu (yang terbaru)
-     * 2. Kalau gak ada → pakai yang terbaru (pending, dll)
+     * POST /admin/activation/:peserta/toggle-audisi
+     * Admin centang/hapus centang "sudah audisi"
+     */
+    public function toggleAudisi(Peserta $peserta): RedirectResponse
+    {
+        $peserta->sudah_audisi = ! $peserta->sudah_audisi;
+        $peserta->tanggal_audisi = $peserta->sudah_audisi ? now() : null;
+        $peserta->save();
+
+        $status = $peserta->sudah_audisi ? 'ditandai sudah audisi' : 'dibatalkan audisinya';
+
+        return redirect()
+            ->route('admin.activation', ['event' => $peserta->event_id, 'mode' => 'registrasi'])
+            ->with('success', "Peserta berhasil {$status}.");
+    }
+
+    /**
+     * Transform data peserta untuk view
+     */
+       private function transform(Peserta $peserta): array
+    {
+        $pembayaran = $this->pembayaranTerbaik($peserta);
+
+        // Ambil semua pembayaran registrasi peserta
+        $semuaPembayaranRegistrasi = $peserta->pembayaranRegistrasi->sortBy('id');
+
+        // Cari per tipe
+        $dp1 = $semuaPembayaranRegistrasi->where('tipe', 'dp1')->first();
+        $dp2 = $semuaPembayaranRegistrasi->where('tipe', 'dp2')->first();
+        $lunas = $semuaPembayaranRegistrasi->where('tipe', 'lunas')->first();
+
+        // Pembayaran registrasi terbaru
+        $pembayaranRegistrasi = $semuaPembayaranRegistrasi->sortByDesc('id')->first();
+
+        // Hitung sisa pembayaran DP
+        $sisaPembayaranDp = null;
+        if ($peserta->event
+            && $peserta->event->harga_registrasi
+            && $dp1
+            && $dp1->status_midtrans === 'settlement') {
+            $sisaPembayaranDp = max(0, $peserta->event->harga_registrasi - $dp1->jumlah);
+        }
+
+        $nominalUnik = null;
+        $kodeUnik = null;
+        if ($pembayaran && $pembayaran->kode_unik) {
+            $kodeUnik = $pembayaran->kode_unik;
+            $nominalUnik = 'Rp ' . number_format($pembayaran->jumlah ?? 0, 0, ',', '.');
+        }
+
+        $statusAkun = 'menunggu';
+        if ($pembayaran && $pembayaran->status_midtrans === 'settlement') {
+            $statusAkun = 'aktif';
+        }
+
+        return [
+            'id'                 => $peserta->id,
+            'no_registrasi'      => 'PPA-' . date('Y') . '-' . str_pad($peserta->id, 3, '0', STR_PAD_LEFT),
+            'nama'               => $peserta->namaTampil(),
+            'email'              => $peserta->emailTampil(),
+            'statusAkun'         => $statusAkun,
+            'nominal_unik'       => $nominalUnik,
+            'kode_unik'          => $kodeUnik,
+            'pembayaran'         => $pembayaran,
+            'sudahAudisi'        => (bool) $peserta->sudah_audisi,
+            'tanggalAudisi'      => $peserta->tanggal_audisi,
+            'statusRegistrasi'   => $peserta->status_registrasi ?? 'belum',
+            'pembayaranRegistrasi' => $pembayaranRegistrasi,
+            'dp1'                => $dp1,               
+            'dp2'                => $dp2,               
+            'lunas'              => $lunas,             
+            'sisaPembayaranDp'   => $sisaPembayaranDp,  
+        ];
+    }
+
+    /**
+     * Ambil pembayaran terbaik (pendaftaran)
      */
     private function pembayaranTerbaik(Peserta $peserta)
     {
-        $semua = $peserta->pembayaran instanceof \Illuminate\Support\Collection
-            ? $peserta->pembayaran
-            : collect([$peserta->pembayaran])->filter();
+        $pembayaran = $peserta->pembayaran ?? collect();
 
-        if ($semua->isEmpty()) {
-            return null;
-        }
-
-        return $semua->where('status_midtrans', 'settlement')->sortByDesc('id')->first()
-            ?? $semua->sortByDesc('id')->first();
-    }
-
-    private function transform(Peserta $peserta): array
-    {
-        $kategoriJawaban = $peserta->jawabans->first(
-            fn ($jawaban) => $jawaban->pertanyaan
-                && str_contains(strtolower($jawaban->pertanyaan->label), 'kategori')
-        );
-
-        $pembayaran = $this->pembayaranTerbaik($peserta);
-        $lunas = $pembayaran?->status_midtrans === 'settlement';
-
-        return [
-            'id' => $peserta->id,
-            'no_registrasi' => 'PPA-' . now()->year . '-' . str_pad($peserta->id, 3, '0', STR_PAD_LEFT),
-            'nama' => $peserta->namaTampil(),
-            'email' => $peserta->user->email ?? '-',
-            'kategori' => $kategoriJawaban?->jawaban ?? '-',
-            'pembayaran' => $pembayaran,
-            'nominal_unik' => $pembayaran ? 'Rp ' . number_format($pembayaran->jumlah, 0, ',', '.') : null,
-            'kode_unik' => $pembayaran?->kode_unik,
-            'tarif_dasar' => $pembayaran?->tarif_dasar,
-            'statusAkun' => $lunas ? 'aktif' : 'terkunci',
-            'peserta' => $peserta,
-        ];
+        return $pembayaran->where('status_midtrans', 'settlement')->sortByDesc('id')->first()
+            ?? $pembayaran->sortByDesc('id')->first();
     }
 }
