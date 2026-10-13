@@ -396,12 +396,11 @@
             }
 
             .top3Swiper .swiper-slide {
-                width: calc(33.333% - 16px);
+                width: 300px;  /* ← fix 300px di desktop, biar ada ruang card samping */
                 max-width: none;
                 opacity: 1;
                 filter: none;
                 transform: none;
-                transition: none;
             }
 
             .top3Swiper .swiper-slide-active {
@@ -1466,7 +1465,7 @@
             breakpoints: {
                 768: {
                     effect: 'slide',
-                    slidesPerView: 3,
+                    slidesPerView: auto,
                     spaceBetween: 20,
                     centeredSlides: true,
                     coverflowEffect: null,
