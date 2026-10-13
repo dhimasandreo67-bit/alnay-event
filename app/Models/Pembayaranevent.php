@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,17 +11,19 @@ class PembayaranEvent extends Model
     use HasFactory;
 
     protected $table = 'pembayaran_event';
+
     public $timestamps = false;
 
     protected $fillable = [
         'peserta_id',
         'jumlah',
         'tarif_dasar',
+        'kode_unik',
         'metode',
-        'payment_method',
-        'qr_string',
-        'qr_url',
-        'va_number',
+        'payment_method',      // ← tambah
+        'qr_string',           // ← tambah
+        'qr_url',              // ← tambah
+        'va_number',           // ← tambah
         'midtrans_order_id',
         'midtrans_transaction_id',
         'status_midtrans',
@@ -28,8 +31,8 @@ class PembayaranEvent extends Model
     ];
 
     protected $casts = [
-        'jumlah'        => 'integer',
-        'tarif_dasar'   => 'integer',
+        'jumlah'      => 'integer',
+        'tarif_dasar' => 'integer',
         'tanggal_bayar' => 'datetime',
     ];
 
@@ -45,9 +48,11 @@ class PembayaranEvent extends Model
 
     public function getNominalPembayaranAttribute(): string
     {
-        if (!$this->jumlah) {
+        if (!$this->pembayaran) {
             return 'Belum ada tagihan';
         }
-        return 'Rp ' . number_format($this->jumlah, 0, ',', '.');
+
+        return 'Rp ' . number_format($this->pembayaran->jumlah, 0, ',', '.')
+            . ' (kode unik: ' . $this->pembayaran->kode_unik . ')';
     }
 }
