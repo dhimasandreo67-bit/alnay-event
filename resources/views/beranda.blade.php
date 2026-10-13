@@ -31,6 +31,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        html, body {
+        overflow-x: hidden;
+        max-width: 100vw;
+}
         html { scroll-behavior: smooth; }
         body { background: #fff; font-family: "Inter", ui-sans-serif, system-ui, sans-serif; }
         .display-font { font-family: "Playfair Display", Georgia, serif; }
@@ -135,7 +139,21 @@
         }
 
         #event-sebelumnya-container:not(.view-list) {
-            display: grid;
+    display: grid;
+}
+
+        @media (max-width: 640px) {
+            #event-sebelumnya-container:not(.view-list) .event-card h3 {
+                font-size: 13px !important;
+            }
+
+            #event-sebelumnya-container:not(.view-list) .event-card p {
+                font-size: 11px !important;
+            }
+
+            #event-sebelumnya-container:not(.view-list) .event-banner-wrapper {
+                height: 140px !important;
+            }
         }
 
         /* ============================================
@@ -325,7 +343,7 @@
             @if ($heroEvents->count() > 0)
                 <div class="hero-carousel-wrapper relative" id="heroCarousel">
 
-                    <div class="hero-carousel-viewport" style="clip-path: inset(-12px 0px -12px 0px round 16px);">
+                    <div class="hero-carousel-viewport" style="clip-path: inset(0px 0px 0px 0px round 16px);">
                         <div class="hero-carousel-track flex items-stretch transition-transform duration-500 ease-out" style="will-change: transform;">
 
                             @foreach ($heroEvents as $idx => $eventHero)
@@ -568,7 +586,7 @@
                         </div>
                     </div>
 
-                    <div id="event-akan-datang-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 transition-all duration-300">
+                    <div id="event-akan-datang-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 transition-all duration-300">
                         @foreach ($eventAkanDatangLainnya as $event)
                             @php $bukaPendaftaran = (int) ($event->pendaftaran_dibuka ?? 0) === 1; @endphp
 
@@ -979,7 +997,7 @@
                 </div>
 
                 @if ($eventSebelumnya->count() > 0)
-                    <div id="event-sebelumnya-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 transition-all duration-300">
+                    <div id="event-sebelumnya-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 transition-all duration-300">
                         @foreach ($eventSebelumnya as $item)
                             <a href="{{ $routeDetail($item) }}"
                                 class="event-card card-shadow overflow-hidden rounded-[16px] border border-[#ededed] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col">

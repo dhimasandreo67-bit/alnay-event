@@ -459,6 +459,26 @@
                 max-width: none;
             }
         }
+
+        @media (max-width: 640px) {
+            #gridKandidat .kandidat-card .relative.h-\[175px\] {
+                height: 140px !important;
+            }
+
+            #gridKandidat .kandidat-card h3 {
+                font-size: 12px !important;
+            }
+
+            #gridKandidat .kandidat-card .p-3\.5 {
+                padding: 0.6rem !important;
+            }
+
+            #gridKandidat .kandidat-card a.detail-button {
+                padding-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+                font-size: 10px !important;
+            }
+        }
     </style>
 </head>
 
@@ -1047,7 +1067,7 @@
             </div>
 
             @if (count($kandidat) > 0)
-                <div id="gridKandidat" class="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+                <div id="gridKandidat" class="mt-3.5 grid grid-cols-2 gap-3 sm:gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
 
                     @foreach ($kandidat as $index => $item)
                         @php
