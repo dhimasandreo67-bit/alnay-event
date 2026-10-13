@@ -28,6 +28,11 @@ class Peserta extends Model
         'galeri_foto',
         'total_vote',
         'answers',
+        'sudah_audisi',        // ← TAMBAH
+        'tanggal_audisi',      // ← TAMBAH
+        'status_registrasi',   // ← TAMBAH
+        'hasil_audisi',
+        'kandidat_voting',
     ];
 
     protected $casts = [
@@ -35,7 +40,16 @@ class Peserta extends Model
         'tanggal_daftar' => 'datetime',
         'galeri_foto' => 'array',
         'answers' => 'array',
+        'sudah_audisi' => 'boolean',      // ← TAMBAH
+        'tanggal_audisi' => 'datetime',
+        'created_at'      => 'datetime', // ✅ Tambahkan ini
+        'updated_at'      => 'datetime',   // ← TAMBAH
+        'kandidat_voting' => 'boolean',
     ];
+
+    // ============================================
+    // RELASI
+    // ============================================
 
     public function event(): BelongsTo
     {
@@ -57,6 +71,12 @@ class Peserta extends Model
         return $this->hasMany(PembayaranEvent::class, 'peserta_id');
     }
 
+    /** Relasi BARU — pembayaran registrasi */
+    public function pembayaranRegistrasi(): HasMany
+    {
+        return $this->hasMany(PembayaranEvent::class, 'peserta_id');
+    }
+
     public function votingMasuk(): HasMany
     {
         return $this->hasMany(Voting::class, 'peserta_id');
@@ -67,23 +87,34 @@ class Peserta extends Model
         return $this->hasMany(Voting::class, 'peserta_id');
     }
 
-    public function isOwnedBy(?PenggunaEvent $user): bool
-    {
-        return $user !== null && $this->user_id === $user->id;
-    }
-
     public function jawaban()
     {
         return $this->hasMany(Jawaban::class, 'peserta_id');
     }
 
-    /**
-     * Ambil nama tampil peserta — prioritas dari jawaban pertanyaan "nama",
-     * fallback ke nama_pendaftaran, lalu ke nama akun.
-     */
+    // ============================================
+    // HELPER
+    // ============================================
+
+    public function isOwnedBy(?PenggunaEvent $user): bool
+    {
+        return $user !== null && $this->user_id === $user->id;
+    }
+
+    /** Apakah peserta sudah lunas registrasi? */
+    public function sudahLunasRegistrasi(): bool
+    {
+        return $this->status_registrasi === 'lunas';
+    }
+
+    /** Apakah peserta sudah bayar DP? */
+    public function sudahBayarDp(): bool
+    {
+        return in_array($this->status_registrasi, ['dp', 'lunas'], true);
+    }
+
     public function namaTampil(): string
     {
-        // Pastikan relasi jawaban + pertanyaan sudah dimuat
         $jawabanList = $this->relationLoaded('jawaban')
             ? $this->jawaban
             : $this->jawaban()->with('pertanyaan')->get();
@@ -95,25 +126,18 @@ class Peserta extends Model
 
         if ($jawabanNama && $jawabanNama->jawaban) {
             $val = $jawabanNama->jawaban;
-
             return is_array($val) ? ($val[0] ?? '') : (string) $val;
         }
 
-        // Fallback ke nama_pendaftaran (data lama)
         if ($this->nama_pendaftaran) {
             return $this->nama_pendaftaran;
         }
 
-        // Fallback ke nama akun
         return $this->user?->nama_custom
             ?: $this->user?->nama
             ?: 'Peserta';
     }
 
-    /**
-     * Ambil email peserta — prioritas dari jawaban pertanyaan "email",
-     * fallback ke email akun.
-     */
     public function emailTampil(): string
     {
         $jawabanList = $this->relationLoaded('jawaban')
@@ -127,7 +151,6 @@ class Peserta extends Model
 
         if ($jawabanEmail && $jawabanEmail->jawaban) {
             $val = $jawabanEmail->jawaban;
-
             return is_array($val) ? ($val[0] ?? '') : (string) $val;
         }
 

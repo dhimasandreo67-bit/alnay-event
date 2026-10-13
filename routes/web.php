@@ -85,6 +85,14 @@ Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
 Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
 Route::get('/event/{event}/kandidat', [AdminPendaftaranController::class, 'kandidat'])->name('event.peserta');
 Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
+Route::post('/kandidat/{event}/store', [AdminPendaftaranController::class, 'storeKandidat'])
+    ->name('admin.kandidat.store');
+// Pembayaran Manual Khusus Kandidat Voting
+Route::post('/kandidat/pembayaran', [App\Http\Controllers\Admin\PendaftaranController::class, 'storePembayaranManual'])
+    ->name('admin.kandidat.pembayaran');
+// Store Kandidat Voting
+Route::post('/kandidat/{event}', [App\Http\Controllers\Admin\PendaftaranController::class, 'storeKandidat'])
+    ->name('admin.kandidat.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -208,7 +216,6 @@ Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.lo
 Route::middleware('admin.session')->prefix('admin')->group(function () {
 
     // A. Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     // B. Profile & Logout (di atas route dinamis)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
@@ -232,12 +239,18 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.events.toggle-blackout');
     Route::delete('/events/{event}/questions/clear', [AdminPendaftaranController::class, 'clearQuestions'])
         ->name('admin.events.questions.clear');
-    Route::get('/events/{event}/peserta/export', [AdminPendaftaranController::class, 'export'])
+    Route::get('/events/{event}/peserta/export', [PesertaController::class, 'export'])
         ->name('admin.peserta.export');
     Route::get('/api/event/{event}/pending-payments', [EventController::class, 'getPendingPayments'])
         ->name('admin.events.pending-payments');
     Route::post('/events/set-active', [EventController::class, 'setActive'])
         ->name('admin.events.set-active');
+    Route::get('/events/{event}/peserta/template-csv', [AdminPendaftaranController::class, 'downloadCsvTemplate'])
+        ->name('admin.peserta.template');
+    Route::post('/events/{event}/peserta/import', [AdminPendaftaranController::class, 'importCsv'])
+        ->name('admin.peserta.import');
+    Route::post('/events/{event}/peserta/kandidat-langsung', [AdminPendaftaranController::class, 'storeKandidat'])
+    ->name('admin.kandidat.store');
 
     // E. Form Builder
     Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])
@@ -254,6 +267,10 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
 
     Route::get('/preview/{event}', [PendaftaranController::class, 'previewForm'])
         ->name('admin.preview-form');
+    Route::get('/peserta/{id}/edit', [AdminPendaftaranController::class, 'edit'])
+        ->name('admin.peserta.edit');
+    Route::put('/peserta/{id}', [AdminPendaftaranController::class, 'update'])
+        ->name('admin.peserta.update');
 
     Route::get('/peserta/{id}', [AdminPendaftaranController::class, 'show'])
         ->name('admin.peserta.show');
@@ -263,6 +280,10 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.peserta.destroy');
     Route::get('/peserta/jawaban/{jawaban}/file', [AdminPendaftaranController::class, 'downloadJawabanFile'])
         ->name('admin.jawaban.file');
+    Route::post('/peserta/{id}/hasil-audisi', [AdminPendaftaranController::class, 'updateHasilAudisi'])
+    ->name('admin.peserta.hasil-audisi');
+    Route::post('/peserta/{peserta}/hasil-audisi', [App\Http\Controllers\Admin\PesertaController::class, 'updateHasilAudisi'])
+    ->name('admin.peserta.hasil-audisi');
 
     // G. Aktivasi & Voting
     Route::get('/activation/{event?}', [AktivasiController::class, 'index'])
@@ -283,6 +304,8 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.voters.manual-vote');
     Route::get('/leaderboard/{event?}', [VotingController::class, 'leaderboard'])
         ->name('admin.leaderboard');
+
+        Route::get('/{eventId?}', [DashboardController::class, 'index'])->name('admin.dashboard');
 });
 
 /*
