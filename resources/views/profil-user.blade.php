@@ -221,6 +221,35 @@
         }
 
         /* ============================================ */
+        /* PILIHAN METODE BAYAR REGISTRASI               */
+        /* ============================================ */
+        .metode-opt {
+            transition: all .2s ease;
+        }
+
+        .metode-opt .dot {
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+            background: transparent;
+        }
+
+        .metode-opt.is-on {
+            border-color: #C99A32;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(201, 154, 50, .14);
+        }
+
+        .metode-opt.is-on .dot {
+            background: #C99A32;
+        }
+
+        .metode-opt.is-on .ring {
+            border-color: #C99A32;
+        }
+
+        /* ============================================ */
         /* REDUCED MOTION                                */
         /* ============================================ */
         @media (prefers-reduced-motion: reduce) {
@@ -428,9 +457,43 @@
         </section>
 
         {{-- ============================================ --}}
-        {{-- STATUS PENDAFTARAN                            --}}
+        {{-- STATUS PENDAFTARAN (ALUR BARU)                --}}
         {{-- ============================================ --}}
         @if ($pendaftarans->count() > 0)
+
+            @php
+                /*
+                |--------------------------------------------------------------
+                | Helper tampilan (dipakai semua kartu)
+                |--------------------------------------------------------------
+                */
+                $tones = [
+                    'ok'      => 'bg-[#e9f8f1] text-[#0f7a52]',
+                    'wait'    => 'bg-[#fff3d6] text-[#9a6f10]',
+                    'info'    => 'bg-[#e8f0fb] text-[#2f5fa8]',
+                    'neutral' => 'bg-[#efede7] text-[#6f6a5c]',
+                    'bad'     => 'bg-[#fdeaea] text-[#b23b3b]',
+                ];
+                $chip = fn (string $label, string $tone) =>
+                    '<span class="shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-semibold ' . $tones[$tone] . '">' . e($label) . '</span>';
+                $rp = fn ($n) => 'Rp ' . number_format((int) $n, 0, ',', '.');
+                $toC = fn ($v) => $v ? ($v instanceof \Carbon\CarbonInterface ? $v : \Carbon\Carbon::parse($v)) : null;
+                $tgl = fn ($c) => $c ? $c->translatedFormat('d M Y') : '-';
+                $tglJam = fn ($c) => $c ? $c->translatedFormat('l, d M Y · H.i') . ' WIB' : '-';
+                $routeAda = fn ($nama) => \Illuminate\Support\Facades\Route::has($nama);
+
+                $GOLD = 'mt-4 block w-full rounded-lg bg-gradient-to-r from-[#c99a32] to-[#b8862a] py-3 text-center text-[13px] font-semibold text-white shadow-sm transition hover:opacity-90';
+                $OUTLINE = 'mt-4 block w-full rounded-lg border border-[#d9d9d9] bg-white py-3 text-center text-[13px] font-semibold text-[#333] transition hover:bg-[#f7f7f7]';
+                $CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+                $CROSS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+                $BADGE = [
+                    'calon'   => ['border-[#f0dca8] bg-[#fff6e0] text-[#a37b2a]', 'bg-[#c99a32]', 'Calon Peserta'],
+                    'peserta' => ['border-[#bfe8d6] bg-[#e9f8f1] text-[#0f7a52]', 'bg-[#0f7a52]', 'Peserta'],
+                    'gugur'   => ['border-[#f1cccc] bg-[#fdeaea] text-[#b23b3b]', 'bg-[#b23b3b]', 'Tidak Lolos'],
+                ];
+            @endphp
+
             <section class="reveal-up delay-3 mt-6">
                 <div class="mb-4">
                     <div class="title-ornament mb-2">
@@ -441,66 +504,136 @@
                         <span class="inline-block h-1.5 w-1.5 rotate-45 bg-[#C99A32]"></span>
                     </div>
                     <h2 class="font-display text-lg md:text-xl font-bold text-[#15233d]">Status Pendaftaran</h2>
-                    <p class="text-gray-500 text-xs mt-0.5">Pantau status pendaftaran event kamu di sini</p>
+                    <p class="text-gray-500 text-xs mt-0.5">Pantau tahapan pendaftaran event kamu di sini</p>
                 </div>
 
                 <div class="space-y-4">
                     @foreach ($pendaftarans as $p)
                         @php
-                            $eventP = $p->event;
-                            $pembayaran = $p->pembayaran->sortByDesc('id')->first();
-                            $sudahBayar = $pembayaran && $pembayaran->status_midtrans === 'settlement';
+                            $e = $p->event;
+                            $now = now();
 
-                            $adalahCardTerbaru =
-                                $pendaftarans->where('event_id', $p->event_id)->sortByDesc('id')->first()?->id ===
-                                $p->id;
+                            /* ---------- Biaya & pengaturan event (diisi admin) ---------- */
+                            $biayaDaftar = (int) ($e->biaya_pendaftaran ?? 0);
+                            $biayaRegis  = (int) ($e->biaya_registrasi ?? 0);
+                            $dpRegis     = (int) ($e->dp_minimal ?? 0);
+                            $audTgl      = $toC($e->audisi_tanggal ?? null);
+                            $audLokasi   = $e->audisi_lokasi ?? null;
+                            $vMulai      = $toC($e->voting_mulai ?? null);
+                            $vAkhir      = $toC($e->voting_selesai ?? null);
 
-                            $sudahDaftarUlang = $pendaftarans->contains(function ($other) use ($p) {
-                                return $other->id !== $p->id &&
-                                    $other->event_id === $p->event_id &&
-                                    in_array($other->status, ['menunggu_review', 'diterima'], true);
-                            });
+                            /* ---------- Tahap 2: pembayaran pendaftaran ---------- */
+                            $bayarDaftar = $p->pembayaran
+                                ->filter(fn ($x) => ($x->jenis ?? 'pendaftaran') === 'pendaftaran' && $x->status_midtrans === 'settlement')
+                                ->sortByDesc('id')->first();
+                            $sudahBayar = (bool) $bayarDaftar;
+                            $tglLunas = $bayarDaftar ? $toC($bayarDaftar->tanggal_bayar ?? $bayarDaftar->created_at) : null;
 
-                            $meta = match ($p->status) {
-                                'menunggu_review' => [
-                                    'label' => 'Menunggu Review',
-                                    'bg' => 'bg-amber-50',
-                                    'text' => 'text-amber-700',
-                                    'border' => 'border-amber-200',
-                                ],
-                                'diterima' => [
-                                    'label' => $sudahBayar ? 'Peserta Aktif' : 'Diterima',
-                                    'bg' => 'bg-emerald-50',
-                                    'text' => 'text-emerald-700',
-                                    'border' => 'border-emerald-200',
-                                ],
-                                'ditolak' => [
-                                    'label' => 'Ditolak',
-                                    'bg' => 'bg-rose-50',
-                                    'text' => 'text-rose-700',
-                                    'border' => 'border-rose-200',
-                                ],
-                                default => [
-                                    'label' => ucfirst($p->status),
-                                    'bg' => 'bg-gray-50',
-                                    'text' => 'text-gray-700',
-                                    'border' => 'border-gray-200',
-                                ],
-                            };
+                            /* ---------- Registrasi: dihitung dari total pembayaran ---------- */
+                            $cicilan = $p->pembayaran
+                                ->filter(fn ($x) => ($x->jenis ?? null) === 'registrasi' && $x->status_midtrans === 'settlement')
+                                ->sortBy('id')->values();
+                            $totalRegis = (int) $cicilan->sum('jumlah');
+                            $regStatus = $totalRegis <= 0 ? 'belum' : (($biayaRegis > 0 && $totalRegis >= $biayaRegis) ? 'lunas' : 'dp');
+                            $sisaRegis = max($biayaRegis - $totalRegis, 0);
+                            $dpTampil = $dpRegis > 0 ? $dpRegis : (int) round($biayaRegis / 4);
+
+                            /* ---------- Voting ---------- */
+                            $vStatus = (!$vMulai || $now->lt($vMulai)) ? 'belum' : (($vAkhir && $now->gt($vAkhir)) ? 'selesai' : 'jalan');
+                            $sisaHari = $vAkhir ? max((int) $now->copy()->startOfDay()->diffInDays($vAkhir->copy()->startOfDay(), false), 0) : null;
+                            $teksSisa = $sisaHari === null ? '' : ($sisaHari === 0 ? 'hari ini hari terakhir' : 'sisa ' . $sisaHari . ' hari');
+                            $bisaBayarRegis = $vStatus !== 'selesai';
+
+                            /* ---------- Tahap 3: audisi ---------- */
+                            $hasil = $p->hasil_audisi ?? null; // null | 'lolos' | 'tidak_lolos' (diputuskan admin)
+                            $susulan = $p->audisi_susulan ?? null; // override manual admin (true/false), null = otomatis
+                            if ($susulan === null) {
+                                $susulan = $audTgl && ($sudahBayar ? ($tglLunas && $tglLunas->gt($audTgl)) : $audTgl->isPast());
+                            }
+
+                            /* ---------- Status umum + status tahap berjalan ---------- */
+                            $fail = false;
+                            $lockedAudisi = null;
+                            $bodyKey = null;
+
+                            if (!$sudahBayar) {
+                                $cur = 2; $ov = 'calon'; $chipCur = ['Belum dibayar', 'wait']; $bodyKey = 'bayar';
+                                if ($susulan) {
+                                    $lockedAudisi = 'Audisi resmi sudah lewat. Kamu akan mengikuti audisi susulan yang diatur admin.';
+                                    $hint = 'Formulir sudah terkirim. Selesaikan pembayaran pendaftaran, lalu ikuti audisi susulan yang diatur admin.';
+                                } else {
+                                    $hint = 'Formulir sudah terkirim. Selesaikan pembayaran pendaftaran untuk lanjut ke audisi.';
+                                }
+                            } elseif ($hasil === 'tidak_lolos') {
+                                $cur = 3; $ov = 'gugur'; $fail = true; $chipCur = ['Tidak lolos', 'bad']; $bodyKey = 'gugur';
+                                $hint = 'Kamu belum lolos audisi, sehingga proses berhenti di tahap ini.';
+                            } elseif ($hasil === 'lolos') {
+                                $cur = 4; $ov = 'peserta'; $chipCur = null;
+                                $hint = match (true) {
+                                    $vStatus === 'selesai' => 'Voting sudah berakhir. Terima kasih atas partisipasimu.',
+                                    $regStatus === 'lunas' && $vStatus === 'jalan' => 'Voting sedang berlangsung. Ajak teman-temanmu mendukung kamu.',
+                                    $regStatus === 'lunas' => 'Registrasi lunas. Tinggal menunggu voting dibuka.',
+                                    $regStatus === 'dp' && $vStatus === 'jalan' => 'Voting sedang berlangsung. Sisa registrasi masih bisa dilunasi sebelum voting berakhir.',
+                                    $regStatus === 'dp' => 'DP sudah masuk. Sisanya bisa dilunasi kapan saja, asal sebelum voting berakhir.',
+                                    $vStatus === 'jalan' => 'Voting sedang berlangsung. Registrasimu belum dibayar, selesaikan sebelum voting berakhir.',
+                                    default => 'Kamu sudah resmi menjadi peserta. Registrasi bisa dibayar kapan saja, asal sebelum voting berakhir.',
+                                };
+                            } elseif ($susulan) {
+                                $cur = 3; $ov = 'calon'; $chipCur = ['Menunggu hasil', 'wait']; $bodyKey = 'susulan';
+                                $hint = 'Pendaftaran lunas. Audisi resmi sudah lewat, jadi kamu mengikuti audisi susulan yang informasinya disampaikan admin.';
+                            } elseif (!$audTgl || !$audLokasi) {
+                                $cur = 3; $ov = 'calon'; $chipCur = ['Jadwal belum ditentukan', 'neutral']; $bodyKey = 'jadwal';
+                                $hint = 'Pendaftaran lunas. Jadwal audisi akan diumumkan admin.';
+                            } elseif ($audTgl->isFuture()) {
+                                $cur = 3; $ov = 'calon'; $chipCur = ['Terjadwal', 'info']; $bodyKey = 'terjadwal';
+                                $hint = 'Audisi sudah terjadwal. Pastikan kamu hadir sesuai jadwal.';
+                            } else {
+                                $cur = 3; $ov = 'calon'; $chipCur = ['Menunggu hasil', 'wait']; $bodyKey = 'menunggu';
+                                $hint = 'Audisi sudah berlangsung. Menunggu pengumuman hasil dari admin.';
+                            }
+
+                            $peserta = $ov === 'peserta';
+                            [$bc, $bd, $bt] = $BADGE[$ov];
+
+                            $steps = [
+                                ['n' => 1, 't' => 'Formulir pendaftaran',   'd' => 'Data diri dan foto yang kamu kirim'],
+                                ['n' => 2, 't' => 'Pembayaran pendaftaran', 'd' => 'Biaya ' . $rp($biayaDaftar) . ', dibayar sekali (lunas)'],
+                                ['n' => 3, 't' => 'Audisi',                 'd' => 'Penilaian peserta, hasil ditentukan admin'],
+                            ];
+                            $doneChip = [1 => ['Terkirim', 'ok'], 2 => ['Lunas', 'ok'], 3 => ['Lolos', 'ok']];
+                            $doneTxt = [
+                                1 => 'Formulir terkirim · ' . $tgl($toC($p->tanggal_daftar)),
+                                2 => 'Dibayar ' . $rp($bayarDaftar->jumlah ?? $biayaDaftar) . ' · ' . $tgl($tglLunas),
+                                3 => 'Dinyatakan lolos oleh admin' . (($p->tanggal_hasil_audisi ?? null) ? ' · ' . $tgl($toC($p->tanggal_hasil_audisi)) : ''),
+                            ];
+
+                            $pct = $peserta ? 100 : (($cur - 1) / 3 * 100 + 8);
+                            $barClr = $fail ? 'bg-[#d9534f]' : 'bg-[#c99a32]';
+                            $labelKiri = $fail ? 'Proses berhenti di langkah ' . $cur : ($peserta ? 'Seleksi selesai' : 'Langkah ' . $cur . ' dari 3');
+                            $labelKanan = $fail ? 'Tidak dilanjutkan' : ($peserta ? 'Kamu sudah menjadi peserta' : 'Dalam proses');
+
+                            /* ---------- URL (aman jika route belum dibuat) ---------- */
+                            $urlBayarDaftar = $routeAda('peserta.pembayaran') ? route('peserta.pembayaran', $p->id) : '#';
+                            $urlBayarRegis  = $routeAda('peserta.registrasi.bayar') ? route('peserta.registrasi.bayar', $p->id) : '#';
+                            $urlDataDaftar  = $routeAda('peserta.pendaftaran.show') ? route('peserta.pendaftaran.show', $p->id) : '#';
+                            $urlEvent       = $e && $routeAda('public.event.show') ? route('public.event.show', $e) : '#';
+                            $urlProfilPeserta = $e && $routeAda('public.peserta.show') ? route('public.peserta.show', [$e, $p->id]) : '#';
                         @endphp
 
-                        <div class="card-premium bg-white rounded-2xl border border-[#ebe7df] p-5 shadow-sm">
-                            <div class="flex items-center justify-between gap-3">
+                        <div class="card-premium bg-white rounded-2xl border border-[#ebe7df] p-5 sm:p-6 shadow-sm">
+
+                            {{-- ============ HEADER KARTU + STATUS UMUM ============ --}}
+                            <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
                                     <div class="w-12 h-12 shrink-0 rounded-xl bg-[#22212b] overflow-hidden">
-                                        @if ($eventP && $eventP->banner)
-                                            <img src="{{ asset('storage/' . $eventP->banner) }}"
-                                                alt="{{ $eventP->nama }}" class="w-full h-full object-cover">
+                                        @if ($e && $e->banner)
+                                            <img src="{{ asset('storage/' . $e->banner) }}"
+                                                alt="{{ $e->nama }}" class="w-full h-full object-cover">
                                         @endif
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-sm font-semibold text-[#15233d] truncate">
-                                            {{ $eventP->nama ?? 'Event' }}</p>
+                                            {{ $e->nama ?? 'Event' }}</p>
                                         <p class="text-xs text-gray-500 mt-0.5">
                                             {{ $p->namaTampil() }} · Didaftarkan
                                             {{ $p->tanggal_daftar?->format('d M Y') ?? '-' }}
@@ -508,67 +641,332 @@
                                     </div>
                                 </div>
 
-                                <span
-                                    class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full {{ $meta['bg'] }} border {{ $meta['border'] }} {{ $meta['text'] }} text-[10px] font-semibold">
-                                    {{ $meta['label'] }}
+                                <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold {{ $bc }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $bd }}"></span>{{ $bt }}
                                 </span>
                             </div>
 
-                            @if ($p->status === 'ditolak' && $p->catatan_admin)
-                                <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4">
-                                    <p class="text-[10px] font-bold uppercase tracking-wide text-rose-700 mb-1">Alasan Penolakan</p>
-                                    <p class="text-sm text-rose-800 whitespace-pre-line">{{ $p->catatan_admin }}</p>
+                            {{-- ============ PROGRESS ============ --}}
+                            <div class="mt-5">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-semibold {{ $fail ? 'text-[#b23b3b]' : 'text-[#a37b2a]' }}">{{ $labelKiri }}</span>
+                                    <span class="text-gray-400">{{ $labelKanan }}</span>
                                 </div>
-                            @endif
-
-                            @if ($p->status === 'diterima' && !$sudahBayar)
-                                <div class="mt-4 rounded-xl border border-[#ece5d7] bg-[#fcfaf6] p-4">
-                                    <p class="text-xs text-[#4B463F] mb-1">Biaya Pendaftaran</p>
-                                    <p class="text-lg font-bold text-[#13223a]">
-                                        Rp {{ number_format($eventP->biaya_pendaftaran ?? 0, 0, ',', '.') }}
-                                    </p>
-                                    <a href="{{ route('peserta.pembayaran', $p->id) }}"
-                                        class="mt-3 block w-full rounded-lg bg-gradient-to-r from-[#cf9b32] to-[#b88625] py-2.5 text-center text-[12px] font-semibold text-white transition hover:from-[#b88625] hover:to-[#a3741d] shadow-sm hover:shadow-md">
-                                        Bayar Sekarang →
-                                    </a>
+                                <div class="mt-1.5 h-1.5 rounded-full bg-[#eee6d2]">
+                                    <div class="h-1.5 rounded-full {{ $barClr }} transition-all" style="width: {{ $pct }}%"></div>
                                 </div>
-                            @endif
+                                <p class="mt-2 text-xs text-[#666]">{{ $hint }}</p>
+                            </div>
 
-                            @if ($sudahBayar)
-                                <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                                    <p class="text-xs font-semibold text-emerald-700 inline-flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                        Pembayaran Lunas
-                                    </p>
-                                    <p class="text-xs text-emerald-600 mt-1">
-                                        {{ $pembayaran->tanggal_bayar?->format('d M Y, H:i') ?? '' }} WIB
-                                    </p>
-                                </div>
-                            @endif
+                            {{-- ============ TIMELINE 3 TAHAP SELEKSI ============ --}}
+                            <ol class="mt-6 border-t border-[#f0eadb] pt-6">
+                                @foreach ($steps as $s)
+                                    @php
+                                        $last = $loop->last;
+                                        $state = $s['n'] < $cur ? 'done' : ($s['n'] === $cur ? ($fail ? 'fail' : 'current') : 'locked');
+                                    @endphp
 
-                            @if ($p->status === 'ditolak' && $eventP && !$sudahDaftarUlang && $adalahCardTerbaru)
-                                <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                                    <p class="text-xs text-blue-800 mb-2">
-                                        Kamu bisa mendaftar ulang untuk event ini dengan data yang sudah diperbaiki.
-                                    </p>
-                                    <a href="{{ route('public.registration', $eventP) }}"
-                                        class="inline-flex items-center justify-center w-full rounded-lg bg-gradient-to-r from-[#cf9b32] to-[#b88625] py-2.5 text-center text-[12px] font-semibold text-white transition hover:from-[#b88625] hover:to-[#a3741d] shadow-sm hover:shadow-md">
-                                        Daftar Ulang ke Event Ini →
-                                    </a>
-                                </div>
-                            @endif
+                                    <li class="relative pl-12 {{ $last ? '' : 'pb-5' }}">
+                                        @unless ($last)
+                                            <span class="absolute left-[15px] top-9 bottom-1 w-px {{ $state === 'done' ? 'bg-[#e3c887]' : 'bg-[#e8e3d6]' }}"></span>
+                                        @endunless
 
-                            @if ($p->status === 'ditolak' && !$adalahCardTerbaru)
-                                <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                                    <p class="text-xs text-gray-500">Riwayat pendaftaran sebelumnya.</p>
-                                </div>
-                            @endif
+                                        {{-- Titik --}}
+                                        @if ($state === 'done')
+                                            <span class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#c99a32] text-white">{!! $CHECK !!}</span>
+                                        @elseif ($state === 'fail')
+                                            <span class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#d9534f] text-white shadow-[0_0_0_4px_rgba(217,83,79,.15)]">{!! $CROSS !!}</span>
+                                        @elseif ($state === 'current')
+                                            <span class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#c99a32] bg-white text-[13px] font-bold text-[#c99a32] shadow-[0_0_0_4px_rgba(201,154,50,.15)]">{{ $s['n'] }}</span>
+                                        @else
+                                            <span class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f1ec] text-[13px] font-semibold text-[#b5ad9c]">{{ $s['n'] }}</span>
+                                        @endif
 
-                            @if ($p->status === 'ditolak' && $eventP && $sudahDaftarUlang)
-                                <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                                    <p class="text-xs text-gray-600">Kamu sudah terdaftar untuk event ini.</p>
+                                        {{-- Isi --}}
+                                        @if ($state === 'done')
+                                            <div class="flex items-start justify-between gap-3 pt-1">
+                                                <p class="text-sm font-semibold text-[#15233d]">{{ $s['t'] }}</p>
+                                                {!! $chip(...$doneChip[$s['n']]) !!}
+                                            </div>
+                                            <p class="mt-0.5 text-xs text-gray-500">{{ $doneTxt[$s['n']] }}</p>
+                                            @if ($s['n'] === 1)
+                                                <a href="{{ $urlDataDaftar }}" class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-[#a37b2a] hover:text-[#c99a32]">
+                                                    Lihat data pendaftaran <span>›</span>
+                                                </a>
+                                            @endif
+
+                                        @elseif ($state === 'locked')
+                                            @php $infoKunci = $s['n'] === 3 && $lockedAudisi; @endphp
+                                            <p class="pt-1 text-sm font-semibold text-[#a9a39a]">{{ $s['t'] }}</p>
+                                            <p class="mt-0.5 text-xs {{ $infoKunci ? 'text-[#a08a50]' : 'text-[#b9b3a8]' }}">{{ $infoKunci ? $lockedAudisi : $s['d'] }}</p>
+
+                                        @else
+                                            <div class="rounded-xl border p-4 {{ $fail ? 'border-[#f1cccc] bg-[#fff8f8]' : 'border-[#ecdfc0] bg-[#fffcf3]' }}">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <p class="text-sm font-semibold text-[#15233d]">{{ $s['t'] }}</p>
+                                                    {!! $chip(...$chipCur) !!}
+                                                </div>
+                                                <p class="mb-3 mt-0.5 text-xs text-gray-500">{{ $s['d'] }}</p>
+
+                                                @switch($bodyKey)
+                                                    @case('bayar')
+                                                        <div class="flex items-end justify-between gap-3">
+                                                            <div>
+                                                                <p class="text-xs text-gray-500">Biaya pendaftaran</p>
+                                                                <p class="text-[22px] font-bold text-[#13223a]">{{ $rp($biayaDaftar) }}</p>
+                                                            </div>
+                                                            <span class="text-[11px] text-gray-400">Sekali bayar, langsung lunas</span>
+                                                        </div>
+                                                        <a href="{{ $urlBayarDaftar }}" class="{{ $GOLD }}">Bayar Sekarang →</a>
+                                                        @break
+
+                                                    @case('jadwal')
+                                                        <div class="divide-y divide-[#f0eadb] rounded-lg border border-[#ece5d7] bg-white text-[12.5px]">
+                                                            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5">
+                                                                <span class="text-gray-500">Tanggal</span>
+                                                                @if ($audTgl)
+                                                                    <span class="text-right font-medium">{{ $tglJam($audTgl) }}</span>
+                                                                @else
+                                                                    <span class="italic text-[#b0a999]">Belum ditentukan</span>
+                                                                @endif
+                                                            </div>
+                                                            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5">
+                                                                <span class="text-gray-500">Lokasi</span>
+                                                                @if ($audLokasi)
+                                                                    <span class="text-right font-medium">{{ $audLokasi }}</span>
+                                                                @else
+                                                                    <span class="italic text-[#b0a999]">Belum ditentukan</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <p class="mt-3 text-xs leading-relaxed text-gray-500">Admin akan mengumumkan jadwal dan lokasi audisi. Setelah ditentukan, informasinya muncul otomatis di sini.</p>
+                                                        @break
+
+                                                    @case('terjadwal')
+                                                    @case('menunggu')
+                                                        <div class="divide-y divide-[#f0eadb] rounded-lg border border-[#ece5d7] bg-white text-[12.5px]">
+                                                            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5">
+                                                                <span class="text-gray-500">Tanggal</span>
+                                                                <span class="text-right font-medium">{{ $tglJam($audTgl) }}</span>
+                                                            </div>
+                                                            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5">
+                                                                <span class="text-gray-500">Lokasi</span>
+                                                                <span class="text-right font-medium">{{ $audLokasi }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <p class="mt-3 text-xs leading-relaxed text-gray-500">
+                                                            @if ($bodyKey === 'terjadwal')
+                                                                Hadir tepat waktu. Kalau ada perubahan, jadwal di sini ikut diperbarui.
+                                                            @else
+                                                                Audisi sudah berlangsung. Hasilnya akan diumumkan admin dan muncul di halaman ini.
+                                                            @endif
+                                                        </p>
+                                                        @break
+
+                                                    @case('susulan')
+                                                        <p class="text-[12.5px] leading-relaxed text-[#666]">Audisi resmi sudah berlangsung sebelum kamu mendaftar. Informasi audisi susulan akan disampaikan langsung oleh admin, dan hasilnya muncul di halaman ini.</p>
+                                                        @break
+
+                                                    @case('gugur')
+                                                        <div class="rounded-lg border border-[#f1cccc] bg-white px-3.5 py-3 text-[12.5px] leading-relaxed text-[#6b4a4a]">
+                                                            Terima kasih sudah mengikuti audisi. Sayangnya kamu belum lolos, sehingga tidak dilanjutkan ke tahap berikutnya. Biaya pendaftaran tidak dikembalikan.
+                                                        </div>
+                                                        @break
+                                                @endswitch
+                                            </div>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ol>
+
+                            {{-- ============ SETELAH LOLOS: REGISTRASI + VOTING ============ --}}
+                            @if ($peserta)
+                                <div class="mt-6 border-t border-[#f0eadb] pt-6">
+
+                                    <div class="rounded-lg bg-[#e9f8f1] px-3.5 py-3 text-[12.5px] text-[#0f6b49]">
+                                        <p class="font-semibold">Selamat! Kamu resmi menjadi peserta.</p>
+                                        <p class="mt-0.5">Profilmu sudah tampil di daftar peserta event.
+                                            <a href="{{ $urlProfilPeserta }}" class="font-semibold underline">Lihat profil saya</a>
+                                        </p>
+                                    </div>
+
+                                    <p class="mt-4 text-xs text-gray-500">Registrasi dan voting berjalan bersamaan. Registrasi bisa dibayar kapan saja, asal sebelum voting berakhir.</p>
+
+                                    <div class="mt-3 space-y-3.5">
+
+                                        {{-- ---------- REGISTRASI ---------- --}}
+                                        @php
+                                            $descRegis = 'Biaya ' . $rp($biayaRegis) . ', bisa lunas atau cicil 2 kali';
+                                            $okRegis = $regStatus === 'lunas';
+                                        @endphp
+                                        <div class="rounded-xl border p-4 {{ $okRegis ? 'border-[#cfe6d8] bg-[#f6fbf8]' : 'border-[#ecdfc0] bg-[#fffcf3]' }}">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <p class="text-sm font-semibold text-[#15233d]">Registrasi</p>
+                                                @if ($regStatus === 'lunas')
+                                                    {!! $chip('Lunas', 'ok') !!}
+                                                @elseif ($regStatus === 'dp')
+                                                    {!! $chip('DP terbayar', 'info') !!}
+                                                @else
+                                                    {!! $chip('Belum dibayar', 'wait') !!}
+                                                @endif
+                                            </div>
+                                            <p class="mb-3 mt-0.5 text-xs text-gray-500">{{ $descRegis }}</p>
+
+                                            @if ($regStatus === 'lunas')
+                                                <p class="text-[12.5px] text-[#666]">
+                                                    Dibayar {{ $rp($totalRegis) }}
+                                                    @if ($cicilan->last()) · {{ $tgl($toC($cicilan->last()->tanggal_bayar ?? $cicilan->last()->created_at)) }} @endif.
+                                                    Terima kasih, registrasimu sudah selesai.
+                                                </p>
+
+                                            @elseif ($regStatus === 'dp')
+                                                <p class="text-xs text-gray-500">Terbayar</p>
+                                                <p class="text-xl font-bold text-[#13223a]">{{ $rp($totalRegis) }}
+                                                    <span class="text-xs font-medium text-gray-400">dari {{ $rp($biayaRegis) }}</span>
+                                                </p>
+                                                <div class="mt-2 h-1.5 rounded-full bg-[#eee6d2]">
+                                                    <div class="h-1.5 rounded-full bg-[#c99a32]" style="width: {{ $biayaRegis > 0 ? min(round($totalRegis / $biayaRegis * 100), 100) : 0 }}%"></div>
+                                                </div>
+
+                                                <div class="mt-4 divide-y divide-[#f0eadb] rounded-lg border border-[#ece5d7] bg-white text-[12.5px]">
+                                                    <div class="flex items-center justify-between gap-3 px-3.5 py-3">
+                                                        <div>
+                                                            <p class="font-medium">Cicilan 1 · DP</p>
+                                                            <p class="text-[11px] text-gray-400">Dibayar {{ $tgl($toC($cicilan->first()->tanggal_bayar ?? $cicilan->first()->created_at ?? null)) }}</p>
+                                                        </div>
+                                                        <div class="flex items-center gap-3">
+                                                            <b>{{ $rp($totalRegis) }}</b>{!! $chip('Lunas', 'ok') !!}
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center justify-between gap-3 px-3.5 py-3">
+                                                        <div>
+                                                            <p class="font-medium">Cicilan 2 · Pelunasan</p>
+                                                            <p class="text-[11px] text-gray-400">
+                                                                Batas bayar: sebelum voting berakhir{{ $vAkhir ? ', ' . $tgl($vAkhir) : '' }}
+                                                                @if ($vStatus === 'jalan' && $teksSisa)
+                                                                    <span class="font-semibold text-[#9a6f10]">· {{ $teksSisa }}</span>
+                                                                @endif
+                                                            </p>
+                                                        </div>
+                                                        <div class="flex items-center gap-3">
+                                                            <b>{{ $rp($sisaRegis) }}</b>{!! $chip('Belum dibayar', 'wait') !!}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                @if ($bisaBayarRegis)
+                                                    <form method="POST" action="{{ $urlBayarRegis }}">
+                                                        @csrf
+                                                        <input type="hidden" name="metode" value="pelunasan">
+                                                        <button type="submit" class="{{ $GOLD }}">Bayar Sisa {{ $rp($sisaRegis) }} →</button>
+                                                    </form>
+                                                    <p class="mt-2 text-[11.5px] text-gray-400">Sisa pembayaran bisa dilunasi kapan saja, asal sebelum voting berakhir. Registrasi yang belum lunas saat voting berakhir dapat membuat profilmu dikeluarkan dari peringkat.</p>
+                                                @else
+                                                    <p class="mt-3 text-[12px] text-[#9a6f10]">Batas pembayaran sudah berakhir karena voting telah selesai. Silakan hubungi admin.</p>
+                                                @endif
+
+                                            @else
+                                                {{-- Belum bayar sama sekali --}}
+                                                @if ($vStatus === 'jalan')
+                                                    <div class="mb-3 rounded-lg bg-[#fff3d6] px-3.5 py-2.5 text-xs text-[#8a6310]">
+                                                        Voting sedang berjalan. Selesaikan registrasi sebelum voting berakhir{{ $vAkhir ? ', ' . $tgl($vAkhir) : '' }}
+                                                        @if ($teksSisa) <b>({{ $teksSisa }})</b>@endif.
+                                                    </div>
+                                                @endif
+
+                                                @if ($bisaBayarRegis)
+                                                    <form method="POST" action="{{ $urlBayarRegis }}" class="form-regis">
+                                                        @csrf
+                                                        <p class="text-[12.5px] text-[#666]">Pilih cara pembayaran:</p>
+                                                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                                            <label class="metode-opt is-on cursor-pointer rounded-xl border border-[#e6e0d2] bg-white/60 p-3.5 text-left hover:border-[#d9c48a]">
+                                                                <input type="radio" name="metode" value="lunas" class="sr-only" checked>
+                                                                <span class="flex items-center gap-2.5">
+                                                                    <span class="ring flex h-4 w-4 items-center justify-center rounded-full border border-[#cfc8b6]"><span class="dot"></span></span>
+                                                                    <span class="text-[13px] font-semibold">Bayar Lunas</span>
+                                                                </span>
+                                                                <span class="mt-2 block text-[17px] font-bold">{{ $rp($biayaRegis) }}</span>
+                                                                <span class="mt-0.5 block text-[11.5px] leading-snug text-gray-500">Sekali bayar, registrasi langsung selesai.</span>
+                                                            </label>
+                                                            <label class="metode-opt cursor-pointer rounded-xl border border-[#e6e0d2] bg-white/60 p-3.5 text-left hover:border-[#d9c48a]">
+                                                                <input type="radio" name="metode" value="cicil" class="sr-only">
+                                                                <span class="flex items-center gap-2.5">
+                                                                    <span class="ring flex h-4 w-4 items-center justify-center rounded-full border border-[#cfc8b6]"><span class="dot"></span></span>
+                                                                    <span class="text-[13px] font-semibold">Cicil 2 Kali</span>
+                                                                </span>
+                                                                <span class="mt-2 block text-[17px] font-bold">DP {{ $rp($dpTampil) }}</span>
+                                                                <span class="mt-0.5 block text-[11.5px] leading-snug text-gray-500">Sisa {{ $rp(max($biayaRegis - $dpTampil, 0)) }} dibayar di cicilan kedua.</span>
+                                                            </label>
+                                                        </div>
+
+                                                        <div data-cicil-info class="mt-3 hidden divide-y divide-[#f0eadb] rounded-lg border border-[#ece5d7] bg-white text-[12.5px]">
+                                                            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5"><span class="text-gray-500">Cicilan 1 · DP (bayar sekarang)</span><span class="font-medium">{{ $rp($dpTampil) }}</span></div>
+                                                            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5"><span class="text-gray-500">Cicilan 2 · Pelunasan</span><span class="font-medium">{{ $rp(max($biayaRegis - $dpTampil, 0)) }}</span></div>
+                                                        </div>
+
+                                                        <button type="submit" data-submit
+                                                            data-lunas="Bayar Lunas {{ $rp($biayaRegis) }} →"
+                                                            data-cicil="Bayar DP {{ $rp($dpTampil) }} →"
+                                                            class="{{ $GOLD }}">Bayar Lunas {{ $rp($biayaRegis) }} →</button>
+                                                        <p class="mt-2 text-[11.5px] text-gray-400">Bisa dibayar kapan saja, asal sebelum voting berakhir{{ $vAkhir ? ' (' . $tgl($vAkhir) . ')' : '' }}. Registrasi yang belum lunas saat voting berakhir dapat membuat profilmu dikeluarkan dari peringkat.</p>
+                                                    </form>
+                                                @else
+                                                    <p class="text-[12px] text-[#9a6f10]">Batas pembayaran sudah berakhir karena voting telah selesai. Silakan hubungi admin.</p>
+                                                @endif
+                                            @endif
+                                        </div>
+
+                                        {{-- ---------- VOTING ---------- --}}
+                                        @php $okVote = $vStatus === 'jalan'; @endphp
+                                        <div class="rounded-xl border p-4 {{ $okVote ? 'border-[#cfe6d8] bg-[#f6fbf8]' : 'border-[#ecdfc0] bg-[#fffcf3]' }}">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <p class="text-sm font-semibold text-[#15233d]">Voting</p>
+                                                @if ($vStatus === 'jalan')
+                                                    {!! $chip('Berlangsung', 'ok') !!}
+                                                @elseif ($vStatus === 'selesai')
+                                                    {!! $chip('Berakhir', 'neutral') !!}
+                                                @else
+                                                    {!! $chip('Belum dibuka', 'neutral') !!}
+                                                @endif
+                                            </div>
+
+                                            @if ($vStatus === 'belum')
+                                                <p class="mb-3 mt-0.5 text-xs text-gray-500">Dibuka sesuai jadwal event</p>
+                                                <p class="text-[12.5px] text-[#666]">
+                                                    @if ($vMulai)
+                                                        Voting dibuka <b class="text-[#15233d]">{{ $vMulai->translatedFormat('d M Y, H.i') }} WIB</b>
+                                                        @if ($vAkhir) dan berakhir {{ $tgl($vAkhir) }}@endif.
+                                                    @else
+                                                        Jadwal voting akan diumumkan di halaman event.
+                                                    @endif
+                                                </p>
+                                                <a href="{{ $urlEvent }}" class="{{ $OUTLINE }}">Lihat Halaman Event</a>
+                                            @else
+                                                <p class="mb-3 mt-0.5 text-xs text-gray-500">
+                                                    {{ $vStatus === 'jalan' ? 'Berakhir' : 'Berakhir pada' }} {{ $tgl($vAkhir) }}
+                                                </p>
+                                                <div class="grid grid-cols-2 overflow-hidden rounded-lg border border-[#ece5d7] bg-white text-center">
+                                                    <div class="px-2 py-3">
+                                                        <p class="text-[10px] text-gray-500">Suara diterima</p>
+                                                        <p class="mt-1 text-base font-bold text-[#c87918]">{{ number_format($p->total_suara ?? 0, 0, ',', '.') }}</p>
+                                                    </div>
+                                                    <div class="border-l border-[#e8e1d5] px-2 py-3">
+                                                        <p class="text-[10px] text-gray-500">Peringkat {{ $vStatus === 'jalan' ? 'saat ini' : 'akhir' }}</p>
+                                                        <p class="mt-1 text-base font-bold">
+                                                            {{ ($p->peringkat ?? null) ? '#' . $p->peringkat : '-' }}
+                                                            @if ($p->total_peserta ?? null)
+                                                                <span class="text-[11px] font-medium text-gray-400">dari {{ $p->total_peserta }}</span>
+                                                            @endif
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <a href="{{ $urlEvent }}" class="{{ $vStatus === 'jalan' ? $GOLD : $OUTLINE }}">
+                                                    {{ $vStatus === 'jalan' ? 'Lihat Halaman Event & Vote →' : 'Lihat Halaman Event' }}
+                                                </a>
+                                            @endif
+                                        </div>
+
+                                    </div>
                                 </div>
                             @endif
                         </div>
@@ -743,6 +1141,19 @@ const tampilToast = (teks) => {
                 }
             });
         }
+
+        // Pilihan metode bayar registrasi (lunas / cicil 2 kali)
+        document.addEventListener('change', e => {
+            const radio = e.target.closest('input[name="metode"]');
+            if (!radio) return;
+            const form = radio.closest('form');
+            form.querySelectorAll('.metode-opt').forEach(l =>
+                l.classList.toggle('is-on', l.querySelector('input').checked));
+            const btn = form.querySelector('[data-submit]');
+            if (btn) btn.textContent = radio.value === 'cicil' ? btn.dataset.cicil : btn.dataset.lunas;
+            const info = form.querySelector('[data-cicil-info]');
+            if (info) info.classList.toggle('hidden', radio.value !== 'cicil');
+        });
     </script>
 
 </body>
