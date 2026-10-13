@@ -1,5 +1,4 @@
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-@include('admin.partials.pwa-head')
 <header
     class="fixed top-0 right-0 left-[235px] z-[15] flex h-[76px] min-h-[76px] items-center justify-between border-b border-[#e8e8e5] bg-white px-[30px] font-sans text-[#1e2530] max-[900px]:left-[70px] max-[900px]:px-[18px]">
 
@@ -95,80 +94,88 @@
     role="status" aria-live="polite"></div>
 
 <script>
-window.showAdminToast = function(message, type = 'success') {
-    const toast = document.getElementById('adminToast');
-    if (!toast) return;
+    window.showAdminToast = function(message, type = 'success') {
+        const toast = document.getElementById('adminToast');
+        if (!toast) return;
 
-    toast.textContent = message;
-    toast.classList.toggle('bg-[#b94b3d]', type === 'error');
-    toast.classList.toggle('bg-[#24211d]', type !== 'error');
-    toast.classList.remove('translate-x-[120%]', 'opacity-0');
-    toast.classList.add('translate-x-0', 'opacity-100');
+        toast.textContent = message;
+        toast.classList.toggle('bg-[#b94b3d]', type === 'error');
+        toast.classList.toggle('bg-[#24211d]', type !== 'error');
+        toast.classList.remove('translate-x-[120%]', 'opacity-0');
+        toast.classList.add('translate-x-0', 'opacity-100');
 
-    window.clearTimeout(window.adminToastTimer);
-    window.adminToastTimer = window.setTimeout(() => {
-        toast.classList.remove('translate-x-0', 'opacity-100');
-        toast.classList.add('translate-x-[120%]', 'opacity-0');
-    }, 2800);
-};
+        window.clearTimeout(window.adminToastTimer);
+        window.adminToastTimer = window.setTimeout(() => {
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            toast.classList.add('translate-x-[120%]', 'opacity-0');
+        }, 2800);
+    };
+    // Toggle pendaftaran manual — klik dari header
+    window.togglePendaftaran = async function(eventId) {
+        const btn = document.getElementById('togglePendaftaranBtn');
+        const label = document.getElementById('togglePendaftaranLabel');
+        const track = document.getElementById('togglePendaftaranTrack');
+        const thumb = document.getElementById('togglePendaftaranThumb');
+        if (!btn) return;
 
-window.togglePendaftaran = async function(eventId) {
-    const btn = document.getElementById('togglePendaftaranBtn');
-    const label = document.getElementById('togglePendaftaranLabel');
-    const track = document.getElementById('togglePendaftaranTrack');
-    const thumb = document.getElementById('togglePendaftaranThumb');
-    if (!btn) return;
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-wait');
 
-    btn.disabled = true;
-    btn.classList.add('opacity-50', 'cursor-wait');
+        try {
+            const response = await fetch(`/admin/events/${eventId}/toggle-pendaftaran`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
 
-    try {
-        const response = await fetch(`/admin/events/${eventId}/toggle-pendaftaran`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Gagal mengubah status.');
+
+            const isOn = data.pendaftaran_dibuka;
+
+            if (isOn) {
+                btn.classList.remove('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100',
+                    'hover:border-rose-400');
+                btn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300',
+                    'hover:bg-emerald-100', 'hover:border-emerald-400');
+
+                if (label) label.textContent = 'Nonaktifkan Pendaftaran';
+                if (track) track.style.backgroundColor = '#10b981';
+                if (thumb) thumb.style.transform = 'translateX(14px)';
+
+            } else {
+                btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300',
+                    'hover:bg-emerald-100', 'hover:border-emerald-400');
+                btn.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100',
+                    'hover:border-rose-400');
+
+                if (label) label.textContent = 'Aktifkan Pendaftaran';
+                if (track) track.style.backgroundColor = '#fb7185';
+                if (thumb) thumb.style.transform = 'translateX(0)';
             }
-        });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Gagal mengubah status.');
+            if (typeof window.showAdminToast === 'function') {
+                window.showAdminToast(data.message, 'success');
+            }
 
-        const isOn = data.pendaftaran_dibuka;
-
-        if (isOn) {
-            btn.classList.remove('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100', 'hover:border-rose-400');
-            btn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'hover:bg-emerald-100', 'hover:border-emerald-400');
-            if (label) label.textContent = 'Nonaktifkan Pendaftaran';
-            if (track) track.style.backgroundColor = '#10b981';
-            if (thumb) thumb.style.transform = 'translateX(14px)';
-        } else {
-            btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'hover:bg-emerald-100', 'hover:border-emerald-400');
-            btn.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-300', 'hover:bg-rose-100', 'hover:border-rose-400');
-            if (label) label.textContent = 'Aktifkan Pendaftaran';
-            if (track) track.style.backgroundColor = '#fb7185';
-            if (thumb) thumb.style.transform = 'translateX(0)';
+        } catch (error) {
+            if (typeof window.showAdminToast === 'function') {
+                window.showAdminToast(error.message, 'error');
+            } else {
+                alert(error.message);
+            }
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-wait');
         }
+    };
 
-        if (typeof window.showAdminToast === 'function') {
-            window.showAdminToast(data.message, 'success');
-        }
-    } catch (error) {
-        if (typeof window.showAdminToast === 'function') {
-            window.showAdminToast(error.message, 'error');
-        } else {
-            alert(error.message);
-        }
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50', 'cursor-wait');
-    }
-};
-
-window.saveThenPreview = function() {
-    @if ($event)
-    window.open('{{ route('admin.preview-form', $event->id) }}', '_blank');
-    @endif
-};
+    window.saveThenPreview = function() {
+        @if ($event)
+            window.open('{{ route('admin.preview-form', $event->id) }}', '_blank');
+        @endif
+    };
 </script>

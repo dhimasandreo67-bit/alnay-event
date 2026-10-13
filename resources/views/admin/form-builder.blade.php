@@ -8,7 +8,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-         @include('admin.partials.pwa-head')
+        @include('admin.partials.pwa-head')
         <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
         <style>
             :root {
@@ -731,12 +731,6 @@
             </div>
         </div>
 
-        <div id="formBuilderToast"
-            class="fixed right-5 top-5 z-[9999] translate-x-[120%] rounded-lg border border-[#d9d2c8] bg-[#24211d] px-4 py-3 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-300 pointer-events-none"
-            role="status" aria-live="polite"></div>
-
-
-
         <script>
             document.addEventListener('DOMContentLoaded', async function() {
                 const list = document.getElementById('questionList');
@@ -1272,39 +1266,10 @@
                 });
                 return questions;
             }
-
-            // Fungsi Toast Mandiri di Form Builder
-            function toast(message, type = 'success') {
-                const toastEl = document.getElementById('formBuilderToast');
-                if (!toastEl) return;
-
-                toastEl.textContent = message;
-                
-                // Atur warna background berdasarkan tipe (success, error, warning)
-                if (type === 'error') {
-                    toastEl.style.backgroundColor = '#b94b3d'; // Merah
-                } else if (type === 'warning') {
-                    toastEl.style.backgroundColor = '#c38b22'; // Kuning/Gold
-                } else {
-                    toastEl.style.backgroundColor = '#24211d'; // Gelap standar
-                }
-
-                // Munculkan toast
-                toastEl.classList.remove('translate-x-[120%]', 'opacity-0');
-                toastEl.classList.add('translate-x-0', 'opacity-100');
-
-                // Sembunyikan otomatis setelah 2.8 detik
-                window.clearTimeout(window.formBuilderToastTimer);
-                window.formBuilderToastTimer = window.setTimeout(() => {
-                    toastEl.classList.remove('translate-x-0', 'opacity-100');
-                    toastEl.classList.add('translate-x-[120%]', 'opacity-0');
-                }, 2800);
-            }
         </script>
 
         @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
         @include('admin.partials.pwa-head')
-        @include('partials.swal')
     </body>
 
     </html>
