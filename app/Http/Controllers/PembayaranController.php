@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\PembayaranEvent;
@@ -37,9 +36,8 @@ class PembayaranController extends Controller
             ], 400);
         }
 
-        // 4. Ambil nominal
+        // 4. Ambil nominal (TANPA kode unik)
         $jumlah = (int) $peserta->event->biaya_pendaftaran;
-
         if ($jumlah <= 0) {
             return response()->json([
                 'message' => 'Biaya pendaftaran belum diatur admin.',
@@ -72,13 +70,12 @@ class PembayaranController extends Controller
         }
 
         // 6. Simpan record pembayaran (pending)
-        // Cek pembayaran pending yang sudah ada — pakai itu
         $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
             ->where('status_midtrans', 'pending')
             ->latest('id')
             ->first();
 
-        if (! $pembayaran) {
+        if (!$pembayaran) {
             $pembayaran = PembayaranEvent::create([
                 'peserta_id'        => $peserta->id,
                 'jumlah'            => $jumlah,
@@ -89,7 +86,6 @@ class PembayaranController extends Controller
                 'tanggal_bayar'     => null,
             ]);
         } else {
-            // Update order_id baru ke record lama
             $pembayaran->update(['midtrans_order_id' => $orderId]);
         }
 
@@ -101,13 +97,11 @@ class PembayaranController extends Controller
     }
 
     // POST /peserta/midtrans/webhook
-        // POST /peserta/midtrans/webhook
     public function webhook(Request $request)
     {
         \Log::info('Midtrans webhook received', $request->all());
 
-        // ===== GUARD: Test notification dari Midtrans — payload kosong =====
-        if (! $request->filled('order_id') || ! $request->filled('signature_key')) {
+        if (!$request->filled('order_id') || !$request->filled('signature_key')) {
             return response()->json(['message' => 'OK — test notification'], 200);
         }
 
@@ -115,12 +109,12 @@ class PembayaranController extends Controller
         $signature = hash(
             'sha512',
             (string) $request->input('order_id')
-                . (string) $request->input('status_code')
-                . (string) $request->input('gross_amount')
-                . config('services.midtrans.server_key')
+            . (string) $request->input('status_code')
+            . (string) $request->input('gross_amount')
+            . config('services.midtrans.server_key')
         );
 
-        if (! hash_equals($signature, (string) $request->input('signature_key'))) {
+        if (!hash_equals($signature, (string) $request->input('signature_key'))) {
             \Log::warning('Midtrans webhook: signature tidak valid', $request->all());
             return response()->json(['message' => 'Signature tidak valid'], 403);
         }
@@ -129,8 +123,7 @@ class PembayaranController extends Controller
         $pembayaran = PembayaranEvent::where('midtrans_order_id', $request->order_id)
             ->first();
 
-        // Kalau order_id gak ketemu — log & return OK biar Midtrans gak retry terus
-        if (! $pembayaran) {
+        if (!$pembayaran) {
             \Log::warning('Midtrans webhook: order_id tidak ditemukan', [
                 'order_id' => $request->order_id,
             ]);
@@ -149,25 +142,20 @@ class PembayaranController extends Controller
 
         return response()->json(['message' => 'OK']);
     }
-    /**
-     * GET /peserta/{peserta}/pembayaran
-     * Halaman pembayaran pendaftaran.
-     */
+
+    // GET /peserta/{peserta}/pembayaran
     public function show(Request $request, Peserta $peserta)
     {
-        // Cek peserta milik user yang login
         if ((int) $peserta->user_id !== (int) $request->user()->id) {
             abort(403, 'Bukan pendaftaran milik kamu.');
         }
 
-        // Cek status peserta
         if ($peserta->status !== 'diterima') {
             return redirect()
                 ->route('profil-user')
                 ->with('error', 'Pendaftaran belum diterima admin.');
         }
 
-        // Ambil pembayaran terbaik — prioritas settlement, lalu pending terbaru
         $semuaPembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
             ? $peserta->pembayaran
             : collect([$peserta->pembayaran])->filter();
@@ -175,7 +163,6 @@ class PembayaranController extends Controller
         $pembayaran = $semuaPembayaran->where('status_midtrans', 'settlement')->sortByDesc('id')->first()
             ?? $semuaPembayaran->sortByDesc('id')->first();
 
-        // Kalau sudah lunas → redirect ke profil
         if ($pembayaran && $pembayaran->status_midtrans === 'settlement') {
             return redirect()
                 ->route('profil-user')
@@ -191,28 +178,21 @@ class PembayaranController extends Controller
         ]);
     }
 
-    /**
-     * POST /peserta/{peserta}/charge
-     * Request charge ke Midtrans Core API — QRIS atau VA BRI.
-     */
+    // POST /peserta/{peserta}/charge
     public function charge(Request $request, Peserta $peserta)
     {
-        // Cek peserta milik user
         if ((int) $peserta->user_id !== (int) $request->user()->id) {
             return response()->json(['message' => 'Bukan pendaftaran milik kamu.'], 403);
         }
 
-        // Cek status
         if ($peserta->status !== 'diterima') {
             return response()->json(['message' => 'Pendaftaran belum diterima admin.'], 403);
         }
 
-        // Validasi metode
         $request->validate([
             'payment_method' => ['required', 'in:qris,bri_va'],
         ]);
 
-        // Cek sudah bayar
         $sudahBayar = PembayaranEvent::where('peserta_id', $peserta->id)
             ->where('status_midtrans', 'settlement')
             ->exists();
@@ -222,35 +202,29 @@ class PembayaranController extends Controller
         }
 
         $jumlah = (int) $peserta->event->biaya_pendaftaran;
-
         if ($jumlah <= 0) {
             return response()->json(['message' => 'Biaya pendaftaran belum diatur admin.'], 400);
         }
 
-        // Cek kalau sudah ada pending — pakai yang lama
         $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
             ->where('status_midtrans', 'pending')
             ->latest('id')
             ->first();
 
         if ($pembayaran && $pembayaran->qr_string && $pembayaran->payment_method === $request->payment_method) {
-            // Sudah ada pending dengan QR/VA — langsung redirect ke instruksi
             return response()->json([
                 'redirect_url' => route('peserta.pembayaran.instruksi', $peserta->id),
             ]);
         }
 
-        // Generate order ID
         $orderId = 'PENDAFTARAN-' . $peserta->id . '-' . Str::random(8);
 
-        // Setup Midtrans
         Config::$serverKey    = config('services.midtrans.server_key');
         Config::$isProduction = config('services.midtrans.is_production');
         Config::$isSanitized  = config('services.midtrans.is_sanitized');
         Config::$is3ds        = config('services.midtrans.is_3ds');
 
         try {
-            // Request ke Midtrans Core API — via HTTP
             $payload = [
                 'payment_type' => $request->payment_method === 'qris' ? 'qris' : 'bank_transfer',
                 'transaction_details' => [
@@ -279,10 +253,10 @@ class PembayaranController extends Controller
 
             $data = $response->json();
 
-            if (! $response->successful() || ($data['status_code'] ?? '') !== '201') {
+            if (!$response->successful() || ($data['status_code'] ?? '') !== '201') {
                 return response()->json([
                     'message' => 'Gagal request ke Midtrans: ' . ($data['status_message'] ?? 'Unknown'),
-                    'debug' => $data,
+                    'debug'   => $data,
                 ], 500);
             }
         } catch (\Exception $e) {
@@ -291,45 +265,41 @@ class PembayaranController extends Controller
             ], 500);
         }
 
-        // Extract QR / VA dari response
         $qrString = null;
-        $qrUrl = null;
+        $qrUrl    = null;
         $vaNumber = null;
 
         if ($request->payment_method === 'qris') {
-            $qrString = $data['actions'][0]['url'] ?? null;  // QR image URL
-            // Ambil dari 'qr_string' juga kalau ada
+            $qrString = $data['actions'][0]['url'] ?? null;
             if (isset($data['qr_string'])) {
                 $qrString = $data['qr_string'];
             }
-            // QR URL untuk ditampilkan
             $qrUrl = collect($data['actions'] ?? [])->firstWhere('name', 'generate-qr-code')['url'] ?? null;
         } else {
             $vaNumber = $data['va_numbers'][0]['va_number'] ?? null;
         }
 
-        // Simpan / update pembayaran
         if ($pembayaran) {
             $pembayaran->update([
-                'midtrans_order_id' => $orderId,
+                'midtrans_order_id'       => $orderId,
                 'midtrans_transaction_id' => $data['transaction_id'] ?? null,
-                'payment_method' => $request->payment_method,
-                'qr_string' => $qrString,
-                'qr_url' => $qrUrl,
-                'va_number' => $vaNumber,
+                'payment_method'          => $request->payment_method,
+                'qr_string'               => $qrString,
+                'qr_url'                  => $qrUrl,
+                'va_number'               => $vaNumber,
             ]);
         } else {
             $pembayaran = PembayaranEvent::create([
-                'peserta_id' => $peserta->id,
-                'jumlah' => $jumlah,
-                'tarif_dasar' => $jumlah,
-                'midtrans_order_id' => $orderId,
+                'peserta_id'              => $peserta->id,
+                'jumlah'                  => $jumlah,
+                'tarif_dasar'             => $jumlah,
+                'midtrans_order_id'       => $orderId,
                 'midtrans_transaction_id' => $data['transaction_id'] ?? null,
-                'status_midtrans' => 'pending',
-                'payment_method' => $request->payment_method,
-                'qr_string' => $qrString,
-                'qr_url' => $qrUrl,
-                'va_number' => $vaNumber,
+                'status_midtrans'         => 'pending',
+                'payment_method'          => $request->payment_method,
+                'qr_string'               => $qrString,
+                'qr_url'                  => $qrUrl,
+                'va_number'               => $vaNumber,
             ]);
         }
 
@@ -338,39 +308,31 @@ class PembayaranController extends Controller
         ]);
     }
 
-    /**
-     * GET /peserta/{peserta}/pembayaran/instruksi
-     * Halaman instruksi pembayaran — QRIS atau VA BRI.
-     */
+    // GET /peserta/{peserta}/pembayaran/instruksi
     public function instruksi(Request $request, Peserta $peserta)
     {
-        // Cek milik user
         if ((int) $peserta->user_id !== (int) $request->user()->id) {
             abort(403);
         }
 
-        // Ambil pembayaran pending
         $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
             ->where('status_midtrans', 'pending')
             ->latest('id')
             ->first();
 
-        if (! $pembayaran) {
+        if (!$pembayaran) {
             return redirect()->route('peserta.pembayaran', $peserta->id)
                 ->with('error', 'Belum ada pembayaran pending.');
         }
 
         return view('pembayaran.instruksi', [
-            'peserta' => $peserta,
-            'event' => $peserta->event,
+            'peserta'    => $peserta,
+            'event'      => $peserta->event,
             'pembayaran' => $pembayaran,
         ]);
     }
 
-    /**
-     * GET /peserta/{peserta}/pembayaran/status
-     * Cek status pembayaran (untuk polling).
-     */
+    // GET /peserta/{peserta}/pembayaran/status
     public function statusPembayaran(Request $request, Peserta $peserta)
     {
         if ((int) $peserta->user_id !== (int) $request->user()->id) {
@@ -383,7 +345,7 @@ class PembayaranController extends Controller
 
         return response()->json([
             'status' => $pembayaran?->status_midtrans ?? 'none',
-            'lunas' => $pembayaran?->status_midtrans === 'settlement',
+            'lunas'  => $pembayaran?->status_midtrans === 'settlement',
         ]);
     }
 }
