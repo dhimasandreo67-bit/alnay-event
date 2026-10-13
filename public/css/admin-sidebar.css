@@ -103,3 +103,13 @@
     body:has(.admin-sidebar) .shell { margin-left: 0 !important; }
     body:has(.admin-sidebar) header.fixed { left: 0 !important; }
 }
+
+/* ============================================ */
+/* FIX: Halaman admin pakai Tailwind ml-[235px] */
+/* Pastikan margin-left 235px di desktop        */
+/* ============================================ */
+@media (min-width: 901px) {
+    body:has(.admin-sidebar) main[class*="ml-[235px]"] {
+        margin-left: 235px !important;
+    }
+}

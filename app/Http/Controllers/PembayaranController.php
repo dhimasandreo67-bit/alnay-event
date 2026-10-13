@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\PembayaranEvent;
@@ -109,9 +110,9 @@ class PembayaranController extends Controller
         $signature = hash(
             'sha512',
             (string) $request->input('order_id')
-            . (string) $request->input('status_code')
-            . (string) $request->input('gross_amount')
-            . config('services.midtrans.server_key')
+                . (string) $request->input('status_code')
+                . (string) $request->input('gross_amount')
+                . config('services.midtrans.server_key')
         );
 
         if (!hash_equals($signature, (string) $request->input('signature_key'))) {
@@ -343,9 +344,15 @@ class PembayaranController extends Controller
             ->latest('id')
             ->first();
 
+        $status = $pembayaran?->status_midtrans ?? 'none';
+
         return response()->json([
-            'status' => $pembayaran?->status_midtrans ?? 'none',
-            'lunas'  => $pembayaran?->status_midtrans === 'settlement',
+            'status'   => $status,
+            'lunas'    => $status === 'settlement',
+            'pending'  => in_array($status, ['pending', 'capture']),
+            'gagal'    => in_array($status, ['deny', 'cancel', 'failure', 'expire']),
+            'expired'  => $status === 'expire',
+            'order_id' => $pembayaran?->midtrans_order_id,
         ]);
     }
 }

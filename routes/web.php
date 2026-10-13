@@ -114,6 +114,22 @@ Route::post('/midtrans/webhook', function (\Illuminate\Http\Request $request) {
     \Log::warning('Midtrans webhook: order_id tidak dikenal', ['order_id' => $orderId]);
     return response()->json(['status' => 'unknown order'], 200);
 })->name('midtrans.webhook.universal');
+
+// Alias untuk /midtrans/callback (sama persis dengan /webhook)
+Route::post('/midtrans/callback', function (\Illuminate\Http\Request $request) {
+    $orderId = $request->input('order_id', '');
+
+    if (str_starts_with($orderId, 'VOTING-')) {
+        return app(\App\Http\Controllers\VotingController::class)->webhook($request);
+    }
+
+    if (str_starts_with($orderId, 'PENDAFTARAN-')) {
+        return app(\App\Http\Controllers\PembayaranController::class)->webhook($request);
+    }
+
+    \Log::warning('Midtrans callback: order_id tidak dikenal', ['order_id' => $orderId]);
+    return response()->json(['status' => 'unknown order'], 200);
+})->name('midtrans.callback.universal');
 /*
 |--------------------------------------------------------------------------
 | 6. PENDAFTARAN PUBLIK

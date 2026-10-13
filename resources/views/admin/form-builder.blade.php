@@ -1269,6 +1269,7 @@
 
         @include('admin.partials.sidebar', ['active' => 'form-builder', 'event' => $event])
         @include('admin.partials.pwa-head')
+        @include('partials.swal')
     </body>
 
     </html>

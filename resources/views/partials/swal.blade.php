@@ -1,4 +1,4 @@
-{{-- SweetAlert2 — CDN + Helper Global
+{{-- SweetAlert2 — CDN + Helper Global --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const SWAL_COLOR = '#c99a32';
@@ -62,4 +62,4 @@
     };
 
     window.swalClose = function () { Swal.close(); };
-</script>    --}}
+</script>
