@@ -50,7 +50,8 @@
                                 </div>
                                 <label class="toggle-switch shrink-0">
                                     <input type="hidden" name="voting_aktif" value="0">
-                                    <input type="checkbox" name="voting_aktif" value="1" {{ $event->voting_aktif ? 'checked' : '' }}>
+                                    <input type="checkbox" id="toggleVotingSwitch" name="voting_aktif" value="1"
+                                        {{ $event->voting_aktif ? 'checked' : '' }}>
                                     <span class="toggle-track"><span class="toggle-thumb"></span></span>
                                 </label>
                             </div>
@@ -193,40 +194,52 @@
     </style>
 
     <script>
-        document.querySelectorAll('.format-option').forEach(label => {
-            label.addEventListener('click', () => {
-                document.querySelectorAll('.format-option').forEach(l => l.classList.remove('border-gold', 'bg-[#fff8e9]'));
-                label.classList.add('border-gold', 'bg-[#fff8e9]');
-            });
+    // ---- Format hasil voting (radio) ----
+    document.querySelectorAll('.format-option').forEach(label => {
+        label.addEventListener('click', () => {
+            document.querySelectorAll('.format-option').forEach(l =>
+                l.classList.remove('border-gold', 'bg-[#fff8e9]'));
+            label.classList.add('border-gold', 'bg-[#fff8e9]');
         });
+    });
 
-        function updateDurasi() {
-            const mulai = document.getElementById('votingMulai')?.value;
-            const selesai = document.getElementById('votingSelesai')?.value;
-            const teks = document.getElementById('durasiTeks');
-            if (!teks) return;
+    // ---- Hitung durasi ----
+    function updateDurasi() {
+        const mulai   = document.getElementById('votingMulai')?.value;
+        const selesai = document.getElementById('votingSelesai')?.value;
+        const teks    = document.getElementById('durasiTeks');
+        if (!teks) return;
 
-            if (!mulai || !selesai) {
-                teks.textContent = '-';
-                return;
+        if (!mulai || !selesai) { teks.textContent = '-'; return; }
+
+        const diffMs = new Date(selesai) - new Date(mulai);
+        if (diffMs <= 0) { teks.textContent = 'Tanggal tidak valid'; return; }
+
+        const totalMinutes = Math.floor(diffMs / 60000);
+        const hari  = Math.floor(totalMinutes / 1440);
+        const jam   = Math.floor((totalMinutes % 1440) / 60);
+        const menit = totalMinutes % 60;
+        teks.textContent = `${hari} Hari ${jam} Jam ${menit} Mnt`;
+    }
+    document.getElementById('votingMulai')?.addEventListener('input', updateDurasi);
+    document.getElementById('votingSelesai')?.addEventListener('input', updateDurasi);
+    updateDurasi();
+
+    // ---- ✅ AUTO-SAVE saat toggle voting diubah ----
+    const toggleVoting = document.getElementById('toggleVotingSwitch');
+    if (toggleVoting) {
+        toggleVoting.addEventListener('change', function () {
+            const form = this.closest('form');
+            if (!form) return;
+
+            // Submit form secara native (paling aman, sudah ada @csrf)
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
             }
-
-            const diffMs = new Date(selesai) - new Date(mulai);
-            if (diffMs <= 0) {
-                teks.textContent = 'Tanggal tidak valid';
-                return;
-            }
-
-            const totalMinutes = Math.floor(diffMs / 60000);
-            const hari = Math.floor(totalMinutes / 1440);
-            const jam = Math.floor((totalMinutes % 1440) / 60);
-            const menit = totalMinutes % 60;
-            teks.textContent = `${hari} Hari ${jam} Jam ${menit} Mnt`;
-        }
-
-        document.getElementById('votingMulai')?.addEventListener('input', updateDurasi);
-        document.getElementById('votingSelesai')?.addEventListener('input', updateDurasi);
-        updateDurasi();
-    </script>
+        });
+    }
+</script>
 </body>
 </html>
