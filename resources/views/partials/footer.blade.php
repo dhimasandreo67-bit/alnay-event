@@ -1,12 +1,14 @@
 {{-- FOOTER — Platform Event & Voting ALNAY.ID --}}
 <footer class="bg-[#101010] text-white mt-16">
-    <div class="mx-auto max-w-[1200px] px-5 py-12 md:px-8">
+    <div class="mx-auto max-w-[1200px] px-5 py-10 md:px-8 md:py-12">
 
-        {{-- BARIS 1: INFO UTAMA --}}
-        <div class="grid grid-cols-1 gap-10 border-b border-[#2a2a2a] pb-10 md:grid-cols-[1.5fr_1fr_1fr_1.15fr]">
+        {{-- BARIS 1: INFO UTAMA
+             Mobile  : 2 kolom → Brand (penuh), Menu Event + Untuk Peserta (berdampingan), Hubungi Kami (penuh)
+             Desktop : 4 kolom seperti semula --}}
+        <div class="grid grid-cols-2 gap-x-6 gap-y-9 border-b border-[#2a2a2a] pb-8 md:grid-cols-[1.5fr_1fr_1fr_1.15fr] md:gap-10 md:pb-10">
 
             {{-- Kolom 1: Brand + Deskripsi + Sosmed --}}
-            <div>
+            <div class="col-span-2 md:col-span-1">
                 <div class="flex items-center gap-3">
                     <img src="{{ asset('images/alnaylogo.png') }}" alt="ALNAY.ID"
                         class="h-9 w-9 object-contain">
@@ -188,7 +190,7 @@
             </div>
 
             {{-- Kolom 4: Hubungi Kami --}}
-            <div>
+            <div class="col-span-2 md:col-span-1">
                 <h3 class="text-[10px] font-semibold tracking-[.14em] text-white">HUBUNGI KAMI</h3>
                 <div class="mt-4 space-y-3 text-[10px] text-[#858585]">
                     {{-- Telepon Admin --}}
@@ -223,13 +225,6 @@
                             <div class="text-[9px] text-[#626262]">Lokasi</div>
                             <div>Lampung, Indonesia</div>
                         </div>
-                    </div>
-
-                    {{-- Jam Operasional --}}
-                    <div class="pt-2 border-t border-[#2a2a2a]">
-                        <div class="text-[9px] text-[#626262]">Jam Operasional</div>
-                        <div>Senin - Sabtu: 11:00 - 19:00 WIB</div>
-                        <div>Minggu: Tutup</div>
                     </div>
                 </div>
             </div>

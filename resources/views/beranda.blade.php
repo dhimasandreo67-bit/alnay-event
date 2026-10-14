@@ -283,22 +283,15 @@
                 </div>
 
                 <h1 class="display-font font-bold text-[34px] leading-[1.18] text-[#111827] sm:text-[42px] md:text-[48px] tracking-tight">
-                    Ajang Perayaan Budaya &amp; <br class="hidden sm:inline" />
-                    <span class="gold-shimmer">Vote Perserta Favorit</span>
+                    Selamat Datang di &amp; <br class="hidden sm:inline" />
+                    <span class="gold-shimmer">Event &amp; Vote Kandidat</span>
                 </h1>
 
                 <p class="mt-4 max-w-[580px] text-[14px] leading-relaxed text-[#555] sm:text-[15px] md:text-[16px]">
-                    Dukung perwakilan terbaik, berikan suaramu secara transparan, dan ikuti setiap momen bersejarah dalam perayaan budaya yang menginspirasi.
+                    Temukan event yang sedang berlangsung, dukung peserta favoritmu, dan ikuti hasil suaranya secara langsung.
                 </p>
 
-                <div class="mt-6 flex flex-wrap items-center gap-3 text-[12px] text-[#4b463f] font-medium">
-                    <div class="flex items-center gap-2 bg-white/80 backdrop-blur border border-[#ededed] px-3.5 py-1.5 rounded-xl shadow-xs transition hover:border-[#c99a32]/40">
-                        <span>Sistem Vote Transparan</span>
-                    </div>
-                    <div class="flex items-center gap-2 bg-white/80 backdrop-blur border border-[#ededed] px-3.5 py-1.5 rounded-xl shadow-xs transition hover:border-[#c99a32]/40">
-                        <span>Hasil Suara Real-time</span>
-                    </div>
-                </div>
+                
             </div>
 
             <div class="flex shrink-0 items-center gap-1.5 rounded-2xl bg-[#f5f3ef] p-1.5 border border-[#ebe7df] shadow-inner self-start md:self-end">
