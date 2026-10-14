@@ -154,39 +154,52 @@
                 </div>
             @endif
 
-            @php
+@php
     $sekarang = now();
-    $bukaDaftar =$event->pembukaan_pendaftaran_tanggal;
-    $batasDaftar =$event->batas_pendaftaran_tanggal;
+    $bukaDaftar = $event->pembukaan_pendaftaran_tanggal;
+    $batasDaftar = $event->batas_pendaftaran_tanggal;
 
-    // 1. KHUSUS MODE PREVIEW (ADMIN)
-    // Abaikan pembatasan tanggal & status event, cukup ikuti toggle `pendaftaran_dibuka`
+    $pendaftaranDitutup = false;
+    $alasanTutup = null;
+
+    // NOTE: guard harus 'pelanggan', sama seperti di PendaftaranController@storePublic
+    $currentUser = \Illuminate\Support\Facades\Auth::guard('pelanggan')->user();
+
+    $sudahTerdaftar = false;
+
+    if (!$isPreview && $currentUser) {
+        // Query ini SENGAJA dibuat identik dengan pengecekan di storePublic(),
+        // supaya "diblokir di sini" = "ditolak kalau submit" (konsisten).
+        $sudahTerdaftar = \App\Models\Peserta::where('event_id', $event->id)
+            ->where('user_id', $currentUser->id)
+            ->whereIn('status', ['diterima'])
+            ->exists();
+    }
+
     if ($isPreview) {
-        if (!$event->pendaftaran_dibuka) {$pendaftaranDitutup = true;
+        if (!$event->pendaftaran_dibuka) {
+            $pendaftaranDitutup = true;
             $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup (Toggle Pendaftaran Nonaktif).';
-        } else {
-            $pendaftaranDitutup = false;
-            $alasanTutup = null;
         }
-    } 
-    // 2. TAMPILAN PUBLIK (USER)
-    // Terapkan semua validasi tanggal & status event
-    else {
-        if (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {$pendaftaranDitutup = true;
+    } else {
+        if ($sudahTerdaftar) {
+            $pendaftaranDitutup = true;
+            $alasanTutup = 'Kamu sudah terdaftar dengan akun ini pada event yang sama. Satu akun hanya dapat mendaftar sekali.';
+        } elseif (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {
+            $pendaftaranDitutup = true;
             $alasanTutup = 'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
-        } elseif (!$event->pendaftaran_dibuka) {$pendaftaranDitutup = true;
+        } elseif (!$event->pendaftaran_dibuka) {
+            $pendaftaranDitutup = true;
             $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
-        } elseif ($bukaDaftar &&$sekarang->lt($bukaDaftar)) {$pendaftaranDitutup = true;
+        } elseif ($bukaDaftar && $sekarang->lt($bukaDaftar)) {
+            $pendaftaranDitutup = true;
             $alasanTutup = 'Pendaftaran untuk event ini belum dibuka. Buka pada ' . $bukaDaftar->translatedFormat('d F Y') . ' pukul ' . ($event->pembukaan_pendaftaran_waktu ?? '00:00') . ' WIB.';
-        } elseif ($batasDaftar &&$sekarang->gt($batasDaftar)) {$pendaftaranDitutup = true;
-            $alasanTutup = 'Pendaftaran untuk event ini sudah ditutup pada ' .$batasDaftar->translatedFormat('d F Y') . '.';
-        } else {
-            $pendaftaranDitutup = false;
-            $alasanTutup = null;
+        } elseif ($batasDaftar && $sekarang->gt($batasDaftar)) {
+            $pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran untuk event ini sudah ditutup pada ' . $batasDaftar->translatedFormat('d F Y') . '.';
         }
     }
 @endphp
-
             @if ($pendaftaranDitutup)
                 {{-- ================== PENDAFTARAN DITUTUP ================== --}}
                 <div class="mt-6 rounded-2xl border border-[#ece5d7] bg-white p-8 text-center shadow-sm sm:p-10">
