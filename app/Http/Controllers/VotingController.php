@@ -327,11 +327,17 @@ public function instruksiPembayaran($orderId)
     {
         $adminLogin = Auth::guard('admin')->check();
 
-        // Cek tampilkan hasil
+        // ✅ Kalau hasil belum dipublikasikan & bukan admin → kirim JSON kosong (bukan 403)
+        //    supaya frontend tetap bisa render tanpa crash
         if (! $event->tampilkan_hasil_voting && ! $adminLogin) {
             return response()->json([
-                'message' => 'Hasil voting untuk event ini belum ditampilkan ke publik.',
-            ], 403);
+                'event' => $event->only(['id', 'nama', 'voting_aktif', 'tampilkan_hasil_voting']),
+                'peserta' => [],
+                'hasil_voting' => [],
+                'blackout' => false,
+                'waktu_grand_final' => null,
+                'message' => 'Hasil voting belum dipublikasikan.',
+            ], 200);
         }
 
         $pesertaList = Peserta::with('user')
@@ -436,7 +442,11 @@ public function instruksiPembayaran($orderId)
                 'nama',
                 'harga_per_vote',
                 'tampilkan_hasil_voting',
-                'format_hasil_voting'
+                'format_hasil_voting',
+                'voting_aktif',           // ✅ TAMBAH — biar frontend tahu status voting
+                'voting_mulai',           // ✅ TAMBAH — info jadwal
+                'voting_selesai',         // ✅ TAMBAH
+                'auto_freeze_voting',     // ✅ TAMBAH
             ]) : null,
         ]);
     }
@@ -759,56 +769,5 @@ public function instruksiPembayaran($orderId)
                 'message' => 'Gagal menghapus vote: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * POST /admin/voters/manual-vote
-     * Tambah vote manual oleh admin.
-     */
-    public function manualVote(Request $request)
-    {
-        $data = $request->validate([
-    'peserta_id'    => 'required|exists:peserta_event,id',
-    'jumlah_vote'   => 'required|integer|min:1|max:1000',
-    'nama_voter'    => 'nullable|string|max:255',   
-    'email_voter'   => 'nullable|email|max:255',        
-    'pesan_dukungan' => 'nullable|string|max:1000',
-]);
-
-        $peserta = \App\Models\Peserta::findOrFail($data['peserta_id']);
-        $event = $peserta->event;
-
-        DB::transaction(function () use ($data, $peserta, $event) {
-            // Buat record voting manual
-            \App\Models\Voting::create([
-                'event_id'          => $event->id,
-                'peserta_id'        => $peserta->id,
-                'user_id'           => null,
-                'nama_voter'        => $data['nama_voter'] ?? 'Seseorang',          
-                'email_voter'       => $data['email_voter'] ?? null,            
-                'nama_tampilan'     => $data['nama_voter'] ?? 'Nilai Juri',     
-                'jumlah_vote'       => $data['jumlah_vote'],
-                'harga_per_vote'    => $event->harga_per_vote,
-                'total_bayar'       => 0,                                
-                'midtrans_order_id' => 'MANUAL-' . Str::random(10),
-                'status_midtrans'   => 'settlement',
-                'pesan_dukungan'    => $data['pesan_dukungan'] ?? null,
-                'tanggal_vote'      => now(),
-            ]);
-
-            // Update total_vote peserta
-            $peserta->increment('total_vote', $data['jumlah_vote']);
-        });
-
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote manual berhasil ditambahkan.',
-            ]);
-        }
-
-        return redirect()
-            ->back()
-            ->with('success', 'Vote manual berhasil ditambahkan.');
     }
 }
