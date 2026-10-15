@@ -99,20 +99,10 @@ class PendaftaranController extends Controller
 
             $peserta = $event->pesertas()->create($pesertaData);
 
-            // 4. ✅ BUAT PEMBAYARAN: Langsung 'settlement' (Lunas) agar bisa langsung vote
-            // Karena ini input manual admin, kita bypass proses pembayaran user
-            if ($event->biaya_pendaftaran > 0) {
-                $jumlah = (int) $event->biaya_pendaftaran;
-                \App\Models\PembayaranEvent::create([
-                    'peserta_id'        => $peserta->id,
-                    'jumlah'            => $jumlah,
-                    'tarif_dasar'       => $jumlah,
-                    'metode'            => 'manual_admin',
-                    'midtrans_order_id' => 'ADMIN-MANUAL-' . date('YmdHis') . '-' . $peserta->id,
-                    'status_midtrans'   => 'pending', // ✅ LANGSUNG LUNAS
-                    'tanggal_bayar'     => now(),
-                ]);
-            }
+            // 4. ✅ TIDAK membuat record pembayaran otomatis — peserta yang baru
+            // ditambah manual harus berstatus "Belum Bayar" secara default.
+            // Admin pakai tombol "Bayar"/"Tambah DP" di tabel kalau peserta
+            // ini memang sudah membayar.
 
             // 5. Simpan jawaban Form Builder
             foreach ($questions as $question) {
@@ -308,17 +298,19 @@ class PendaftaranController extends Controller
 
         $peserta = Peserta::findOrFail($id);
 
-        // ✅ UPDATE data peserta dengan catatan
-        $updateData = [
-            'hasil_audisi' => $request->hasil_audisi,
-        ];
+        // ✅ Set langsung ke properti model (bukan lewat update() mass-assignment),
+        // supaya TETAP tersimpan walau 'hasil_audisi'/'catatan_admin' belum ada
+        // di $fillable milik model Peserta. update() akan diam-diam membuang
+        // field yang tidak fillable tanpa error — itu sebabnya status kembali
+        // ke semula setelah refresh.
+        $peserta->hasil_audisi = $request->hasil_audisi;
 
         // ✅ Simpan catatan_admin jika ada (bahkan string kosong)
         if ($request->has('catatan_admin')) {
-            $updateData['catatan_admin'] = $request->catatan_admin;
+            $peserta->catatan_admin = $request->catatan_admin;
         }
 
-        $peserta->update($updateData);
+        $peserta->save();
 
         // Return JSON untuk AJAX
         if ($request->expectsJson()) {
@@ -777,6 +769,24 @@ class PendaftaranController extends Controller
                 ]);
             }
         });
+
+        if ($request->expectsJson() || $request->ajax()) {
+            $peserta->load('pembayaran');
+            $pembayaranTerbaru = $peserta->pembayaran->sortByDesc('id')->first();
+            $sudahDibayarBaru  = (int) ($pembayaranTerbaru?->jumlah ?? 0);
+            $isLunasBaru       = $sudahDibayarBaru >= $totalBiaya && $pembayaranTerbaru?->status_midtrans === 'settlement';
+
+            return response()->json([
+                'success'       => true,
+                'message'       => 'Pembayaran kandidat berhasil disimpan!',
+                'peserta_id'    => $peserta->id,
+                'sudah_dibayar' => $sudahDibayarBaru,
+                'total_biaya'   => $totalBiaya,
+                'sisa'          => max(0, $totalBiaya - $sudahDibayarBaru),
+                'is_lunas'      => $isLunasBaru,
+                'riwayat'       => $peserta->pembayaran->values(),
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Pembayaran kandidat berhasil disimpan!');
     }
