@@ -333,6 +333,12 @@
                 muatDukunganTerkini(p.event?.id)
             ]);
 
+            // ✅ Voting aktif dari setting admin
+            const votingAktif = p.event?.voting_aktif ?? true;
+
+            // ✅ Sembunyikan SEMUA tampilan vote kalau voting dimatikan ATAU blackout
+            const sembunyikanVote = !votingAktif || (statistik?.blackout ?? false);
+
             const nama = cariJawaban(p.jawabans, 'nama', /nama/i) ?? p.user?.nama ?? 'Peserta';
             const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota|alamat/i);
             const deskripsi = cariJawaban(p.jawabans, 'bio', /bio|profil|tentang|deskripsi/i);
@@ -410,7 +416,7 @@
             let blokPersentase = '';
             if (statistik) {
                 if (format === 'angka' || format === 'keduanya') {
-                    if (statistik.blackout) {
+                    if (sembunyikanVote) {
                         blokTotalVote = `
                             <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
                                 <p class="mb-1 text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Total Vote</p>
@@ -433,8 +439,8 @@
                 }
 
                 if (format === 'persentase' || format === 'keduanya') {
-                if (statistik.blackout) {
-                    blokPersentase = `
+                    if (sembunyikanVote) {
+                        blokPersentase = `
                         <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
                             <div class="mb-1 flex items-center justify-between">
                                 <p class="text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Persentase Suara</p>
@@ -467,72 +473,86 @@
             const gridCols = format === 'keduanya' ? 'sm:grid-cols-2' : '';
 
             const blokStatistik = (() => {
-                if (statistik?.blackout) {
-                    return `
-                        <div class="notice-reveal relative mb-5 overflow-hidden rounded-2xl border border-[#E8DCC0] bg-gradient-to-br from-[#FDFBF6] via-white to-[#FAF6ED] p-6 text-center shadow-sm">
+            // ── KASUS 1: Voting DIMATIKAN admin → pesan simpel, tanpa akses statistik
+            if (!votingAktif) {
+                return `
+                    <div class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-5 text-center">
+                        <div class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                            <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                        </div>
+                        <p class="font-display text-base font-bold text-orange-800">Voting Sedang Ditutup</p>
+                        <p class="mt-1 text-[11px] leading-relaxed text-orange-700">
+                            Statistik suara tidak ditampilkan saat voting ditutup.
+                        </p>
+                    </div>`;
+            }
 
-                            {{-- Shimmer — kilau lembut di sudut --}}
-                            <div class="notice-glow pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#C28E27]/15 blur-3xl"></div>
+            // ── KASUS 2: Blackout aktif (statistik PASTI ada karena API hanya 200)
+            if (statistik?.blackout) {
+                return `
+                    <div class="notice-reveal relative mb-5 overflow-hidden rounded-2xl border border-[#E8DCC0] bg-gradient-to-br from-[#FDFBF6] via-white to-[#FAF6ED] p-6 text-center shadow-sm">
+                        <div class="notice-glow pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#C28E27]/15 blur-3xl"></div>
 
-                            {{-- Ornamen atas — mahkota --}}
-                            <div class="notice-fade-up delay-1 relative mb-5 flex items-center justify-center gap-2">
-                                <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#C28E27]/40"></span>
-                                <svg class="h-4 w-4 text-[#C28E27] notice-pulse" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-                                </svg>
-                                <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#C28E27]/40"></span>
-                            </div>
+                        <div class="notice-fade-up delay-1 relative mb-5 flex items-center justify-center gap-2">
+                            <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#C28E27]/40"></span>
+                            <svg class="h-4 w-4 text-[#C28E27] notice-pulse" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                            </svg>
+                            <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#C28E27]/40"></span>
+                        </div>
 
-                            {{-- Icon lock — pulse halus --}}
-                            <div class="notice-fade-up delay-2 notice-float relative mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#C28E27]/10 ring-1 ring-[#C28E27]/20">
-                                <span class="notice-ring absolute inset-0 rounded-full ring-1 ring-[#C28E27]/30"></span>
-                                <svg class="h-5 w-5 text-[#C28E27] notice-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
-                                </svg>
-                            </div>
+                        <div class="notice-fade-up delay-2 notice-float relative mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#C28E27]/10 ring-1 ring-[#C28E27]/20">
+                            <span class="notice-ring absolute inset-0 rounded-full ring-1 ring-[#C28E27]/30"></span>
+                            <svg class="h-5 w-5 text-[#C28E27] notice-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                            </svg>
+                        </div>
 
-                            {{-- Judul --}}
-                            <p class="notice-fade-up delay-3 relative mb-3 font-display text-lg font-bold leading-snug text-[#1D1B17] md:text-xl">
-                                Siapa yang akan membawa pulang mahkota?
+                        <p class="notice-fade-up delay-3 relative mb-3 font-display text-lg font-bold leading-snug text-[#1D1B17] md:text-xl">
+                            Siapa yang akan membawa pulang mahkota?
+                        </p>
+
+                        <p class="notice-fade-up delay-4 relative mx-auto max-w-xs text-[12px] leading-relaxed text-[#6A6259]">
+                            Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan hasil sementara saat ini.
+                        </p>
+
+                        <div class="notice-fade-up delay-5 relative mx-auto my-4 flex items-center justify-center gap-1.5">
+                            <span class="h-1 w-1 rounded-full bg-[#C28E27]/40 notice-pulse delay-a"></span>
+                            <span class="h-1 w-1 rounded-full bg-[#C28E27]/30 notice-pulse delay-b"></span>
+                            <span class="h-1 w-1 rounded-full bg-[#C28E27]/20 notice-pulse delay-c"></span>
+                        </div>
+
+                        <div class="notice-fade-up delay-6 relative inline-flex flex-col items-center gap-1">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-[#8A8178]">
+                                Malam Puncak
                             </p>
-
-                            {{-- Caption --}}
-                            <p class="notice-fade-up delay-4 relative mx-auto max-w-xs text-[12px] leading-relaxed text-[#6A6259]">
-                                Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan hasil sementara saat ini.
+                            <p class="font-display text-sm font-bold text-[#1D1B17]">
+                                ${esc(statistik.waktuGrandFinal ?? '-')} WIB
                             </p>
+                        </div>
+                    </div>`;
+            }
 
-                            {{-- Divider --}}
-                            <div class="notice-fade-up delay-5 relative mx-auto my-4 flex items-center justify-center gap-1.5">
-                                <span class="h-1 w-1 rounded-full bg-[#C28E27]/40 notice-pulse delay-a"></span>
-                                <span class="h-1 w-1 rounded-full bg-[#C28E27]/30 notice-pulse delay-b"></span>
-                                <span class="h-1 w-1 rounded-full bg-[#C28E27]/20 notice-pulse delay-c"></span>
-                            </div>
+            // ── KASUS 3: Normal, statistik tersedia
+            if (statistik) {
+                return `
+                    <div class="mb-5 grid grid-cols-1 ${gridCols} gap-2.5 text-reveal text-reveal-4">
+                        ${blokTotalVote}
+                        ${blokPersentase}
+                    </div>`;
+            }
 
-                            {{-- Grand final --}}
-                            <div class="notice-fade-up delay-6 relative inline-flex flex-col items-center gap-1">
-                                <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-[#8A8178]">
-                                    Malam Puncak
-                                </p>
-                                <p class="font-display text-sm font-bold text-[#1D1B17]">
-                                    ${esc(statistik.waktuGrandFinal)} WIB
-                                </p>
-                            </div>
-                        </div>`;
-                }
-
-                if (statistik) {
-                    return `
-                            <div class="mb-5 grid grid-cols-1 ${gridCols} gap-2.5 text-reveal text-reveal-4">
-                                ${blokTotalVote}
-                                ${blokPersentase}
-                            </div>`;
-                }
-
-                                return `
-                        <div class="mb-5 rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4 text-xs text-[#4B463F]">
-                            🔒 Statistik suara disembunyikan hingga malam puncak.
-                        </div>`;
-            })();
+            // ── KASUS 4: API gagal (403 karena tampilkan_hasil_voting = false)
+            //    Voting masih aktif, tapi hasil tidak boleh publik → pesan halus
+            return `
+                <div class="mb-5 rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] px-4 py-4 text-center">
+                    <p class="text-xs font-medium text-[#6A6259]">
+                        Statistik suara akan ditampilkan setelah panitia mempublikasikannya.
+                    </p>
+                </div>`;
+        })();
 
             let isiDukungan;
 
@@ -602,7 +622,7 @@
         <p class="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-[.16em] text-[#7F5700]">
             <span>${esc(p.event?.nama ?? '')}</span>
             ${
-                statistik?.blackout
+                sembunyikanVote
                     ? `<span class="normal-case font-semibold tracking-normal">Ranking disembunyikan</span>`
                     : statistik?.ranking
                         ? `<span class="normal-case font-semibold tracking-normal">&#9734; Ranking: #${statistik.ranking}</span>`
@@ -618,34 +638,32 @@
 
         ${
             (() => {
+                // ✅ PRIORITAS 1: Toggle admin OFF → voting ditutup
+                if (!votingAktif) {
+                    return `
+                        <div class="block w-full cursor-not-allowed rounded-xl border border-orange-200 bg-orange-50 py-3.5 text-center text-sm font-semibold text-orange-700">
+                            Voting ditutup tombol vote dinonaktifkan.
+                        </div>`;
+                }
+
+                // ✅ PRIORITAS 2: Toggle ON, tapi jadwal kick-off belum tiba
                 if (p.event?.voting_mulai && new Date(p.event.voting_mulai) > new Date()) {
                     return `
-                            <div class="block w-full cursor-not-allowed rounded-xl border border-blue-100 bg-blue-50 py-3.5 text-center text-sm font-semibold text-blue-700">
-                                Voting belum dibuka
-                            </div>`;
+                        <div class="block w-full cursor-not-allowed rounded-xl border border-blue-100 bg-blue-50 py-3.5 text-center text-sm font-semibold text-blue-700">
+                            Voting belum dibuka
+                        </div>`;
                 }
 
-                                if (p.event?.auto_freeze_voting && p.event?.voting_selesai && new Date(p.event.voting_selesai) < new Date()) {
-                    return `
-                            <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-600">
-                                Voting Ditutup
-                            </div>`;
-                }
-
-    if (p.event?.status === 'akan_datang') {
-        return `
-                            <div class="block w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-semibold text-gray-500">
-                                Voting belum dibuka
-                            </div>`;
-    }
-
-    return `
-                        <a href="/peserta/${pesertaId}/checkout"
-                            class="vote-button block w-full rounded-xl bg-[#C28E27] py-3.5 text-center text-sm font-semibold tracking-wide text-[#FFF8F1] text-reveal text-reveal-5">
-                            Rp ${formatAngka(hargaPerVote)} / Vote
-                        </a>`;
-    })()
-    }
+                // ✅ Toggle ON = admin override → TOMBOL VOTE TAMPIL
+                // (auto_freeze & deadline TIDAK lagi mengunci tombol;
+                //  admin yang pegang kontrol penuh via toggle)
+                return `
+                    <a href="/peserta/${pesertaId}/checkout"
+                        class="vote-button block w-full rounded-xl bg-[#C28E27] py-3.5 text-center text-sm font-semibold tracking-wide text-[#FFF8F1] text-reveal text-reveal-5">
+                        Rp ${formatAngka(hargaPerVote)} / Vote
+                    </a>`;
+            })()
+        }
 
     ${blokDukungan}
     </div>`;
