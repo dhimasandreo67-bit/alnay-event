@@ -23,87 +23,89 @@
                 {{-- ============================================
                     EVENT HEADER
                 ============================================= --}}
-                <div class="bg-white rounded-xl border border-[#e7e2da] p-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            @if (isset($events) && $events->count() > 1)
-                                <div class="mb-3">
-                                    <select onchange="window.location.href='{{ url('/admin') }}/' + this.value"
-                                        class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none">
-                                        @foreach ($events as $ev)
-                                            <option value="{{ $ev->id }}" @selected(($event?->id ?? 0) === $ev->id)>
-                                                {{ $ev->nama }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
-
-                            <span class="text-xs text-[#8c8982]">
-                                @if ($event?->tanggal_mulai && $event?->tanggal_selesai)
-                                    {{ \Carbon\Carbon::parse($event->tanggal_mulai)->format('d M Y') }},
-                                    {{ $event->waktu_mulai ? \Carbon\Carbon::parse($event->waktu_mulai)->format('H:i') : '00:00' }}
-                                    –
-                                    {{ \Carbon\Carbon::parse($event->tanggal_selesai)->format('d M Y') }},
-                                    {{ $event->waktu_selesai ? \Carbon\Carbon::parse($event->waktu_selesai)->format('H:i') : '23:59' }}
-                                    WIB
-                                @else
-                                    Jadwal event belum ditentukan
-                                @endif
-                            </span>
-
-                            <h1 class="text-2xl font-bold text-[#24211d] mt-1">
-                                {{ $event?->nama ?? 'Belum ada event' }}
-                            </h1>
-
-                            <span class="text-xs text-[#8c8982]">
-                                Pendaftaran:
-                                @if ($event?->pembukaan_pendaftaran_tanggal && $event?->batas_pendaftaran_tanggal)
-                                    {{ \Carbon\Carbon::parse($event->pembukaan_pendaftaran_tanggal)->format('d') }} –
-                                    {{ \Carbon\Carbon::parse($event->batas_pendaftaran_tanggal)->format('d M Y') }}
-                                @else
-                                    -
-                                @endif
-                                &nbsp;·&nbsp;
-                                Kuota Maks: {{ $event?->kuota_peserta ?? 'Tidak terbatas' }} orang
-                            </span>
-                        </div>
-
-                        @if ($event)
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <a href="{{ route('admin.peserta.export', $event->id) }}"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-lg transition shadow-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                    Download Data Peserta
-                                </a>
-
-                                <button type="button" onclick="openImportModal()"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg transition shadow-sm cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                    </svg>
-                                    Import CSV Peserta
-                                </button>
-
-                                <a href="{{ route('admin.registrations', $event->id) }}"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#ba8320] hover:bg-[#a06f1a] text-white font-semibold text-sm rounded-lg transition shadow-sm">
-                                    + Tambah Manual
-                                </a>
-
-                                {{-- ✅ TOMBOL BARU: Kandidat Voting --}}
-                                <button type="button" onclick="openModalTambahKandidat()"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg transition shadow-sm cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                    </svg>
-                                    + Kandidat Voting
-                                </button>
-                            </div>
-                        @endif
-                    </div>
+<div class="bg-white rounded-xl border border-[#e7e2da] p-4 sm:p-5">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        {{-- Kiri: info event --}}
+        <div class="min-w-0 flex-1">
+            @if (isset($events) && $events->count() > 1)
+                <div class="mb-2">
+                    <select onchange="window.location.href='{{ url('/admin') }}/' + this.value"
+                        class="max-w-full border border-[#e7e2da] rounded-lg px-3 py-1.5 text-sm bg-white text-[#24211d] focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 outline-none">
+                        @foreach ($events as $ev)
+                            <option value="{{ $ev->id }}" @selected(($event?->id ?? 0) === $ev->id)>
+                                {{ $ev->nama }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
+            @endif
+
+            <h1 class="text-xl sm:text-2xl font-bold text-[#24211d] leading-snug truncate">
+                {{ $event?->nama ?? 'Belum ada event' }}
+            </h1>
+
+            <div class="mt-1.5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-3 gap-y-1 text-[12px] text-[#8c8982]">
+                <span>
+                    @if ($event?->tanggal_mulai && $event?->tanggal_selesai)
+                        {{ \Carbon\Carbon::parse($event->tanggal_mulai)->format('d M Y') }},
+                        {{ $event->waktu_mulai ? \Carbon\Carbon::parse($event->waktu_mulai)->format('H:i') : '00:00' }}
+                        –
+                        {{ \Carbon\Carbon::parse($event->tanggal_selesai)->format('d M Y') }},
+                        {{ $event->waktu_selesai ? \Carbon\Carbon::parse($event->waktu_selesai)->format('H:i') : '23:59' }}
+                        WIB
+                    @else
+                        Jadwal event belum ditentukan
+                    @endif
+                </span>
+                <span class="hidden sm:inline text-[#d4cfc6]">·</span>
+                <span>
+                    Pendaftaran:
+                    @if ($event?->pembukaan_pendaftaran_tanggal && $event?->batas_pendaftaran_tanggal)
+                        {{ \Carbon\Carbon::parse($event->pembukaan_pendaftaran_tanggal)->format('d') }} –
+                        {{ \Carbon\Carbon::parse($event->batas_pendaftaran_tanggal)->format('d M Y') }}
+                    @else
+                        -
+                    @endif
+                </span>
+                <span class="hidden sm:inline text-[#d4cfc6]">·</span>
+                <span>
+                    Kuota: {{ $event?->kuota_peserta ?? 'Tidak terbatas' }} orang
+                </span>
+            </div>
+        </div>
+
+        {{-- Kanan: aksi --}}
+        @if ($event)
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <a href="{{ route('admin.peserta.export', $event->id) }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition shadow-sm">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span class="whitespace-nowrap">Download</span>
+                </a>
+                <button type="button" onclick="openImportModal()"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition shadow-sm cursor-pointer">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span class="whitespace-nowrap">Import CSV</span>
+                </button>
+                <a href="{{ route('admin.registrations', $event->id) }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-[#ba8320] hover:bg-[#a06f1a] text-white font-semibold text-xs sm:text-sm rounded-lg transition shadow-sm">
+                    <span class="whitespace-nowrap">+ Tambah Manual</span>
+                </a>
+                <button type="button" onclick="openModalTambahKandidat()"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition shadow-sm cursor-pointer">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    <span class="whitespace-nowrap">+ Kandidat Voting</span>
+                </button>
+            </div>
+        @endif
+    </div>
+</div>
 
                 {{-- ============================================
                     CARD STATISTIK (DINAMIS PER TAB)
@@ -182,111 +184,124 @@
                     PANEL: PENDAFTARAN
                 ============================================= --}}
                 <div id="panel-pendaftaran" class="tab-panel bg-white rounded-xl border border-[#e7e2da] overflow-hidden">
-                    <div class="p-4 border-b border-[#e7e2da] flex items-center justify-between">
+                    <div class="px-4 py-3 border-b border-[#e7e2da] flex flex-wrap items-center justify-between gap-2">
                         <h3 class="text-sm font-semibold text-[#24211d]">Daftar Peserta</h3>
-                        <span class="text-xs text-[#8c8982]">
+                        <span class="text-[11px] text-[#8c8982]">
                             Update terakhir: {{ $lastUpdate ? \Carbon\Carbon::parse($lastUpdate)->format('d M Y, H:i') : '-' }} WIB
                         </span>
                     </div>
+
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <table class="w-full text-[13px] min-w-[900px]">
                             <thead>
-                                <tr class="bg-[#faf8f4] text-xs text-[#8c8982] uppercase tracking-wide">
-                                    <th class="px-4 py-3 text-left font-semibold">No</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Nama Peserta</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Waktu Daftar</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Status Pendaftaran</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Total Biaya</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Sudah Dibayar</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Status Pembayaran</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Aksi</th>
+                                <tr class="bg-[#faf8f4] text-[11px] text-[#8c8982] uppercase tracking-wide">
+                                    <th class="px-3 py-2.5 text-left font-semibold w-10">No</th>
+                                    <th class="px-3 py-2.5 text-left font-semibold min-w-[180px]">Nama Peserta</th>
+                                    <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">Waktu Daftar</th>
+                                    <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">Status Pendaftaran</th>
+                                    <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Total Biaya</th>
+                                    <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Sudah Dibayar</th>
+                                    <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">Status Pembayaran</th>
+                                    <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#e7e2da]">
                                 @forelse($pesertas as $index => $peserta)
                                     @php
                                         $totalBiaya = $event->biaya_pendaftaran ?? 0;
-                                        // ✅ Akumulasikan seluruh pembayaran yang sudah settlement
                                         $sudahDibayar = $peserta->pembayaran->where('status_midtrans', 'settlement')->sum('jumlah');
                                         $sisa = max(0, $totalBiaya - $sudahDibayar);
                                         $isLunas = $sudahDibayar >= $totalBiaya && $totalBiaya > 0;
                                     @endphp
                                     <tr class="hover:bg-[#faf8f4] transition" data-status="diterima">
-                                        <td class="px-4 py-3 text-[#8c8982]">
+                                        {{-- No --}}
+                                        <td class="px-3 py-3 text-[#8c8982] align-top">
                                             {{ ($pesertas->currentPage() - 1) * $pesertas->perPage() + $index + 1 }}
                                         </td>
-                                        <td class="px-4 py-3 font-medium text-[#24211d]">
-                                            {{ $peserta->namaTampil() }}
+
+                                        {{-- Nama --}}
+                                        <td class="px-3 py-3 align-top">
+                                            <div class="font-medium text-[#24211d] leading-snug">
+                                                {{ $peserta->namaTampil() }}
+                                            </div>
                                             @if ($peserta->user && $peserta->namaTampil() !== ($peserta->user->nama_custom ?: $peserta->user->nama))
-                                                <span class="block text-xs text-[#8c8982] font-normal">
+                                                <div class="text-[11px] text-[#8c8982] mt-0.5">
                                                     akun: {{ $peserta->user->nama_custom ?: $peserta->user->nama }}
-                                                </span>
+                                                </div>
                                             @endif
-                                            <span class="block text-xs text-[#8c8982] font-normal mt-0.5">
+                                            <div class="text-[11px] text-[#8c8982] mt-0.5 truncate max-w-[200px]">
                                                 {{ $peserta->user->email ?? '-' }}
-                                            </span>
+                                            </div>
                                             <a href="{{ route('admin.peserta.show', $peserta->id) }}"
-                                                class="inline-block mt-1 text-xs text-[#C28E27] hover:text-[#a3721a] hover:underline font-medium">
+                                               class="inline-block mt-1 text-[11px] text-[#C28E27] hover:text-[#a3721a] hover:underline font-medium">
                                                 Lihat selengkapnya →
                                             </a>
                                         </td>
-                                        <td class="px-4 py-3 text-[#8c8982] text-xs">
+
+                                        {{-- Waktu Daftar --}}
+                                        <td class="px-3 py-3 text-[#8c8982] text-[12px] align-top whitespace-nowrap">
                                             @if ($peserta->created_at)
-                                                {{ \Carbon\Carbon::parse($peserta->created_at)->format('d M Y') }}<br>
-                                                {{ \Carbon\Carbon::parse($peserta->created_at)->format('H:i') }} WIB
+                                                <div>{{ \Carbon\Carbon::parse($peserta->created_at)->format('d M Y') }}</div>
+                                                <div class="text-[11px]">{{ \Carbon\Carbon::parse($peserta->created_at)->format('H:i') }} WIB</div>
                                             @else
                                                 -
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+
+                                        {{-- Status Pendaftaran --}}
+                                        <td class="px-3 py-3 align-top">
+                                            <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
                                                 Diterima
                                             </span>
                                         </td>
-                                        
-                                        {{-- Kolom Total Biaya & Sudah Dibayar --}}
-                                        <td class="px-4 py-3 text-[#8c8982]">
+
+                                        {{-- Total Biaya --}}
+                                        <td class="px-3 py-3 text-[#24211d] text-right align-top whitespace-nowrap font-medium">
                                             Rp {{ number_format($totalBiaya, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-4 py-3 text-[#8c8982]">
+
+                                        {{-- Sudah Dibayar --}}
+                                        <td class="px-3 py-3 text-[#24211d] text-right align-top whitespace-nowrap font-medium">
                                             Rp {{ number_format($sudahDibayar, 0, ',', '.') }}
                                         </td>
-                                        {{-- Tampilan Status Pembayaran --}}
-                                        <td class="px-4 py-3">
+
+                                        {{-- Status Pembayaran --}}
+                                        <td class="px-3 py-3 align-top">
                                             @if($isLunas)
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                                                     Lunas
                                                 </span>
                                             @elseif($sudahDibayar > 0)
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                                     DP (Sisa: Rp {{ number_format($sisa, 0, ',', '.') }})
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
                                                     Belum Bayar
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                {{-- Tombol Bayar Manual (Menggunakan fungsi modal pembayaran kandidat yang sudah ada) --}}
+
+                                        {{-- Aksi --}}
+                                        <td class="px-3 py-3 align-top">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
                                                 <button type="button"
                                                     onclick='openModalPembayaranKandidat({{ $peserta->id }}, {{ $totalBiaya }}, {{ $sudahDibayar }}, {{ json_encode($peserta->namaTampil()) }}, {!! json_encode($peserta->pembayaran) !!})'
-                                                    class="px-3 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white transition cursor-pointer">
+                                                    class="px-2.5 py-1 text-[11px] font-semibold text-blue-700 border border-blue-200 rounded-md hover:bg-blue-600 hover:text-white transition cursor-pointer whitespace-nowrap">
                                                     {{ $isLunas ? 'Ubah' : ($sudahDibayar > 0 ? 'Tambah DP' : 'Bayar') }}
                                                 </button>
                                                 <a href="{{ route('admin.peserta.edit', $peserta->id) }}"
-                                                    class="px-3 py-1.5 text-xs font-semibold text-[#C28E27] border border-[#C28E27] rounded-lg hover:bg-[#C28E27] hover:text-white transition">
+                                                   class="px-2.5 py-1 text-[11px] font-semibold text-[#C28E27] border border-[#C28E27] rounded-md hover:bg-[#C28E27] hover:text-white transition whitespace-nowrap">
                                                     Edit
                                                 </a>
                                                 <form method="POST" action="{{ route('admin.peserta.destroy', $peserta->id) }}"
-                                                    onsubmit="event.preventDefault(); konfirmasi('Yakin hapus peserta ini?', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
-                                                    class="inline m-0 p-0">
+                                                      onsubmit="event.preventDefault(); konfirmasi('Yakin hapus peserta ini?', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
+                                                      class="inline m-0 p-0">
                                                     @csrf @method('DELETE')
                                                     <button type="submit"
-                                                        class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition cursor-pointer">
+                                                        class="px-2.5 py-1 text-[11px] font-semibold text-red-600 border border-red-200 rounded-md hover:bg-red-600 hover:text-white transition cursor-pointer whitespace-nowrap">
                                                         Hapus
                                                     </button>
                                                 </form>
@@ -303,28 +318,29 @@
                             </tbody>
                         </table>
                     </div>
+
                     @if ($pesertas instanceof \Illuminate\Pagination\LengthAwarePaginator && $pesertas->hasPages())
-                        <div class="px-4 py-3 border-t border-[#e7e2da] flex items-center justify-between">
-                            <span class="text-xs text-[#8c8982]">
+                        <div class="px-4 py-3 border-t border-[#e7e2da] flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-[11px] text-[#8c8982]">
                                 Menampilkan {{ $pesertas->firstItem() }} – {{ $pesertas->lastItem() }} dari {{ $pesertas->total() }} peserta
                             </span>
                             <div class="flex items-center gap-1">
                                 @if ($pesertas->onFirstPage())
-                                    <span class="px-3 py-1.5 text-xs text-[#ccc] border border-[#e7e2da] rounded-lg">‹</span>
+                                    <span class="px-2.5 py-1 text-[11px] text-[#ccc] border border-[#e7e2da] rounded-md">‹</span>
                                 @else
-                                    <a href="{{ $pesertas->previousPageUrl() }}" class="px-3 py-1.5 text-xs text-[#24211d] border border-[#e7e2da] rounded-lg hover:bg-[#faf8f4]">‹</a>
+                                    <a href="{{ $pesertas->previousPageUrl() }}" class="px-2.5 py-1 text-[11px] text-[#24211d] border border-[#e7e2da] rounded-md hover:bg-[#faf8f4]">‹</a>
                                 @endif
                                 @for ($page = max(1, $pesertas->currentPage() - 2); $page <= min($pesertas->lastPage(), $pesertas->currentPage() + 2); $page++)
                                     @if ($page === $pesertas->currentPage())
-                                        <span class="px-3 py-1.5 text-xs font-semibold bg-[#24211d] text-white rounded-lg">{{ $page }}</span>
+                                        <span class="px-2.5 py-1 text-[11px] font-semibold bg-[#24211d] text-white rounded-md">{{ $page }}</span>
                                     @else
-                                        <a href="{{ $pesertas->url($page) }}" class="px-3 py-1.5 text-xs text-[#24211d] border border-[#e7e2da] rounded-lg hover:bg-[#faf8f4]">{{ $page }}</a>
+                                        <a href="{{ $pesertas->url($page) }}" class="px-2.5 py-1 text-[11px] text-[#24211d] border border-[#e7e2da] rounded-md hover:bg-[#faf8f4]">{{ $page }}</a>
                                     @endif
                                 @endfor
                                 @if ($pesertas->hasMorePages())
-                                    <a href="{{ $pesertas->nextPageUrl() }}" class="px-3 py-1.5 text-xs text-[#24211d] border border-[#e7e2da] rounded-lg hover:bg-[#faf8f4]">›</a>
+                                    <a href="{{ $pesertas->nextPageUrl() }}" class="px-2.5 py-1 text-[11px] text-[#24211d] border border-[#e7e2da] rounded-md hover:bg-[#faf8f4]">›</a>
                                 @else
-                                    <span class="px-3 py-1.5 text-xs text-[#ccc] border border-[#e7e2da] rounded-lg">›</span>
+                                    <span class="px-2.5 py-1 text-[11px] text-[#ccc] border border-[#e7e2da] rounded-md">›</span>
                                 @endif
                             </div>
                         </div>
