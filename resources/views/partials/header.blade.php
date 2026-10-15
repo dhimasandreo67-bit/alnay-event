@@ -7,10 +7,19 @@
     .brand-font {
         font-family: 'Inter', sans-serif;
     }
+
+    /* Header menempel di atas layar, jadi link anchor (#faq, #alur-pendaftaran, dst)
+       harus berhenti sedikit di bawah header supaya judulnya tidak tertutup. */
+    html {
+        scroll-padding-top: 76px;
+    }
 </style>
 
-{{-- Header Global --}}
-<header class="sticky top-0 z-50 w-full border-b border-gray-200/60 bg-white/80 backdrop-blur-md shadow-sm transition-all duration-300">
+{{-- Header Global
+     Memakai position: fixed (bukan sticky) supaya TETAP menempel saat di-scroll
+     walaupun halaman punya overflow-x: hidden di html/body atau pembungkus lain.
+     Spacer di bawahnya menggantikan ruang yang tadinya dipakai header di alur halaman. --}}
+<header class="fixed inset-x-0 top-0 z-50 w-full border-b border-gray-200/60 bg-white/80 backdrop-blur-md shadow-sm transition-all duration-300">
     <div class="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-5 md:px-8">
         
         {{-- LOGO & BRAND NAME --}}
@@ -50,3 +59,6 @@
         @endauth
     </div>
 </header>
+
+{{-- Spacer setinggi header (64px) supaya konten tidak tertutup header yang fixed --}}
+<div class="h-[64px]" aria-hidden="true"></div>

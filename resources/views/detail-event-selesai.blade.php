@@ -19,7 +19,9 @@
         .font-display { font-family: 'Playfair Display', serif; }
         .search-input { transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
         .search-input:focus { border-color: #c99a32; box-shadow: 0 0 0 4px rgba(201, 154, 50, .12); }
-        .reveal-up { animation: revealUp .7s cubic-bezier(.22, 1, .36, 1) both; }
+
+        /* "backwards" (bukan "both") supaya transform hover tidak ditimpa nilai akhir animasi */
+        .reveal-up { animation: revealUp .7s cubic-bezier(.22, 1, .36, 1) backwards; }
         @keyframes revealUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -43,7 +45,7 @@
             *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
 
-               .scrollbar-hide {
+        .scrollbar-hide {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
@@ -52,7 +54,64 @@
         }
 
         /* ============================================ */
-        /* TOP 3 SWIPER — COVERFLOW (Mobile Only)       */
+        /* PAGINASI DAFTAR KANDIDAT                      */
+        /* ============================================ */
+        .pg-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid #e8dfc8;
+            background: #fff;
+            color: #8a6a1f;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .25s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease;
+        }
+
+        .pg-btn:hover:not(:disabled):not(.is-active) {
+            border-color: #c99a32;
+            background: #faf8f2;
+            transform: translateY(-1px);
+        }
+
+        .pg-btn.is-active {
+            background: linear-gradient(90deg, #c69220, #b58219);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 6px 14px -6px rgba(198, 146, 32, .6);
+            cursor: default;
+        }
+
+        .pg-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        .pg-dots {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            color: #b5ad9c;
+            font-size: 12px;
+            letter-spacing: .1em;
+        }
+
+        @media (max-width: 400px) {
+            .pg-btn {
+                min-width: 32px;
+                height: 32px;
+                padding: 0 8px;
+            }
+        }
+
+        /* ============================================ */
+        /* TOP 3 SWIPER — COVERFLOW (Mobile) / STATIS    */
         /* ============================================ */
         .top3Swiper {
             overflow: hidden !important;
@@ -91,57 +150,61 @@
             }
 
             .top3Swiper .top3Pagination {
-    position: absolute;
-    bottom: 10px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    z-index: 100;
-    pointer-events: auto;
-}
+                position: absolute;
+                bottom: 10px;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: center;
+                gap: 6px;
+                z-index: 100;
+                pointer-events: auto;
+            }
 
-.top3Swiper .top3Pagination .swiper-pagination-bullet {
-    width: 6px;
-    height: 6px;
-    background: #d4c4a8;
-    opacity: 1;
-    transition: all .3s ease;
-    margin: 0 !important;
-    z-index: 101;
-    pointer-events: auto;
-    cursor: pointer;
-}
+            .top3Swiper .top3Pagination .swiper-pagination-bullet {
+                width: 6px;
+                height: 6px;
+                background: #d4c4a8;
+                opacity: 1;
+                transition: all .3s ease;
+                margin: 0 !important;
+                z-index: 101;
+                pointer-events: auto;
+                cursor: pointer;
+            }
 
-.top3Swiper .top3Pagination .swiper-pagination-bullet-active {
-    width: 20px;
-    border-radius: 99px;
-    background: #c99a32;
-}
+            .top3Swiper .top3Pagination .swiper-pagination-bullet-active {
+                width: 20px;
+                border-radius: 99px;
+                background: #c99a32;
+            }
+        }
 
-            
-
-        /* ---- DESKTOP/TABLET: 3 kolom biasa, no blur ---- */
+        /* ---- DESKTOP/TABLET: 3 kartu statis di tengah, tanpa geser ---- */
         @media (min-width: 768px) {
             .top3Swiper {
                 padding: 20px 0 30px 0;
             }
 
+            .top3Swiper .swiper-wrapper {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                transform: none !important;
+            }
+
             .top3Swiper .swiper-slide {
-                width: 300px;  /* ← fix 300px di desktop, biar ada ruang card samping */
-                max-width: none;
+                width: auto;
+                flex: 1 1 0;
+                min-width: 0;
+                max-width: 300px;
+                margin-right: 0 !important;
                 opacity: 1;
                 filter: none;
                 transform: none;
             }
 
-            .top3Swiper .swiper-slide-active {
-                opacity: 1;
-                filter: none;
-                transform: none;
-            }
-
+            .top3Swiper .swiper-slide-active,
             .top3Swiper .swiper-slide-next,
             .top3Swiper .swiper-slide-prev {
                 opacity: 1;
@@ -176,7 +239,6 @@
                 'id' => $p->id,
                 'nomor' => str_pad($i + 1, 2, '0', STR_PAD_LEFT),
                 'nama' => $p->namaTampil(),
-                'asal' => '-',
                 'foto' => $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : $p->user?->foto_url,
                 'persen' => $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 2) : 0,
                 'vote' => $p->total_vote,
@@ -188,6 +250,9 @@
             $k['juara'] = $i + 1;
             $pemenangArr[] = $k;
         }
+
+        // Peringkat 4 – 6 (daftar ringkas di bawah Top 3)
+        $peringkat46 = array_slice($kandidat, 3, 3);
 
         $jumlahKandidat = count($kandidat);
     @endphp
@@ -235,7 +300,29 @@
                             Telah Berakhir
                         </span>
                         <h1 class="font-display text-xl md:text-2xl font-bold text-[#0a1526] mt-3">{{ $event->nama }}</h1>
-                        <p class="text-gray-500 text-xs md:text-sm leading-relaxed mt-2.5 max-w-3xl">{{ $event->deskripsi ?: 'Deskripsi belum diisi.' }}</p>
+
+                        <div class="relative mt-2.5 max-w-3xl">
+                            <p id="deskripsiEvent"
+                                style="transition: max-height .45s cubic-bezier(.22, 1, .36, 1)"
+                                class="max-h-[78px] overflow-hidden text-xs leading-relaxed text-gray-500 md:max-h-none md:overflow-visible md:text-sm">
+                                {{ $event->deskripsi ?: 'Deskripsi belum diisi.' }}
+                            </p>
+
+                            {{-- Efek pudar di bawah teks yang terpotong (mobile) --}}
+                            <div id="deskripsiFade"
+                                class="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white via-white/80 to-transparent opacity-0 transition-opacity duration-300 md:hidden">
+                            </div>
+                        </div>
+
+                        {{-- Hanya mobile, dan hanya muncul kalau teks terpotong (diatur JS) --}}
+                        <button type="button" id="btnSelengkapnya" aria-expanded="false"
+                            class="mt-1.5 hidden items-center gap-1 text-[11px] font-semibold text-[#a37b2a] transition hover:text-[#c99a32] md:hidden">
+                            <span id="btnSelengkapnyaText">Lihat selengkapnya</span>
+                            <svg id="btnSelengkapnyaIcon" class="h-3 w-3 transition-transform duration-300"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
                     </div>
                     <div class="relative overflow-hidden bg-gradient-to-br from-[#faf8f2] to-[#fdfcf9] border border-[#eee5d2] rounded-2xl p-4">
                         <span class="absolute -right-3 -top-3 pointer-events-none select-none" style="width: 80px; height: 80px;">
@@ -357,9 +444,8 @@
                                 </div>
 
                                 <div class="p-4">
-                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                    <div class="mb-2">
                                         <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $p['nama'] }}</h3>
-                                        <span class="text-[10px] font-semibold text-[#c99a32] bg-[#fbf6e9] px-2 py-1 rounded-md whitespace-nowrap">{{ $p['asal'] }}</span>
                                     </div>
 
                                     @if ($blackoutAktif ?? false)
@@ -390,6 +476,53 @@
                             <div class="top3Pagination"></div>
                         @endif
                     </div>{{-- /swiper --}}
+
+                    {{-- ============================================ --}}
+                    {{-- PERINGKAT 4 – 6 (daftar ringkas)              --}}
+                    {{-- ============================================ --}}
+                    @if (count($peringkat46) > 0)
+                        <div class="mt-1 overflow-hidden rounded-2xl border border-[#ece5d7] bg-white shadow-sm">
+                            @foreach ($peringkat46 as $i => $ps)
+                                <div
+                                    class="flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-5 {{ $loop->first ? '' : 'border-t border-[#f3efe4]' }}">
+
+                                    {{-- Nomor peringkat --}}
+                                    <span class="w-6 shrink-0 font-display text-lg text-[#b5ad9c] sm:w-8 sm:text-xl">
+                                        {{ str_pad($i + 4, 2, '0', STR_PAD_LEFT) }}
+                                    </span>
+
+                                    {{-- Foto / inisial --}}
+                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-[#ece5d7] bg-[#fbf6e9]">
+                                        @if ($ps['foto'])
+                                            <img src="{{ $ps['foto'] }}" alt="{{ $ps['nama'] }}" loading="lazy"
+                                                class="h-full w-full object-cover">
+                                        @else
+                                            <div class="flex h-full w-full items-center justify-center text-[11px] font-bold text-[#c99a32]">
+                                                {{ $inisial($ps['nama']) }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- Nama + bar --}}
+                                    <div class="min-w-0 flex-1 sm:flex sm:items-center sm:gap-4">
+                                        <div class="min-w-0 sm:w-56 sm:shrink-0">
+                                            <h3 class="truncate text-[13px] font-semibold text-[#0a1526]">{{ $ps['nama'] }}</h3>
+                                        </div>
+
+                                        <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#f0ece2] sm:mt-0 sm:flex-1">
+                                            <div class="h-full rounded-full bg-gradient-to-r from-[#c99a32] to-[#e0b254]"
+                                                style="width: {{ $ps['persen'] }}%"></div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Nilai --}}
+                                    <div class="shrink-0 text-right sm:w-24">
+                                        <span class="text-sm font-bold text-[#0a1526]">{{ $ps['persen'] }}%</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 @else
                     <div class="bg-white rounded-2xl border border-dashed border-[#e5e1db] p-12 text-center mt-4">
                         <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#fdf8ec] flex items-center justify-center">
@@ -405,7 +538,7 @@
         @endif
 
         {{-- DAFTAR KANDIDAT --}}
-        <section class="reveal-up delay-5 mt-10">
+        <section id="daftarKandidat" class="reveal-up delay-5 mt-10 scroll-mt-20">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
                 <div>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0a1526]/5 border border-[#0a1526]/10 text-[10px] font-bold uppercase tracking-widest text-[#0a1526]">Semua Peserta</span>
@@ -430,10 +563,10 @@
                             $isHidden = $index >= 8;
                         @endphp
                         <div class="kandidat-card {{ $isHidden ? 'hidden' : '' }} reveal-up {{ $delayClass }} group bg-white rounded-2xl overflow-hidden border border-[#ece5d7] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[#c99a32]/40"
-                            data-nama="{{ strtolower($k['nama']) }}" data-index="{{ $index }}">
+                            data-nama="{{ mb_strtolower($k['nama']) }}" data-index="{{ $index }}">
                             <div class="relative h-[180px] md:h-[200px] overflow-hidden bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0]">
                                 @if ($k['foto'])
-                                    <img src="{{ $k['foto'] }}" alt="{{ $k['nama'] }}"
+                                    <img src="{{ $k['foto'] }}" alt="{{ $k['nama'] }}" loading="lazy"
                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
                                     <div class="hidden w-full h-full items-center justify-center">
@@ -449,7 +582,6 @@
 
                             <div class="p-3.5">
                                 <h3 class="text-[13px] font-bold text-[#0a1526] truncate">{{ $k['nama'] }}</h3>
-                                <p class="text-[10px] text-[#8a8178] mt-0.5">{{ $k['asal'] }}</p>
 
                                 @if ($blackoutAktif ?? false)
                                     <div class="mt-2 flex items-center gap-1.5 text-[10px] text-amber-600 italic">
@@ -469,17 +601,12 @@
                     @endforeach
                 </div>
 
-                @if (count($kandidat) > 8)
-                    <div class="mt-5 text-center" id="wrapBtnLihatSemua">
-                        <button type="button" id="btnLihatSemua"
-                            class="inline-flex items-center gap-2 rounded-full border border-[#c99a32]/40 bg-white px-6 py-3 text-xs font-semibold text-[#a37b2a] shadow-sm transition-all duration-300 hover:border-[#c99a32] hover:bg-[#faf8f2] hover:shadow-md">
-                            <span id="btnLihatSemuaText">Lihat Semua {{ count($kandidat) }} Kandidat</span>
-                            <svg id="btnLihatSemuaIcon" class="h-3.5 w-3.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                    </div>
-                @endif
+                {{-- PAGINASI — dibangun oleh JS (disembunyikan otomatis kalau cuma 1 halaman) --}}
+                <div class="mt-5">
+                    <nav id="paginasiKandidat" aria-label="Halaman kandidat"
+                        class="hidden flex-wrap items-center justify-center gap-1.5"></nav>
+                    <p id="infoHalaman" class="mt-2.5 hidden text-center text-[11px] text-[#8a8178]"></p>
+                </div>
 
                 <div id="emptySearch" class="hidden mt-4 rounded-2xl border border-dashed border-[#ddd8cc] bg-white p-10 text-center">
                     <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#faf5e9] text-[#c99a32]">
@@ -506,99 +633,261 @@
 
     @include('partials.footer')
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-        <script>
-        // ============================================
-        // SEARCH + LIHAT SEMUA — TOGGLE
-        // ============================================
-        (function() {
-            var input = document.getElementById('searchKandidat');
-            var cards = document.querySelectorAll('.kandidat-card');
-            var empty = document.getElementById('emptySearch');
-            var btn = document.getElementById('btnLihatSemua');
-            var btnText = document.getElementById('btnLihatSemuaText');
-            var btnIcon = document.getElementById('btnLihatSemuaIcon');
-            var wrapBtn = document.getElementById('wrapBtnLihatSemua');
+    <script>
+    // ============================================
+    // DESKRIPSI EVENT — LIHAT SELENGKAPNYA (mobile)
+    // Terpotong 4 baris + efek pudar, buka/tutup dengan animasi
+    // ============================================
+    (function() {
+        var teks = document.getElementById('deskripsiEvent');
+        var fade = document.getElementById('deskripsiFade');
+        var btn = document.getElementById('btnSelengkapnya');
+        if (!teks || !fade || !btn) return;
 
-            if (!input) return;
+        var label = document.getElementById('btnSelengkapnyaText');
+        var ikon = document.getElementById('btnSelengkapnyaIcon');
+        var BARIS = 4;
+        var mq = window.matchMedia('(max-width: 767px)');
+        var terbuka = false;
+        var timer;
 
-            var isExpanded = false;
-            var batasAwal = 8;
-            var totalKandidat = cards.length;
+        function tinggiTutup() {
+            var gaya = getComputedStyle(teks);
+            var lh = parseFloat(gaya.lineHeight);
+            if (isNaN(lh)) lh = parseFloat(gaya.fontSize) * 1.6;
+            return Math.round(lh * BARIS);
+        }
 
-            if (btn) {
-                btn.addEventListener('click', function() {
-                    isExpanded = !isExpanded;
-                    var q = input.value.toLowerCase().trim();
+        function tampilTombol(tampil) {
+            btn.classList.toggle('hidden', !tampil);
+            btn.classList.toggle('inline-flex', tampil);
+        }
 
-                    cards.forEach(function(card) {
-                        var idx = parseInt(card.dataset.index);
-                        if (q.length > 0) return;
-                        if (isExpanded) {
-                            card.classList.remove('hidden');
-                        } else {
-                            if (idx >= batasAwal) card.classList.add('hidden');
-                        }
-                    });
-
-                    if (isExpanded) {
-                        btnText.textContent = 'Tampilkan Lebih Sedikit';
-                        btnIcon.style.transform = 'rotate(180deg)';
-                    } else {
-                        btnText.textContent = 'Lihat Semua ' + totalKandidat + ' Kandidat';
-                        btnIcon.style.transform = 'rotate(0)';
-                    }
-                });
+        // Hitung ulang kondisi (load, resize, ganti orientasi)
+        function atur() {
+            // Desktop/tablet: teks tampil penuh
+            if (!mq.matches) {
+                teks.style.maxHeight = '';
+                fade.style.opacity = '0';
+                tampilTombol(false);
+                return;
             }
 
-            input.addEventListener('input', function() {
-                var q = this.value.toLowerCase().trim();
-                var visible = 0;
-                var isSearching = q.length > 0;
+            var tutup = tinggiTutup();
+            var terpotong = teks.scrollHeight > tutup + 2;
 
-                cards.forEach(function(card) {
-                    var idx = parseInt(card.dataset.index);
-                    var match = card.dataset.nama.includes(q);
+            if (!terpotong) {
+                teks.style.maxHeight = '';
+                fade.style.opacity = '0';
+                tampilTombol(false);
+                terbuka = false;
+                return;
+            }
 
-                    if (isSearching) {
-                        if (match) {
-                            card.classList.remove('hidden');
-                            visible++;
-                        } else {
-                            card.classList.add('hidden');
-                        }
-                    } else {
-                        if (idx >= batasAwal && !isExpanded) {
-                            card.classList.add('hidden');
-                        } else {
-                            card.classList.remove('hidden');
-                        }
-                        visible++;
-                    }
-                });
+            tampilTombol(true);
+            if (terbuka) {
+                teks.style.maxHeight = 'none';
+                fade.style.opacity = '0';
+            } else {
+                teks.style.maxHeight = tutup + 'px';
+                fade.style.opacity = '1';
+            }
+        }
 
-                if (wrapBtn) wrapBtn.style.display = isSearching ? 'none' : '';
-                if (empty) empty.classList.toggle('hidden', visible > 0);
+        btn.addEventListener('click', function() {
+            clearTimeout(timer);
+
+            if (!terbuka) {
+                // Buka: animasi sampai tinggi penuh, lalu lepas batas tinggi
+                terbuka = true;
+                teks.style.maxHeight = teks.scrollHeight + 'px';
+                fade.style.opacity = '0';
+                timer = setTimeout(function() {
+                    if (terbuka) teks.style.maxHeight = 'none';
+                }, 480);
+            } else {
+                // Tutup: mulai dari tinggi penuh supaya animasi tetap mulus
+                terbuka = false;
+                teks.style.maxHeight = teks.scrollHeight + 'px';
+                void teks.offsetHeight; // paksa reflow
+                teks.style.maxHeight = tinggiTutup() + 'px';
+                fade.style.opacity = '1';
+            }
+
+            label.textContent = terbuka ? 'Lihat lebih sedikit' : 'Lihat selengkapnya';
+            ikon.style.transform = terbuka ? 'rotate(180deg)' : 'rotate(0)';
+            btn.setAttribute('aria-expanded', terbuka);
+        });
+
+        atur();
+        window.addEventListener('load', atur);
+        window.addEventListener('resize', atur);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(atur);
+        if (mq.addEventListener) mq.addEventListener('change', atur);
+        else mq.addListener(atur);
+    })();
+
+    // ============================================
+    // DAFTAR KANDIDAT — PENCARIAN + PAGINASI
+    // Mobile / tablet (2 kolom) : 6 kartu per halaman (3 baris)
+    // Desktop (4 kolom)         : 8 kartu per halaman (2 baris)
+    // ============================================
+    (function() {
+        var input = document.getElementById('searchKandidat');
+        var grid = document.getElementById('gridKandidat');
+        if (!input || !grid) return;
+
+        var cards = Array.prototype.slice.call(grid.querySelectorAll('.kandidat-card'));
+        var empty = document.getElementById('emptySearch');
+        var nav = document.getElementById('paginasiKandidat');
+        var info = document.getElementById('infoHalaman');
+        var seksi = document.getElementById('daftarKandidat');
+        var mqDesktop = window.matchMedia('(min-width: 768px)');
+
+        var page = 1;
+        var filtered = cards.slice();
+
+        function perPage() {
+            return mqDesktop.matches ? 8 : 6;
+        }
+
+        function totalPages() {
+            return Math.max(1, Math.ceil(filtered.length / perPage()));
+        }
+
+        // Daftar nomor halaman yang ditampilkan: 1 … (n-1) n (n+1) … last
+        function daftarHalaman(tp, cur) {
+            if (tp <= 5) {
+                return Array.from({ length: tp }, function(_, i) { return i + 1; });
+            }
+            var set = [1, tp, cur - 1, cur, cur + 1].filter(function(n) { return n >= 1 && n <= tp; });
+            set = Array.from(new Set(set)).sort(function(a, b) { return a - b; });
+            var out = [];
+            set.forEach(function(n, i) {
+                if (i > 0 && n - set[i - 1] > 1) out.push('...');
+                out.push(n);
             });
-        })();
+            return out;
+        }
 
-        // ============================================
-        // TOP 3 — SWIPER COVERFLOW (single init)
-        // ============================================
-        (function() {
-            if (typeof Swiper === 'undefined') return;
+        function tombol(isi, tujuan, opsi) {
+            opsi = opsi || {};
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pg-btn' + (opsi.aktif ? ' is-active' : '');
+            b.innerHTML = isi;
+            if (opsi.label) b.setAttribute('aria-label', opsi.label);
+            if (opsi.aktif) b.setAttribute('aria-current', 'page');
+            if (opsi.nonaktif) b.disabled = true;
+            if (!opsi.aktif && !opsi.nonaktif) {
+                b.addEventListener('click', function() {
+                    page = tujuan;
+                    render(true);
+                });
+            }
+            return b;
+        }
 
-            var el = document.querySelector('.top3Swiper');
-            if (!el) return;
+        var IKON_PREV = '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>';
+        var IKON_NEXT = '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>';
 
-            var totalSlides = el.querySelectorAll('.swiper-slide').length;
-            var centerIndex = totalSlides >= 2 ? 1 : 0;
+        function bangunNav(tp) {
+            nav.innerHTML = '';
 
-            new Swiper('.top3Swiper', {
+            if (tp <= 1) {
+                nav.classList.add('hidden');
+                nav.classList.remove('flex');
+                info.classList.add('hidden');
+                return;
+            }
+
+            nav.classList.remove('hidden');
+            nav.classList.add('flex');
+
+            nav.appendChild(tombol(IKON_PREV, page - 1, { label: 'Halaman sebelumnya', nonaktif: page === 1 }));
+
+            daftarHalaman(tp, page).forEach(function(n) {
+                if (n === '...') {
+                    var d = document.createElement('span');
+                    d.className = 'pg-dots';
+                    d.textContent = '…';
+                    nav.appendChild(d);
+                } else {
+                    nav.appendChild(tombol(String(n), n, { aktif: n === page, label: 'Halaman ' + n }));
+                }
+            });
+
+            nav.appendChild(tombol(IKON_NEXT, page + 1, { label: 'Halaman berikutnya', nonaktif: page === tp }));
+
+            var pp = perPage();
+            var dari = (page - 1) * pp + 1;
+            var sampai = Math.min(page * pp, filtered.length);
+            info.textContent = 'Menampilkan ' + dari + '–' + sampai + ' dari ' + filtered.length + ' kandidat';
+            info.classList.remove('hidden');
+        }
+
+        function render(gulir) {
+            var tp = totalPages();
+            if (page > tp) page = tp;
+            if (page < 1) page = 1;
+
+            var pp = perPage();
+            var awal = (page - 1) * pp;
+            var akhir = awal + pp;
+
+            var posisi = new Map();
+            filtered.forEach(function(c, i) { posisi.set(c, i); });
+
+            cards.forEach(function(card) {
+                var i = posisi.has(card) ? posisi.get(card) : -1;
+                card.classList.toggle('hidden', !(i >= awal && i < akhir));
+            });
+
+            if (empty) empty.classList.toggle('hidden', filtered.length > 0);
+            bangunNav(tp);
+
+            if (gulir && seksi) {
+                seksi.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        input.addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            filtered = cards.filter(function(card) {
+                return q === '' || card.dataset.nama.includes(q);
+            });
+            page = 1;
+            render(false);
+        });
+
+        // Jumlah kartu per halaman berubah saat ukuran layar berubah
+        if (mqDesktop.addEventListener) mqDesktop.addEventListener('change', function() { render(false); });
+        else mqDesktop.addListener(function() { render(false); });
+
+        render(false);
+    })();
+
+    // ============================================
+    // TOP 3 — SWIPER (hanya mobile; desktop statis 3 kolom)
+    // ============================================
+    (function() {
+        if (typeof Swiper === 'undefined') return;
+
+        var el = document.querySelector('.top3Swiper');
+        if (!el) return;
+
+        var mq = window.matchMedia('(max-width: 767px)');
+        var swiper = null;
+        var totalSlides = el.querySelectorAll('.swiper-slide').length;
+
+        function aktifkan() {
+            if (swiper) return;
+            swiper = new Swiper(el, {
                 grabCursor: true,
                 centeredSlides: true,
                 slidesPerView: 'auto',
                 loop: false,
-                initialSlide: centerIndex,
+                initialSlide: totalSlides >= 2 ? 1 : 0,
 
                 effect: 'coverflow',
                 coverflowEffect: {
@@ -614,20 +903,24 @@
                     clickable: true,
                 },
                 keyboard: { enabled: true },
-                mousewheel: { forceToAxis: true },
-
-                breakpoints: {
-                    768: {
-                        effect: 'slide',
-                        slidesPerView: auto,
-                        spaceBetween: 20,
-                        centeredSlides: true,
-                        coverflowEffect: null,
-                        pagination: false,
-                    },
-                },
             });
-        })();
+        }
+
+        function matikan() {
+            if (!swiper) return;
+            swiper.destroy(true, true); // hapus instance + style inline
+            swiper = null;
+        }
+
+        function sinkron() {
+            if (mq.matches) aktifkan();
+            else matikan();
+        }
+
+        sinkron();
+        if (mq.addEventListener) mq.addEventListener('change', sinkron);
+        else mq.addListener(sinkron);
+    })();
     </script>
 </body>
 </html>

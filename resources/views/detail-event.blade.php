@@ -609,18 +609,15 @@
         $cdDetik = $detik % 60;
 
         // ---- Kandidat ----
-        // Nomor di pojok kartu = PERINGKAT (urutan suara) saat blackout nonaktif.
+        // Nomor di pojok kartu = peringkat (urutan suara).
         // Saat blackout, kartu diurutkan berdasarkan id dan nomor diganti "?"
         // supaya tidak membocorkan peringkat.
-        $nomorUrut = $pesertas->sortBy('id')->values()->pluck('id')->flip();
-
         $kandidat = $pesertas
-            ->map(function ($p) use ($nomorUrut, $inisial) {
+            ->map(function ($p) use ($inisial) {
                 $nama = $p->namaTampil();
 
                 return [
                     'id' => $p->id,
-                    'nomor' => str_pad($nomorUrut[$p->id] + 1, 2, '0', STR_PAD_LEFT),
                     'nama' => $nama,
                     'foto' => $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : $p->user?->foto_url,
                     'inisial' => $inisial($nama),
@@ -630,7 +627,7 @@
             })
             ->values();
 
-        // Saat blackout, urutan kartu mengikuti nomor urut tetap (bukan suara)
+        // Saat blackout, urutan kartu mengikuti id (bukan suara)
         if ($blackout) {
             $kandidat = $kandidat->sortBy('id')->values();
         }
@@ -849,7 +846,7 @@
                                         </p>
                                     @else
                                         <p class="font-display text-base font-bold text-[#f5d78e]">{{ $formatAngka($totalSuara) }}</p>
-                                        <p class="mt-0.5 text-[9px] font-medium uppercase tracking-wider text-gray-400" id="peringkat">Total Vote</p>
+                                        <p class="mt-0.5 text-[9px] font-medium uppercase tracking-wider text-gray-400">Total Vote</p>
                                     @endif
                                 </div>
                             </div>
@@ -1051,15 +1048,15 @@
                 {{-- ============================================ --}}
                 @if ($peringkat46->count() > 0)
                     <div class="mt-1 overflow-hidden rounded-2xl border border-[#ece5d7] bg-white shadow-sm">
-                        @foreach ($peringkat46 as $i => $p)
+                        @foreach ($peringkat46 as $i => $ps)
                             @php
                                 $rank = $i + 4;
-                                $namaR = $p->namaTampil();
-                                $fotoR = $p->user?->foto_custom
-                                    ? asset('storage/' . $p->user->foto_custom)
-                                    : $p->user?->foto_url;
-                                $persenR = $totalUntukPersen > 0 ? round(($p->total_vote / $totalUntukPersen) * 100, 1) : 0;
-                                $voteR = number_format($p->total_vote, 0, ',', '.');
+                                $namaR = $ps->namaTampil();
+                                $fotoR = $ps->user?->foto_custom
+                                    ? asset('storage/' . $ps->user->foto_custom)
+                                    : $ps->user?->foto_url;
+                                $persenR = $totalUntukPersen > 0 ? round(($ps->total_vote / $totalUntukPersen) * 100, 1) : 0;
+                                $voteR = number_format($ps->total_vote, 0, ',', '.');
                                 $formatR = $event->format_hasil_voting ?? 'keduanya';
                             @endphp
 

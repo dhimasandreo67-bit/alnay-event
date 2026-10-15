@@ -253,6 +253,12 @@
             ['pertanyaan' => 'Bagaimana cara memberi vote?', 'jawaban' => 'Buka halaman detail event, pilih kandidat favoritmu, lalu ikuti langkah pembayaran vote yang tersedia di halaman tersebut.'],
             ['pertanyaan' => 'Kapan pemenang diumumkan?', 'jawaban' => 'Pemenang diumumkan setelah masa voting resmi ditutup sesuai jadwal yang tertera pada masing-masing event.'],
         ];
+        $caraVote = [
+    ['no' => '01', 'judul' => 'Pilih Event',    'isi' => 'Buka event yang sedang berlangsung dari beranda.',           'label' => 'Mulai',   'aksi' => 'Pilih Event'],
+    ['no' => '02', 'judul' => 'Pilih Kandidat', 'isi' => 'Lihat daftar kandidat dan buka profil favoritmu.',           'label' => 'Jelajah', 'aksi' => 'Lihat Kandidat'],
+    ['no' => '03', 'judul' => 'Vote & Bayar',   'isi' => 'Masuk dengan akun Google, lalu selesaikan pembayaran vote.', 'label' => 'Utama',   'aksi' => 'Berikan Suara', 'utama' => true],
+    ['no' => '04', 'judul' => 'Suara Tercatat', 'isi' => 'Suaramu langsung masuk ke perolehan kandidat pilihanmu.',    'label' => 'Selesai', 'aksi' => 'Pantau Peringkat'],
+];
 
         $routeDetail = function ($event) {
             if (!$event) return '#';
@@ -283,7 +289,7 @@
                 </div>
 
                 <h1 class="display-font font-bold text-[34px] leading-[1.18] text-[#111827] sm:text-[42px] md:text-[48px] tracking-tight">
-                    Selamat Datang di &amp; <br class="hidden sm:inline" />
+                    Selamat Datang di <br class="hidden sm:inline" />
                     <span class="gold-shimmer">Event &amp; Vote Kandidat</span>
                 </h1>
 
@@ -671,79 +677,58 @@
                 </section>
             @endif
 
-            {{-- ==================== ALUR EVENT ==================== --}}
-            <section class="mt-12 sm:mt-16">
-                <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
-                        Alur Event
-                    </span>
-                    <h3 class="display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
-                        Alur & Langkah Mengikuti Event
-                    </h3>
-                    <p class="mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
-                        Empat langkah mudah untuk berpartisipasi, mendukung kandidat, dan merayakan pemenang.
-                    </p>
-                </div>
+            {{-- ==================== CARA VOTE ==================== --}}
+<section class="mt-12 sm:mt-16">
+    <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
+            Cara Vote
+        </span>
+        <h3 class="display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
+            Cara Memberikan Vote
+        </h3>
+        <p class="mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
+            Empat langkah mudah untuk mendukung kandidat favoritmu.
+        </p>
+    </div>
 
-                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-                    <div class="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-200 via-[#c99a32] to-amber-200 z-0 opacity-40"></div>
+    <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        <div class="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-200 via-[#c99a32] to-amber-200 z-0 opacity-40"></div>
 
-                    <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10 overflow-hidden">
-                        <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">01</span>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-5">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a1526] text-[#c99a32] font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white">01</div>
-                                <span class="text-[10px] font-semibold tracking-wider text-[#a09585] uppercase bg-[#fcfaf6] px-2.5 py-1 rounded-md border border-[#eee8dc]">Tahap awal</span>
-                            </div>
-                            <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">Pendaftaran & Profil</h4>
-                            <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">Peserta mendaftarkan diri, mengunggah karya atau profil terbaik sesuai ketentuan event.</p>
-                            <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] opacity-80 group-hover:opacity-100 transition-opacity"><span>Lengkapi Data</span></div>
-                        </div>
+        @foreach ($caraVote as $langkah)
+            @php $utama = $langkah['utama'] ?? false; @endphp
+
+            <div class="group relative rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl z-10 overflow-hidden {{ $utama ? 'border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] shadow-md hover:border-[#c99a32]' : 'border border-[#ece5d7] bg-white shadow-sm hover:border-[#c99a32]/50' }}">
+                <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">{{ $langkah['no'] }}</span>
+
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 {{ $utama ? 'bg-[#c99a32] text-white' : 'bg-[#0a1526] text-[#c99a32] group-hover:bg-[#c99a32] group-hover:text-white' }}">{{ $langkah['no'] }}</div>
+
+                        @if ($utama)
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-amber-700 uppercase bg-amber-100/80 px-2.5 py-1 rounded-md">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                                {{ $langkah['label'] }}
+                            </span>
+                        @else
+                            <span class="text-[10px] font-semibold tracking-wider text-[#a09585] uppercase bg-[#fcfaf6] px-2.5 py-1 rounded-md border border-[#eee8dc]">{{ $langkah['label'] }}</span>
+                        @endif
                     </div>
 
-                    <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10 overflow-hidden">
-                        <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">02</span>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-5">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a1526] text-[#c99a32] font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white">02</div>
-                                <span class="text-[10px] font-semibold tracking-wider text-[#a09585] uppercase bg-[#fcfaf6] px-2.5 py-1 rounded-md border border-[#eee8dc]">Kurasi</span>
-                            </div>
-                            <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">Verifikasi Panitia</h4>
-                            <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">Panitia melakukan validasi kualifikasi peserta sebelum ditampilkan secara publik di daftar voting.</p>
-                            <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] opacity-80 group-hover:opacity-100 transition-opacity"><span>Proses Validasi</span></div>
-                        </div>
-                    </div>
+                    <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">{{ $langkah['judul'] }}</h4>
+                    <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">{{ $langkah['isi'] }}</p>
 
-                    <div class="group relative rounded-2xl border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] p-6 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32] z-10 overflow-hidden">
-                        <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">03</span>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-5">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#c99a32] text-white font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110">03</div>
-                                <span class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-amber-700 uppercase bg-amber-100/80 px-2.5 py-1 rounded-md">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
-                                    Utama
-                                </span>
-                            </div>
-                            <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">Voting & Dukungan</h4>
-                            <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">Pendukung dapat memberikan voting secara real-time untuk mendongkrak peringkat kandidat pilihan.</p>
-                            <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] group-hover:text-[#b88625]"><span>Kumpulkan Suara</span></div>
-                        </div>
-                    </div>
-
-                    <div class="group relative rounded-2xl border border-[#ece5d7] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#c99a32]/50 z-10 overflow-hidden">
-                        <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">04</span>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-5">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a1526] text-[#c99a32] font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#c99a32] group-hover:text-white">04</div>
-                                <span class="text-[10px] font-semibold tracking-wider text-[#a09585] uppercase bg-[#fcfaf6] px-2.5 py-1 rounded-md border border-[#eee8dc]">Final</span>
-                            </div>
-                            <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">Pengumuman Pemenang</h4>
-                            <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">Pemenang ditentukan berdasarkan akumulasi voting akhir dan kriteria penilaian juri resmi.</p>
-                            <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] opacity-80 group-hover:opacity-100 transition-opacity"><span>Pemenang Event</span></div>
-                        </div>
+                    <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] {{ $utama ? 'group-hover:text-[#b88625]' : 'opacity-80 group-hover:opacity-100 transition-opacity' }}">
+                        <span>{{ $langkah['aksi'] }}</span>
                     </div>
                 </div>
-            </section>
+            </div>
+        @endforeach
+    </div>
+
+    <p class="mt-8 text-center text-[12px] sm:text-[13px] text-[#8a8178]">
+        Ingin jadi peserta? Cek event berlabel <span class="font-semibold text-[#b88625]">Daftar Peserta</span> di bagian atas.
+    </p>
+</section>
 
             {{-- ==================== PERINGKAT ==================== --}}
             @php
