@@ -24,21 +24,23 @@ class AktivasiController extends Controller
         }
 
         $finalis = collect();
-        if ($event) {
-            $mode = request()->query('mode', 'pendaftaran');
+            if ($event) {
+                $mode = request()->query('mode', 'pendaftaran');
 
-            $query = Peserta::where('event_id', $event->id)
-                ->where('status', 'diterima')
-                ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan']);
+                $query = Peserta::where('event_id', $event->id)
+                    ->where('status', 'diterima')
+                    ->where('kandidat_voting', false)
+                    ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan']);
 
-            // Mode Registrasi — cuma tampil yang sudah audisi
-            if ($mode === 'registrasi') {
-                $query->where('sudah_audisi', true);
+                // Mode Registrasi — samakan dengan tab Registrasi di Dashboard
+                // (peserta diterima + lolos audisi)
+                if ($mode === 'registrasi') {
+                    $query->where('hasil_audisi', 'lolos');
+                }
+
+                $finalis = $query->latest('id')->get()
+                    ->map(fn (Peserta $peserta) => $this->transform($peserta));
             }
-
-            $finalis = $query->latest('id')->get()
-                ->map(fn (Peserta $peserta) => $this->transform($peserta));
-        }
 
         $totalFinalis = $finalis->count();
         $lunas = $finalis->where('statusAkun', 'aktif')->count();
@@ -159,6 +161,64 @@ class AktivasiController extends Controller
             'sisaPembayaranDp'   => $sisaPembayaranDp,
             'tampilDiPublik'     => (bool) ($peserta->tampil_di_publik ?? true),
         ];
+    }
+
+    /**
+     * POST /admin/registrasi/pembayaran
+     * Input pembayaran REGISTRASI manual (offline/tunai/transfer) oleh admin,
+     * dipanggil dari tab "Registrasi" di Dashboard.
+     *
+     * NOTE: sesuaikan nama kolom di bawah (jenis, metode, dsb.) kalau nama
+     * kolom aslimu di tabel pembayaran berbeda.
+     */
+    public function simpanPembayaranRegistrasi(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'peserta_id'    => ['required', 'exists:peserta_event,id'],
+            'jumlah_bayar'  => ['required', 'integer', 'min:1'],
+            'metode'        => ['required', 'string'],
+            'tanggal_bayar' => ['required', 'date'],
+        ]);
+
+        $peserta = Peserta::with(['pembayaranRegistrasi', 'event'])->findOrFail($data['peserta_id']);
+
+        $biayaRegistrasi = (int) ($peserta->event->harga_registrasi ?? 0);
+
+        $sudahDibayar = $peserta->pembayaranRegistrasi
+            ->where('status_midtrans', 'settlement')
+            ->sum('jumlah');
+
+        $jumlahBayar  = (int) $data['jumlah_bayar'];
+        $totalSetelah = $sudahDibayar + $jumlahBayar;
+
+        // Tentukan tipe cicilan: dp1 (pembayaran pertama/sebagian),
+        // dp2 (pelunasan setelah dp1), atau lunas (langsung penuh sekali bayar).
+        if ($totalSetelah >= $biayaRegistrasi && $biayaRegistrasi > 0) {
+            $tipe = $sudahDibayar > 0 ? 'dp2' : 'lunas';
+        } else {
+            $tipe = $sudahDibayar > 0 ? 'dp2' : 'dp1';
+        }
+
+        $peserta->pembayaranRegistrasi()->create([
+            'jenis'             => 'registrasi',
+            'tipe'              => $tipe,
+            'jumlah'            => $jumlahBayar,
+            'metode'            => $data['metode'],
+            'tanggal_bayar'     => $data['tanggal_bayar'],
+            'status_midtrans'   => 'settlement',
+            'midtrans_order_id' => 'MANUAL-' . strtoupper(uniqid()),
+        ]);
+
+        // ✅ Sinkronkan status_registrasi di tabel peserta — inilah field yang
+        // dibaca halaman Aktivasi (mode registrasi) untuk badge status.
+        $peserta->status_registrasi = ($totalSetelah >= $biayaRegistrasi && $biayaRegistrasi > 0)
+            ? 'lunas'
+            : 'dp';
+        $peserta->save();
+
+        return redirect()
+            ->back()
+            ->with('success', 'Pembayaran registrasi ' . $peserta->namaTampil() . ' berhasil disimpan.');
     }
 
     /**
