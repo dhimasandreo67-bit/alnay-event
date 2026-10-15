@@ -131,6 +131,11 @@
                                 Audisi
                                 <span class="ml-1 px-1.5 py-0.5 bg-[#e7e2da] text-[#8c8982] text-xs rounded-full">{{ $totalAudisi }}</span>
                             </button>
+                            <button onclick="switchTab('registrasi')" id="btn-tab-registrasi"
+                                class="tab-switcher px-4 py-2 text-sm font-semibold rounded-md text-[#8c8982] hover:text-[#24211d] transition">
+                                Registrasi
+                                <span class="ml-1 px-1.5 py-0.5 bg-[#e7e2da] text-[#8c8982] text-xs rounded-full">{{ $totalRegistrasi ?? 0 }}</span>
+                            </button>
                             <button onclick="switchTab('kandidat')" id="btn-tab-kandidat"
                                 class="tab-switcher px-4 py-2 text-sm font-semibold rounded-md text-[#8c8982] hover:text-[#24211d] transition">
                                 Kandidat Voting
@@ -164,7 +169,6 @@
 
                         {{-- Per Page Dropdown --}}
                         <div class="flex items-center gap-2 shrink-0">
-                            <span class="text-xs text-[#8c8982]">Tampilkan:</span>
                             <select onchange="updatePerPage(this.value)" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
                                 @foreach([10, 25, 50, 100] as $opt)
                                     <option value="{{ $opt }}" @selected(request('per_page', 10) == $opt)>{{ $opt }} Baris</option>
@@ -184,14 +188,12 @@
                             Update terakhir: {{ $lastUpdate ? \Carbon\Carbon::parse($lastUpdate)->format('d M Y, H:i') : '-' }} WIB
                         </span>
                     </div>
-
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="bg-[#faf8f4] text-xs text-[#8c8982] uppercase tracking-wide">
                                     <th class="px-4 py-3 text-left font-semibold">No</th>
                                     <th class="px-4 py-3 text-left font-semibold">Nama Peserta</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Email</th>
                                     <th class="px-4 py-3 text-left font-semibold">Waktu Daftar</th>
                                     <th class="px-4 py-3 text-left font-semibold">Status Pendaftaran</th>
                                     <th class="px-4 py-3 text-left font-semibold">Total Biaya</th>
@@ -203,11 +205,11 @@
                             <tbody class="divide-y divide-[#e7e2da]">
                                 @forelse($pesertas as $index => $peserta)
                                     @php
-                                        $pembayaran = $peserta->pembayaran?->sortByDesc('id')->first();
                                         $totalBiaya = $event->biaya_pendaftaran ?? 0;
-                                        $sudahDibayar = $pembayaran?->jumlah ?? 0;
+                                        // ✅ Akumulasikan seluruh pembayaran yang sudah settlement
+                                        $sudahDibayar = $peserta->pembayaran->where('status_midtrans', 'settlement')->sum('jumlah');
                                         $sisa = max(0, $totalBiaya - $sudahDibayar);
-                                        $isLunas = $sudahDibayar >= $totalBiaya && $pembayaran?->status_midtrans === 'settlement';
+                                        $isLunas = $sudahDibayar >= $totalBiaya && $totalBiaya > 0;
                                     @endphp
                                     <tr class="hover:bg-[#faf8f4] transition" data-status="diterima">
                                         <td class="px-4 py-3 text-[#8c8982]">
@@ -220,13 +222,13 @@
                                                     akun: {{ $peserta->user->nama_custom ?: $peserta->user->nama }}
                                                 </span>
                                             @endif
+                                            <span class="block text-xs text-[#8c8982] font-normal mt-0.5">
+                                                {{ $peserta->user->email ?? '-' }}
+                                            </span>
                                             <a href="{{ route('admin.peserta.show', $peserta->id) }}"
                                                 class="inline-block mt-1 text-xs text-[#C28E27] hover:text-[#a3721a] hover:underline font-medium">
                                                 Lihat selengkapnya →
                                             </a>
-                                        </td>
-                                        <td class="px-4 py-3 text-[#8c8982]">
-                                            {{ $peserta->user->email ?? '-' }}
                                         </td>
                                         <td class="px-4 py-3 text-[#8c8982] text-xs">
                                             @if ($peserta->created_at)
@@ -249,7 +251,6 @@
                                         <td class="px-4 py-3 text-[#8c8982]">
                                             Rp {{ number_format($sudahDibayar, 0, ',', '.') }}
                                         </td>
-
                                         {{-- Tampilan Status Pembayaran --}}
                                         <td class="px-4 py-3">
                                             @if($isLunas)
@@ -268,7 +269,6 @@
                                                 </span>
                                             @endif
                                         </td>
-
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 {{-- Tombol Bayar Manual (Menggunakan fungsi modal pembayaran kandidat yang sudah ada) --}}
@@ -277,12 +277,10 @@
                                                     class="px-3 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white transition cursor-pointer">
                                                     {{ $isLunas ? 'Ubah' : ($sudahDibayar > 0 ? 'Tambah DP' : 'Bayar') }}
                                                 </button>
-
                                                 <a href="{{ route('admin.peserta.edit', $peserta->id) }}"
                                                     class="px-3 py-1.5 text-xs font-semibold text-[#C28E27] border border-[#C28E27] rounded-lg hover:bg-[#C28E27] hover:text-white transition">
                                                     Edit
                                                 </a>
-
                                                 <form method="POST" action="{{ route('admin.peserta.destroy', $peserta->id) }}"
                                                     onsubmit="event.preventDefault(); konfirmasi('Yakin hapus peserta ini?', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
                                                     class="inline m-0 p-0">
@@ -297,7 +295,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="px-4 py-12 text-center text-[#8c8982]">
+                                        <td colspan="8" class="px-4 py-12 text-center text-[#8c8982]">
                                             <p class="text-sm">{{ request('search') ? 'Tidak ada peserta yang cocok dengan pencarian.' : 'Belum ada peserta tercatat.' }}</p>
                                         </td>
                                     </tr>
@@ -305,7 +303,6 @@
                             </tbody>
                         </table>
                     </div>
-
                     @if ($pesertas instanceof \Illuminate\Pagination\LengthAwarePaginator && $pesertas->hasPages())
                         <div class="px-4 py-3 border-t border-[#e7e2da] flex items-center justify-between">
                             <span class="text-xs text-[#8c8982]">
@@ -411,26 +408,26 @@
                                                 <span class="text-[#8c8982]">-</span>
                                             @endif
                                         </td>
-<td class="px-4 py-3">
-    <div class="flex flex-col gap-1.5">
-        {{-- Badge Status --}}
-        <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border {{ $audisiMeta['class'] }} w-fit">
-            {{ $audisiMeta['label'] }}
-        </span>
+                                        <td class="px-4 py-3">
+                                            <div class="flex flex-col gap-1.5">
+                                                {{-- Badge Status --}}
+                                                <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border {{ $audisiMeta['class'] }} w-fit">
+                                                    {{ $audisiMeta['label'] }}
+                                                </span>
 
-        {{-- ✅ Tombol Lihat Catatan --}}
-        @if($peserta->catatan_admin && $hasilAudisi === 'tidak_lolos')
-            <button type="button"
-                onclick="openModalCatatanAdmin({{ $peserta->id }}, {{ json_encode($peserta->namaTampil()) }}, {{ json_encode($peserta->catatan_admin) }})"
-                class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-600 transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-                </svg>
-                <span class="max-w-[120px] truncate">Lihat catatan</span>
-            </button>
-        @endif
-    </div>
-</td>
+                                                {{-- ✅ Tombol Lihat Catatan --}}
+                                                @if($peserta->catatan_admin && $hasilAudisi === 'tidak_lolos')
+                                                    <button type="button"
+                                                        onclick="openModalCatatanAdmin({{ $peserta->id }}, {{ json_encode($peserta->namaTampil()) }}, {{ json_encode($peserta->catatan_admin) }})"
+                                                        class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-600 transition">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                                                        </svg>
+                                                        <span class="max-w-[120px] truncate">Lihat catatan</span>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <button type="button"
@@ -649,12 +646,12 @@
             <tbody class="divide-y divide-[#e7e2da]">
                 @forelse($kandidatVoting as $index => $peserta)
                     @php
-                        $pembayaran = $peserta->pembayaran->sortByDesc('id')->first();
-                        $totalBiaya = $event->biaya_pendaftaran ?? 0;
-                        $sudahDibayar = $pembayaran?->jumlah ?? 0;
-                        $sisa = max(0, $totalBiaya - $sudahDibayar);
-                        $isLunas = $sudahDibayar >= $totalBiaya && $pembayaran?->status_midtrans === 'settlement';
-                    @endphp
+    $totalBiaya = $event->biaya_pendaftaran ?? 0;
+    // ✅ Akumulasikan seluruh pembayaran yang sudah settlement
+    $sudahDibayar = $peserta->pembayaran->where('status_midtrans', 'settlement')->sum('jumlah');
+    $sisa = max(0, $totalBiaya - $sudahDibayar);
+    $isLunas = $sudahDibayar >= $totalBiaya && $totalBiaya > 0;
+@endphp
                     <tr class="hover:bg-[#faf8f4] transition">
                         <td class="px-4 py-3 text-[#8c8982]">
                             {{ ($kandidatVoting->currentPage() - 1) * $kandidatVoting->perPage() + $index + 1 }}
@@ -754,6 +751,243 @@
             </div>
         </div>
     @endif
+</div>
+
+{{-- ============================================
+    ✅ TAB BARU: REGISTRASI (peserta pendaftaran yang sudah diterima,
+    bayar biaya registrasi — TIDAK termasuk kandidat voting)
+============================================= --}}
+<div id="panel-registrasi" class="tab-panel hidden bg-white rounded-xl border border-[#e7e2da] overflow-hidden">
+    <div class="p-4 border-b border-[#e7e2da]">
+        <h3 class="text-sm font-semibold text-[#24211d]">Pembayaran Registrasi Peserta</h3>
+        <p class="text-xs text-[#8c8982] mt-0.5">Peserta pendaftaran (bukan kandidat voting) yang sudah diterima dan perlu membayar biaya registrasi. Gunakan tombol Bayar untuk input pembayaran offline.</p>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-[#faf8f4] text-xs text-[#8c8982] uppercase tracking-wide">
+                    <th class="px-4 py-3 text-left font-semibold">No</th>
+                    <th class="px-4 py-3 text-left font-semibold">Nama Peserta</th>
+                    <th class="px-4 py-3 text-left font-semibold">Total Biaya Registrasi</th>
+                    <th class="px-4 py-3 text-left font-semibold">Sudah Dibayar</th>
+                    <th class="px-4 py-3 text-left font-semibold">Status</th>
+                    <th class="px-4 py-3 text-left font-semibold">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#e7e2da]">
+                @forelse ($pesertaRegistrasi as $index => $peserta)
+                    @php
+                        $totalBiayaRegis = $event->harga_registrasi ?? 0;
+                        $sudahDibayarRegis = $peserta->pembayaranRegistrasi
+                            ->where('status_midtrans', 'settlement')
+                            ->sum('jumlah');
+                        $sisaRegis = max(0, $totalBiayaRegis - $sudahDibayarRegis);
+                        $statusRegis = $peserta->status_registrasi ?? 'belum';
+                    @endphp
+                    <tr class="hover:bg-[#faf8f4] transition">
+                        <td class="px-4 py-3 text-[#8c8982]">
+                            {{ ($pesertaRegistrasi->currentPage() - 1) * $pesertaRegistrasi->perPage() + $index + 1 }}
+                        </td>
+                        <td class="px-4 py-3 font-medium text-[#24211d]">
+                            {{ $peserta->namaTampil() }}
+                            <span class="block text-xs text-[#8c8982] font-normal">{{ $peserta->user->email ?? '-' }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-[#8c8982]">
+                            Rp {{ number_format($totalBiayaRegis, 0, ',', '.') }}
+                        </td>
+                        <td class="px-4 py-3 text-[#8c8982]">
+                            Rp {{ number_format($sudahDibayarRegis, 0, ',', '.') }}
+                        </td>
+                        <td class="px-4 py-3">
+                            @if ($statusRegis === 'lunas')
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Lunas
+                                </span>
+                            @elseif ($statusRegis === 'dp')
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    DP (Sisa: Rp {{ number_format($sisaRegis, 0, ',', '.') }})
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                    Belum Bayar
+                                </span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button type="button"
+                                    onclick='openModalPembayaranRegistrasi({{ $peserta->id }}, {{ $totalBiayaRegis }}, {{ $sudahDibayarRegis }}, {!! json_encode($peserta->namaTampil()) !!}, {!! json_encode($peserta->pembayaranRegistrasi) !!})'
+                                    class="px-3 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white transition cursor-pointer">
+                                    {{ $statusRegis === 'lunas' ? 'Ubah' : ($sudahDibayarRegis > 0 ? 'Tambah DP' : 'Bayar') }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-[#8c8982]">
+                            <p class="text-sm">Belum ada peserta yang perlu membayar registrasi.</p>
+                            <p class="text-xs mt-1">Peserta muncul di sini setelah statusnya "Diterima".</p>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- Pagination Registrasi --}}
+    @if ($pesertaRegistrasi instanceof \Illuminate\Pagination\LengthAwarePaginator && $pesertaRegistrasi->hasPages())
+        <div class="px-4 py-3 border-t border-[#e7e2da] flex items-center justify-between">
+            <span class="text-xs text-[#8c8982]">
+                Menampilkan {{ $pesertaRegistrasi->firstItem() }} – {{ $pesertaRegistrasi->lastItem() }} dari {{ $pesertaRegistrasi->total() }} peserta
+            </span>
+            <div class="flex items-center gap-1">
+                @if ($pesertaRegistrasi->onFirstPage())
+                    <span class="px-3 py-1.5 text-xs text-[#ccc] border border-[#e7e2da] rounded-lg">‹</span>
+                @else
+                    <a href="{{ $pesertaRegistrasi->previousPageUrl() }}" class="px-3 py-1.5 text-xs text-[#24211d] border border-[#e7e2da] rounded-lg hover:bg-[#faf8f4]">‹</a>
+                @endif
+                @for ($page = max(1, $pesertaRegistrasi->currentPage() - 2); $page <= min($pesertaRegistrasi->lastPage(), $pesertaRegistrasi->currentPage() + 2); $page++)
+                    @if ($page === $pesertaRegistrasi->currentPage())
+                        <span class="px-3 py-1.5 text-xs font-semibold bg-[#24211d] text-white rounded-lg">{{ $page }}</span>
+                    @else
+                        <a href="{{ $pesertaRegistrasi->url($page) }}" class="px-3 py-1.5 text-xs text-[#24211d] border border-[#e7e2da] rounded-lg hover:bg-[#faf8f4]">{{ $page }}</a>
+                    @endif
+                @endfor
+                @if ($pesertaRegistrasi->hasMorePages())
+                    <a href="{{ $pesertaRegistrasi->nextPageUrl() }}" class="px-3 py-1.5 text-xs text-[#24211d] border border-[#e7e2da] rounded-lg hover:bg-[#faf8f4]">›</a>
+                @else
+                    <span class="px-3 py-1.5 text-xs text-[#ccc] border border-[#e7e2da] rounded-lg">›</span>
+                @endif
+            </div>
+        </div>
+    @endif
+</div>
+
+{{-- ============================================
+    ✅ MODAL PEMBAYARAN MANUAL REGISTRASI (peserta pendaftaran)
+============================================= --}}
+<div id="modalPembayaranRegistrasi"
+     class="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm items-center justify-center p-4"
+     style="display: none;">
+
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-[#e7e2da] relative max-h-[90vh] overflow-y-auto">
+
+        <div class="flex items-center justify-between pb-4 border-b border-[#e7e2da] mb-4">
+            <h3 class="text-base font-bold text-[#24211d]">Input Pembayaran Registrasi & Riwayat</h3>
+            <button type="button" onclick="closeModalPembayaranRegistrasi()"
+                    class="text-gray-400 hover:text-gray-600 p-1 rounded-lg cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form id="formPembayaranRegistrasi" action="{{ route('admin.registrasi.pembayaran') }}" method="POST">
+            @csrf
+            <input type="hidden" name="peserta_id" id="regbayar_peserta_id">
+            <input type="hidden" name="jumlah_bayar" id="regbayar_jumlah_bayar_raw">
+
+            <div class="space-y-4">
+                <div class="bg-[#faf8f4] p-3 rounded-lg border border-[#e7e2da]">
+                    <p class="text-xs text-[#8c8982] mb-1">Peserta</p>
+                    <p id="regbayar_nama_peserta" class="text-sm font-semibold text-[#24211d]">-</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-700 mb-1">Total Biaya</label>
+                        <input type="text" id="regbayar_display_total" readonly
+                               class="w-full text-xs border border-[#e7e2da] rounded-lg p-2 bg-gray-50 text-gray-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-700 mb-1">Sudah Dibayar</label>
+                        <input type="text" id="regbayar_display_sudah" readonly
+                               class="w-full text-xs border border-[#e7e2da] rounded-lg p-2 bg-gray-50 text-emerald-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-700 mb-1">Sisa Pembayaran</label>
+                        <input type="text" id="regbayar_display_sisa" readonly
+                               class="w-full text-xs border border-[#e7e2da] rounded-lg p-2 bg-gray-50 text-amber-600 font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Riwayat Pembayaran Registrasi Sebelumnya</label>
+                    <div class="max-h-36 overflow-y-auto border border-[#e7e2da] rounded-lg bg-[#faf8f4]">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-100 text-[#8c8982] uppercase border-b border-[#e7e2da] sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2 font-semibold">Tgl Bayar</th>
+                                    <th class="px-3 py-2 font-semibold">Metode</th>
+                                    <th class="px-3 py-2 font-semibold text-right">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riwayat_pembayaran_registrasi_list" class="divide-y divide-[#e7e2da]">
+                                <tr>
+                                    <td colspan="3" class="px-3 py-3 text-center text-gray-400 italic">Belum ada riwayat pembayaran.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        Jumlah Bayar Sekarang (Rp) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs text-gray-500 font-bold">Rp</span>
+                        <input type="text" id="regbayar_jumlah_bayar_formatted" required
+                               placeholder="Contoh: 50.000"
+                               class="w-full pl-9 pr-4 py-2 text-sm border border-[#e7e2da] rounded-lg outline-none focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20 font-semibold">
+                    </div>
+                    <p class="text-[11px] text-gray-500 mt-1">Otomatis terisi sisa tagihan, dapat disesuaikan jika ingin membayar sebagian (DP).</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            Metode Pembayaran <span class="text-red-500">*</span>
+                        </label>
+                        <select name="metode" required
+                                class="w-full text-xs border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] bg-white">
+                            <option value="">-- Pilih Metode --</option>
+                            <option value="transfer_bank">Transfer Bank</option>
+                            <option value="tunai">Tunai</option>
+                            <option value="qris">QRIS</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            Tanggal Bayar <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_bayar" required value="{{ date('Y-m-d') }}"
+                               class="w-full text-xs border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
+                    </div>
+                </div>
+            </div>
+
+            {{-- Footer: keterangan riwayat + aksi pembayaran --}}
+                <div class="flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeModalPembayaranRegistrasi()"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Simpan Pembayaran
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 {{-- ============================================
@@ -870,19 +1104,20 @@
                 </div>
             </div>
 
-            {{-- Footer --}}
-            <div class="pt-4 border-t border-[#e7e2da] flex items-center justify-end gap-3 mt-6">
-                <button type="button" onclick="closeModalPembayaranKandidat()"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition cursor-pointer">
-                    Batal
-                </button>
-                <button type="submit"
-                        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Simpan Pembayaran
-                </button>
+            {{-- Footer: keterangan riwayat + aksi pembayaran --}}
+                <div class="flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeModalPembayaranKandidat()"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Simpan Pembayaran
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -1202,7 +1437,13 @@
             tidak_lolos: {{ $tidakLolosAudisi ?? 0 }},
             belum_dinilai: {{ $belumDinilai ?? 0 }}
         },
-        kandidat: { total: {{ $totalKandidatVoting ?? 0 }} }
+        kandidat: { total: {{ $totalKandidatVoting ?? 0 }} },
+        registrasi: {
+            total: {{ $totalRegistrasi ?? 0 }},
+            lunas: {{ $registrasiLunas ?? 0 }},
+            dp: {{ $registrasiDp ?? 0 }},
+            belum: {{ $registrasiBelum ?? 0 }}
+        }
     };
 
     // Template card untuk tab Pendaftaran
@@ -1284,10 +1525,34 @@
         </div>
     `;
 
+    // Template card untuk tab Registrasi
+    const cardRegistrasi = `
+        <div class="bg-white rounded-xl border border-[#e7e2da] p-5 border-b-4 border-b-[#C28E27]">
+            <p class="text-xs font-semibold text-[#8c8982] uppercase tracking-wide">Total Registrasi</p>
+            <p class="text-3xl font-bold text-[#24211d] mt-1">${statsData.registrasi.total}</p>
+            <p class="text-xs text-[#8c8982] mt-1">Peserta diterima</p>
+        </div>
+        <div class="bg-white rounded-xl border border-[#e7e2da] p-5 border-b-4 border-b-emerald-500">
+            <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Lunas</p>
+            <p class="text-3xl font-bold text-[#24211d] mt-1">${statsData.registrasi.lunas}</p>
+            <p class="text-xs text-[#8c8982] mt-1">Registrasi selesai</p>
+        </div>
+        <div class="bg-white rounded-xl border border-[#e7e2da] p-5 border-b-4 border-b-amber-500">
+            <p class="text-xs font-semibold text-amber-600 uppercase tracking-wide">DP (Sebagian)</p>
+            <p class="text-3xl font-bold text-[#24211d] mt-1">${statsData.registrasi.dp}</p>
+            <p class="text-xs text-[#8c8982] mt-1">Baru bayar sebagian</p>
+        </div>
+        <div class="bg-white rounded-xl border border-[#e7e2da] p-5 border-b-4 border-b-slate-400">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Belum Bayar</p>
+            <p class="text-3xl font-bold text-[#24211d] mt-1">${statsData.registrasi.belum}</p>
+            <p class="text-xs text-[#8c8982] mt-1">Menunggu pembayaran</p>
+        </div>
+    `;
+
     // Template opsi filter untuk masing-masing tab
     const filterPendaftaran = `
         <select onchange="applyFilter(this.value, 'pendaftaran')" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
-            <option value="">Semua Status Pembayaran</option>
+            <option value="">Status Pembayaran</option>
             <option value="settlement" ${getURLParam('pendaftaran_filter') === 'settlement' ? 'selected' : ''}>Lunas</option>
             <option value="pending" ${getURLParam('pendaftaran_filter') === 'pending' ? 'selected' : ''}>Pending</option>
             <option value="belum_bayar" ${getURLParam('pendaftaran_filter') === 'belum_bayar' ? 'selected' : ''}>Belum Bayar</option>
@@ -1296,7 +1561,7 @@
 
     const filterAudisi = `
         <select onchange="applyFilter(this.value, 'audisi')" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
-            <option value="">Semua Status Audisi</option>
+            <option value="">Status Audisi</option>
             <option value="lolos" ${getURLParam('audisi_filter') === 'lolos' ? 'selected' : ''}>Lolos Audisi</option>
             <option value="tidak_lolos" ${getURLParam('audisi_filter') === 'tidak_lolos' ? 'selected' : ''}>Tidak Lolos</option>
             <option value="belum_dinilai" ${getURLParam('audisi_filter') === 'belum_dinilai' ? 'selected' : ''}>Belum Dinilai</option>
@@ -1305,10 +1570,19 @@
 
     const filterKandidat = `
         <select onchange="applyFilter(this.value, 'kandidat')" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
-            <option value="">Semua Status Pembayaran</option>
+            <option value="">Status Pembayaran</option>
             <option value="lunas" ${getURLParam('kandidat_filter') === 'lunas' ? 'selected' : ''}>Lunas</option>
             <option value="dp" ${getURLParam('kandidat_filter') === 'dp' ? 'selected' : ''}>DP (Sebagian)</option>
             <option value="belum_bayar" ${getURLParam('kandidat_filter') === 'belum_bayar' ? 'selected' : ''}>Belum Bayar</option>
+        </select>
+    `;
+
+    const filterRegistrasi = `
+        <select onchange="applyFilter(this.value, 'registrasi')" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
+            <option value="">Status Registrasi</option>
+            <option value="lunas" ${getURLParam('registrasi_filter') === 'lunas' ? 'selected' : ''}>Lunas</option>
+            <option value="dp" ${getURLParam('registrasi_filter') === 'dp' ? 'selected' : ''}>DP (Sebagian)</option>
+            <option value="belum" ${getURLParam('registrasi_filter') === 'belum' ? 'selected' : ''}>Belum Bayar</option>
         </select>
     `;
 
@@ -1338,9 +1612,11 @@
         url.searchParams.delete('pendaftaran_filter');
         url.searchParams.delete('audisi_filter');
         url.searchParams.delete('kandidat_filter');
+        url.searchParams.delete('registrasi_filter');
         url.searchParams.delete('page');
         url.searchParams.delete('audisi_page');
         url.searchParams.delete('kandidat_page');
+        url.searchParams.delete('registrasi_page');
 
         if (val) {
             url.searchParams.set(tabType + '_filter', val);
@@ -1368,6 +1644,10 @@
             statsContainer.className = 'grid grid-cols-1 gap-4 w-full';
             statsContainer.innerHTML = cardKandidat;
             filterContainer.innerHTML = filterKandidat;
+        } else if (tab === 'registrasi') {
+            statsContainer.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full';
+            statsContainer.innerHTML = cardRegistrasi;
+            filterContainer.innerHTML = filterRegistrasi;
         }
     }
 
@@ -1417,6 +1697,7 @@
         url.searchParams.set('per_page', val);
         url.searchParams.delete('page');
         url.searchParams.delete('audisi_page');
+        url.searchParams.delete('registrasi_page');
         window.location.href = url.toString();
     }
 
@@ -1597,6 +1878,7 @@
                         url.searchParams.delete('page');
                         url.searchParams.delete('audisi_page');
                         url.searchParams.delete('kandidat_page');
+                        url.searchParams.delete('registrasi_page');
                         
                         window.location.href = url.toString();
                     }
@@ -1606,7 +1888,7 @@
         // Initialize tab
         const hash = window.location.hash.replace('#', '');
         const savedTab = localStorage.getItem('activeTab');
-        const validTabs = ['pendaftaran', 'audisi', 'kandidat'];
+        const validTabs = ['pendaftaran', 'audisi', 'kandidat', 'registrasi'];
         
         const activeTab = validTabs.includes(hash) ? hash : 
                         validTabs.includes(savedTab) ? savedTab : 
@@ -1706,6 +1988,71 @@
     }
 
     // ==========================================
+    // ✅ FUNGSI MODAL PEMBAYARAN REGISTRASI (peserta pendaftaran)
+    // ==========================================
+    function openModalPembayaranRegistrasi(pesertaId, totalBiaya, sudahDibayar, namaPeserta, listPembayaran = []) {
+        document.getElementById('regbayar_peserta_id').value = pesertaId;
+        document.getElementById('regbayar_nama_peserta').textContent = namaPeserta;
+
+        const fmt = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+        document.getElementById('regbayar_display_total').value = fmt(totalBiaya);
+        document.getElementById('regbayar_display_sudah').value = fmt(sudahDibayar);
+
+        const sisa = Math.max(0, totalBiaya - sudahDibayar);
+        document.getElementById('regbayar_display_sisa').value = fmt(sisa);
+
+        // Render riwayat pembayaran registrasi (hanya yang sudah settlement)
+        const tbody = document.getElementById('riwayat_pembayaran_registrasi_list');
+        tbody.innerHTML = '';
+
+        const riwayat = (listPembayaran || []).filter(item => item.status_midtrans === 'settlement');
+
+        if (riwayat.length > 0) {
+            riwayat.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                let tglFormatted = '-';
+                if (item.tanggal_bayar) {
+                    const d = new Date(item.tanggal_bayar);
+                    tglFormatted = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                }
+
+                tr.innerHTML = `
+                    <td class="px-3 py-2 text-gray-700">${tglFormatted}</td>
+                    <td class="px-3 py-2 text-gray-700 uppercase font-medium">${item.metode || 'Manual'}</td>
+                    <td class="px-3 py-2 text-right font-semibold text-emerald-600">${fmt(item.jumlah || 0)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="3" class="px-3 py-3 text-center text-gray-400 italic">Belum ada riwayat pembayaran.</td></tr>`;
+        }
+
+        // Set otomatis jumlah bayar dengan sisa tagihan
+        const inputFormatted = document.getElementById('regbayar_jumlah_bayar_formatted');
+        const inputRaw = document.getElementById('regbayar_jumlah_bayar_raw');
+
+        inputRaw.value = sisa;
+        inputFormatted.value = sisa > 0 ? new Intl.NumberFormat('id-ID').format(sisa) : '';
+
+        const modal = document.getElementById('modalPembayaranRegistrasi');
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeModalPembayaranRegistrasi() {
+        const modal = document.getElementById('modalPembayaranRegistrasi');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.classList.remove('overflow-hidden');
+
+        const form = document.getElementById('formPembayaranRegistrasi');
+        if (form) form.reset();
+    }
+
+    // ==========================================
     // NUMBER FORMATTER & REALTIME SISA KALKULATOR + LIMITER
     // ==========================================
     document.addEventListener('DOMContentLoaded', function() {
@@ -1739,6 +2086,36 @@
                 // Update real-time sisa pembayaran pada ringkasan
                 const sisaBaru = Math.max(0, sisaMaksimal - numericValue);
                 document.getElementById('bayar_display_sisa').value = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisaBaru);
+            });
+        }
+    });
+
+    // ✅ NUMBER FORMATTER & LIMITER — khusus modal Pembayaran Registrasi
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputFormatted = document.getElementById('regbayar_jumlah_bayar_formatted');
+        const inputRaw = document.getElementById('regbayar_jumlah_bayar_raw');
+
+        if (inputFormatted && inputRaw) {
+            inputFormatted.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                let numericValue = value ? parseInt(value, 10) : 0;
+
+                const totalStr = document.getElementById('regbayar_display_total').value.replace(/\D/g, '');
+                const total = parseInt(totalStr) || 0;
+                const sudahStr = document.getElementById('regbayar_display_sudah').value.replace(/\D/g, '');
+                const sudah = parseInt(sudahStr) || 0;
+                const sisaMaksimal = Math.max(0, total - sudah);
+
+                if (numericValue > sisaMaksimal) {
+                    numericValue = sisaMaksimal;
+                    showToast('Jumlah bayar tidak boleh melebihi sisa tagihan!', 'error');
+                }
+
+                inputRaw.value = numericValue;
+                this.value = numericValue > 0 ? new Intl.NumberFormat('id-ID').format(numericValue) : '';
+
+                const sisaBaru = Math.max(0, sisaMaksimal - numericValue);
+                document.getElementById('regbayar_display_sisa').value = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisaBaru);
             });
         }
     });
