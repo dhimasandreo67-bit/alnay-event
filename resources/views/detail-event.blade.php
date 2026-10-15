@@ -521,7 +521,11 @@
         // =====================================================
         $tz = 'Asia/Jakarta';
         $now = \Carbon\Carbon::now($tz);
+        // Definisi blackout (dari controller → view)
         $blackout = (bool) ($blackoutAktif ?? false);
+
+        // Voting OFF ATAU blackout → sembunyikan SEMUA tampilan vote
+        $sembunyikanVote = !$event->voting_aktif || $blackout;
 
         $mulai = $event->tanggal_mulai ? \Carbon\Carbon::parse($event->tanggal_mulai, $tz)->locale('id') : null;
         $selesai = $event->tanggal_selesai ? \Carbon\Carbon::parse($event->tanggal_selesai, $tz)->locale('id') : null;
@@ -627,8 +631,8 @@
             })
             ->values();
 
-        // Saat blackout, urutan kartu mengikuti id (bukan suara)
-        if ($blackout) {
+        // Saat blackout, urutan kartu mengikuti nomor urut tetap (bukan suara)
+        if ($sembunyikanVote) {
             $kandidat = $kandidat->sortBy('id')->values();
         }
 
@@ -835,7 +839,7 @@
 
                                 <div
                                     class="rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm transition-transform duration-200 hover:scale-105 hover:bg-white/10">
-                                    @if ($blackout)
+                                    @if ($sembunyikanVote)
                                         <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-5 w-5 text-[#f5d78e]"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -885,7 +889,7 @@
             $peringkat46 = $pesertas->slice(3, 3)->values();
         @endphp
 
-        @if ($blackoutAktif ?? false)
+        @if ($sembunyikanVote)
             <section class="section-reveal mt-7">
                 <div
                     class="overflow-hidden rounded-[18px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed] shadow-sm">
@@ -906,8 +910,12 @@
                             Siapa yang akan membawa pulang mahkota?
                         </h2>
                         <p class="mx-auto max-w-xl text-[13px] leading-relaxed text-[#5a5750] md:text-[14px]">
-                            Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat
-                            ini.
+                            @if ($blackout)
+                                Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara
+                                saat ini.
+                            @else
+                                Peringkat sementara akan ditampilkan begitu voting dibuka. Pantau terus halaman ini ya.
+                            @endif
                         </p>
                     </div>
                 </div>
@@ -1178,7 +1186,7 @@
                                     class="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/25 to-transparent">
                                 </div>
 
-                                @if ($blackout)
+                                @if ($sembunyikanVote)
                                     <span
                                         class="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 font-display text-[13px] font-bold text-gray-400 shadow-md ring-1 ring-white/60 backdrop-blur"
                                         title="Nomor urut dirahasiakan">
@@ -1197,7 +1205,7 @@
                                     {{ $item['nama'] }}
                                 </h3>
 
-                                @if ($blackout)
+                                @if ($sembunyikanVote)
                                     <div class="mt-2 flex items-center gap-1.5 text-[10px] italic text-amber-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor">
