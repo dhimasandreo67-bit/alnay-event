@@ -96,6 +96,30 @@ class DashboardController extends Controller
         $totalKandidatVoting = $kandidatQuery ? (clone $kandidatQuery)->count() : 0;
 
         // ============================================
+        // ✅ STATISTIK REGISTRASI (peserta pendaftaran yang SUDAH DITERIMA,
+        // tahap bayar biaya registrasi — bukan kandidat voting)
+        // ============================================
+        $registrasiQuery = $event
+            ? Peserta::where('event_id', $event->id)
+                ->where('kandidat_voting', false)
+                ->where('status', 'diterima')
+                ->where('hasil_audisi', 'lolos')
+            : null;
+
+        $totalRegistrasi = $registrasiQuery ? (clone $registrasiQuery)->count() : 0;
+
+        $registrasiStatistik = $registrasiQuery
+            ? (clone $registrasiQuery)
+                ->selectRaw('status_registrasi, COUNT(*) as total')
+                ->groupBy('status_registrasi')
+                ->pluck('total', 'status_registrasi')
+            : collect();
+
+        $registrasiLunas = $registrasiStatistik->get('lunas', 0);
+        $registrasiDp    = $registrasiStatistik->get('dp', 0);
+        $registrasiBelum = $totalRegistrasi - $registrasiLunas - $registrasiDp;
+
+        // ============================================
         // FILTER & SEARCH LOGIC
         // ============================================
         $perPage = (int) $request->input('per_page', 10);
@@ -157,6 +181,20 @@ class DashboardController extends Controller
                 ->latest('id')
             : null;
 
+        // ============================================
+        // ✅ 4. QUERY REGISTRASI (peserta diterima, belum/sedang/lunas bayar registrasi)
+        // ============================================
+        $pesertaRegistrasiQuery = $registrasiQuery
+            ? (clone $registrasiQuery)
+                ->with(['user', 'event', 'pembayaranRegistrasi'])
+                ->latest('id')
+            : null;
+
+        $registrasiFilter = $request->input('registrasi_filter');
+        if ($pesertaRegistrasiQuery && in_array($registrasiFilter, ['lunas', 'dp', 'belum'], true)) {
+            $pesertaRegistrasiQuery->where('status_registrasi', $registrasiFilter);
+        }
+
         $kandidatFilter = $request->input('kandidat_filter');
         if ($kandidatVotingQuery && $kandidatFilter) {
             $totalBiayaEvent = $event->biaya_pendaftaran ?? 0;
@@ -195,6 +233,7 @@ class DashboardController extends Controller
             $pesertaQuery->where($searchClosure);
             if ($pesertaAudisiQuery) $pesertaAudisiQuery->where($searchClosure);
             if ($kandidatVotingQuery) $kandidatVotingQuery->where($searchClosure);
+            if ($pesertaRegistrasiQuery) $pesertaRegistrasiQuery->where($searchClosure);
         }
 
         // ============================================
@@ -208,6 +247,10 @@ class DashboardController extends Controller
 
         $kandidatVoting = $kandidatVotingQuery
             ? $kandidatVotingQuery->paginate($perPage, ['*'], 'kandidat_page')->appends($request->query())
+            : collect();
+
+        $pesertaRegistrasi = $pesertaRegistrasiQuery
+            ? $pesertaRegistrasiQuery->paginate($perPage, ['*'], 'registrasi_page')->appends($request->query())
             : collect();
 
         // ============================================
@@ -247,6 +290,12 @@ class DashboardController extends Controller
             'kandidatVoting'     => $kandidatVoting,
             'totalKandidatVoting'=> $totalKandidatVoting,
             'pertanyaans'        => $pertanyaans,
+            // ✅ Data tab Registrasi
+            'pesertaRegistrasi'  => $pesertaRegistrasi,
+            'totalRegistrasi'    => $totalRegistrasi,
+            'registrasiLunas'    => $registrasiLunas,
+            'registrasiDp'       => $registrasiDp,
+            'registrasiBelum'    => $registrasiBelum,
         ]);
     }
 }
