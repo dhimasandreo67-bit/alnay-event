@@ -46,6 +46,9 @@ class Event extends Model
     'blackout_h2_voting',
     'format_hasil_voting',
     'tampilkan_hasil_voting',
+    'tanggal_audisi',
+    'audisi_aktif',
+    'audisi_lokasi',
 ];
 
         protected $casts = [
@@ -68,6 +71,8 @@ class Event extends Model
         'voting_mulai' => 'datetime',
         'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
+        'tanggal_audisi' => 'date',
+        'audisi_aktif'   => 'boolean'
     ];
 
     // protected $appends = ['status', 'status_label'];

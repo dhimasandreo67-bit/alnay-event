@@ -194,16 +194,20 @@
                                     <th class="px-4 py-3 text-left font-semibold">Email</th>
                                     <th class="px-4 py-3 text-left font-semibold">Waktu Daftar</th>
                                     <th class="px-4 py-3 text-left font-semibold">Status Pendaftaran</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Status Pembayaran</th> {{-- ✅ Kolom Baru --}}
+                                    <th class="px-4 py-3 text-left font-semibold">Total Biaya</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Sudah Dibayar</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Status Pembayaran</th>
                                     <th class="px-4 py-3 text-left font-semibold">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#e7e2da]">
                                 @forelse($pesertas as $index => $peserta)
                                     @php
-                                        // Ambil pembayaran terbaru peserta
                                         $pembayaran = $peserta->pembayaran?->sortByDesc('id')->first();
-                                        $statusBayar = $pembayaran?->status_midtrans ?? 'belum_bayar';
+                                        $totalBiaya = $event->biaya_pendaftaran ?? 0;
+                                        $sudahDibayar = $pembayaran?->jumlah ?? 0;
+                                        $sisa = max(0, $totalBiaya - $sudahDibayar);
+                                        $isLunas = $sudahDibayar >= $totalBiaya && $pembayaran?->status_midtrans === 'settlement';
                                     @endphp
                                     <tr class="hover:bg-[#faf8f4] transition" data-status="diterima">
                                         <td class="px-4 py-3 text-[#8c8982]">
@@ -238,32 +242,50 @@
                                             </span>
                                         </td>
                                         
-                                        {{-- ✅ TAMPILAN STATUS PEMBAYARAN BARU --}}
+                                        {{-- Kolom Total Biaya & Sudah Dibayar --}}
+                                        <td class="px-4 py-3 text-[#8c8982]">
+                                            Rp {{ number_format($totalBiaya, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-[#8c8982]">
+                                            Rp {{ number_format($sudahDibayar, 0, ',', '.') }}
+                                        </td>
+
+                                        {{-- Tampilan Status Pembayaran --}}
                                         <td class="px-4 py-3">
-                                            @if ($statusBayar === 'settlement')
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                                            @if($isLunas)
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    Lunas
                                                 </span>
-                                            @elseif ($statusBayar === 'pending')
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                            @elseif($sudahDibayar > 0)
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    DP (Sisa: Rp {{ number_format($sisa, 0, ',', '.') }})
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                                                     Belum Bayar
                                                 </span>
                                             @endif
                                         </td>
 
                                         <td class="px-4 py-3">
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                {{-- Tombol Bayar Manual (Menggunakan fungsi modal pembayaran kandidat yang sudah ada) --}}
+                                                <button type="button"
+                                                    onclick='openModalPembayaranKandidat({{ $peserta->id }}, {{ $totalBiaya }}, {{ $sudahDibayar }}, {{ json_encode($peserta->namaTampil()) }}, {!! json_encode($peserta->pembayaran) !!})'
+                                                    class="px-3 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white transition cursor-pointer">
+                                                    {{ $isLunas ? 'Ubah' : ($sudahDibayar > 0 ? 'Tambah DP' : 'Bayar') }}
+                                                </button>
+
                                                 <a href="{{ route('admin.peserta.edit', $peserta->id) }}"
                                                     class="px-3 py-1.5 text-xs font-semibold text-[#C28E27] border border-[#C28E27] rounded-lg hover:bg-[#C28E27] hover:text-white transition">
                                                     Edit
                                                 </a>
+
                                                 <form method="POST" action="{{ route('admin.peserta.destroy', $peserta->id) }}"
                                                     onsubmit="event.preventDefault(); konfirmasi('Yakin hapus peserta ini?', () => this.submit(), { title: 'Hapus Peserta', confirmText: 'Ya, Hapus', confirmColor: '#dc2626' });"
-                                                    class="inline">
+                                                    class="inline m-0 p-0">
                                                     @csrf @method('DELETE')
                                                     <button type="submit"
                                                         class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition cursor-pointer">
@@ -275,7 +297,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="px-4 py-12 text-center text-[#8c8982]">
+                                        <td colspan="9" class="px-4 py-12 text-center text-[#8c8982]">
                                             <p class="text-sm">{{ request('search') ? 'Tidak ada peserta yang cocok dengan pencarian.' : 'Belum ada peserta tercatat.' }}</p>
                                         </td>
                                     </tr>
@@ -310,7 +332,7 @@
                             </div>
                         </div>
                     @endif
-                </div> {{-- ✅ TUTUP PANEL PENDAFTARAN DI SINI --}}
+                </div>
 
                 {{-- ============================================
                     PANEL: AUDISI
@@ -1290,6 +1312,18 @@
         </select>
     `;
 
+    // ==========================================
+    // BRIDGE TOAST — memakai fungsi toast yang sudah ada di pwa-head
+    // ==========================================
+    function panggilToast(message, type = 'success') {
+        // Otomatis memakai fungsi toast mana pun yang tersedia dari pwa-head
+        if (typeof window.showAdminToast === 'function') return window.showAdminToast(message, type);
+        if (typeof window.showToast === 'function')      return window.showToast(message, type);
+        if (typeof window.flashToast === 'function')     return window.flashToast(message, type);
+        if (typeof window.toast === 'function')          return window.toast(message, type);
+        console.warn('[Toast] Fungsi toast tidak ditemukan:', message);
+    }
+
     // Helper untuk membaca URL parameter
     function getURLParam(name) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -1822,13 +1856,23 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    closeModalTolak();
+            if (data.success) {
+                // Ambil nama peserta SEBELUM modal ditutup
+                const namaPeserta = (document.getElementById('tolak_nama_peserta')?.textContent || 'Peserta').trim();
+
+                closeModalTolak();
+
+                // ✅ Pakai toast existing dari pwa-head (tanpa elemen baru)
+                panggilToast('Peserta ' + namaPeserta + ' ditandai TIDAK LOLOS.', 'error');
+
+                // Tunda reload ±2 detik supaya toast sempat terlihat
+                setTimeout(function () {
                     window.location.reload();
-                } else {
-                    alert('Gagal menyimpan: ' + (data.message || 'Terjadi kesalahan'));
-                }
-            })
+                }, 2000);
+            } else {
+                panggilToast(data.message || 'Gagal menyimpan penolakan.', 'error');
+            }
+        })
             .catch(error => {
                 console.error('❌ Error:', error);
                 alert('Terjadi kesalahan sistem.');

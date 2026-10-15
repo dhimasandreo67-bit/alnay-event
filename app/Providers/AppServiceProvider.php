@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
 
             // 3. Hitung statistik peserta khusus untuk event ID ini
             $menungguReview = $eventId 
-                ? Peserta::where('event_id', $eventId)->where('status', 'menunggu_review')->count() 
+                ? Peserta::where('event_id', $eventId)->where('status', 'diterima')->count() 
                 : 0;
 
             // 4. Otomatis ketersediaan variabel $menungguReview di seluruh halaman yang memuat sidebar
