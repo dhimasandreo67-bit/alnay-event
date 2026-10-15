@@ -1,13 +1,17 @@
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 <header
-    class="fixed top-0 right-0 left-[235px] z-[15] flex h-[76px] min-h-[76px] items-center justify-between border-b border-[#e8e8e5] bg-white px-[30px] font-sans text-[#1e2530] max-[900px]:left-[70px] max-[900px]:px-[18px]">
+    class="fixed top-0 right-0 left-[235px] z-[15] flex h-[76px] min-h-[76px] items-center justify-between gap-4 border-b border-[#e8e8e5] bg-white px-[30px] font-sans text-[#1e2530] max-[900px]:left-[70px] max-[900px]:gap-3 max-[900px]:px-[18px]">
 
     @if (($variant ?? 'module') === 'dashboard')
-        <div class="text-[11px] text-[#91959a]">
-            <strong
-                class="mt-2 block text-[17px] text-[#1e2530]">{{ $event?->nama ?? 'Verifikasi Pendaftaran Peserta' }}</strong>
+        {{-- ================= DASHBOARD ================= --}}
+        <div class="min-w-0 text-[11px] text-[#91959a]">
+            <strong class="mt-2 block truncate text-[17px] text-[#1e2530]">
+                {{ $event?->nama ?? 'Verifikasi Pendaftaran Peserta' }}
+            </strong>
         </div>
-        <div class="flex items-center gap-[9px]">
+
+        <div class="flex shrink-0 items-center gap-[9px]">
             <form method="POST" action="{{ route('admin.logout.web') }}">
                 @csrf
                 <button
@@ -15,24 +19,28 @@
                     type="submit">Keluar</button>
             </form>
         </div>
-    @elseif(($variant ?? 'module') === 'builder')
+    @elseif (($variant ?? 'module') === 'builder')
+        {{-- ================= BUILDER ================= --}}
         <div class="flex min-w-0 flex-col gap-1 text-[11px] text-[#91959a]">
-            <span class="text-[9px] text-[#ba8320]">Atelier Event › {{ $event?->nama ?? 'Pilih Event' }} › Atur Formulir
-                Pendaftaran</span>
-            <strong class="truncate text-[17px] text-[#1e2530]">Formulir Pendaftaran 
-                {{ $event?->nama ?? 'Event Baru' }}</strong>
-            <small class="text-[9px] text-[#91959a]">Atur data & persyaratan yang wajib diisi peserta fashion show
-                busana adat</small>
+            <span class="truncate text-[9px] text-[#ba8320]">
+                Atelier Event › {{ $event?->nama ?? 'Pilih Event' }} › Atur Formulir Pendaftaran
+            </span>
+            <strong class="truncate text-[17px] text-[#1e2530]">
+                Formulir Pendaftaran {{ $event?->nama ?? 'Event Baru' }}
+            </strong>
+            <small class="truncate text-[9px] text-[#91959a] max-[1200px]:hidden">
+                Atur data &amp; persyaratan yang wajib diisi peserta fashion show busana adat
+            </small>
         </div>
 
-        <div class="flex shrink-0 items-center gap-3">
+        <div class="flex shrink-0 items-center gap-3 max-[1100px]:gap-2">
 
             {{-- TOGGLE PENDAFTARAN — BISA DIKLIK --}}
             @if ($event)
                 <button type="button" onclick="togglePendaftaran({{ $event->id }})" id="togglePendaftaranBtn"
                     data-event-id="{{ $event->id }}"
                     title="Klik untuk {{ $event->pendaftaran_dibuka ? 'nonaktifkan' : 'aktifkan' }} pendaftaran"
-                    class="group inline-flex items-center gap-2 px-3 py-[9px] text-[11px] font-bold rounded-[5px] border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md
+                    class="group inline-flex cursor-pointer items-center gap-2 rounded-[5px] border px-3 py-[9px] text-[11px] font-bold shadow-sm transition-all duration-200 hover:shadow-md
                         {{ $event->pendaftaran_dibuka
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
                             : 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-400' }}">
@@ -64,27 +72,33 @@
                             "></span>
                     </span>
 
-                    {{-- Label dinamis --}}
-                    <span id="togglePendaftaranLabel" class="text-left whitespace-nowrap">
+                    {{-- Label dinamis — disembunyikan di layar sempit agar hemat ruang --}}
+                    <span id="togglePendaftaranLabel" class="whitespace-nowrap text-left max-[1200px]:hidden">
                         {{ $event->pendaftaran_dibuka ? 'Nonaktifkan Pendaftaran' : 'Aktifkan Pendaftaran' }}
                     </span>
                 </button>
             @endif
 
             <button type="button" onclick="saveThenPreview()"
-                class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-3 py-[9px] text-[11px] font-bold text-[#56524c] hover:bg-[#f9f8f5] transition">
+                class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-3 py-[9px] text-[11px] font-bold text-[#56524c] transition hover:bg-[#f9f8f5]">
                 Lihat Form Publik
             </button>
-            <button
-                class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#ba8320] bg-[#ba8320] px-3 py-[9px] text-[11px] font-bold text-white hover:bg-[#a06f1a] transition"
-                type="button" id="saveFormHeader">▣ Simpan Formulir</button>
+
+            <button type="button" id="saveFormHeader"
+                class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[5px] border border-[#ba8320] bg-[#ba8320] px-3 py-[9px] text-[11px] font-bold text-white transition hover:bg-[#a06f1a]">
+                ▣ Simpan Formulir
+            </button>
         </div>
     @else
-        <div class="text-[11px] text-[#91959a]">
+        {{-- ================= DEFAULT / MODULE ================= --}}
+        <div class="min-w-0 text-[11px] text-[#91959a]">
             Admin Portal
-            <strong class="mt-2 block text-[17px] text-[#1e2530]">{{ $event?->nama ?? 'Event Alnay' }}</strong>
+            <strong class="mt-2 block truncate text-[17px] text-[#1e2530]">
+                {{ $event?->nama ?? 'Event Alnay' }}
+            </strong>
         </div>
-        <a class="inline-flex items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-[13px] py-[9px] text-[11px] font-medium text-[#56524c] no-underline"
+
+        <a class="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[5px] border border-[#dedbd4] bg-white px-[13px] py-[9px] text-[11px] font-medium text-[#56524c] no-underline"
             href="{{ route('admin.dashboard') }}">Dashboard</a>
     @endif
 </header>
@@ -110,6 +124,7 @@
             toast.classList.add('translate-x-[120%]', 'opacity-0');
         }, 2800);
     };
+
     // Toggle pendaftaran manual — klik dari header
     window.togglePendaftaran = async function(eventId) {
         const btn = document.getElementById('togglePendaftaranBtn');
