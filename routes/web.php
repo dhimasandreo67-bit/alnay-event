@@ -200,6 +200,7 @@ Route::middleware('pelanggan')->group(function () {
             'midtransIsProduction' => config('services.midtrans.is_production'),
         ]);
     })->name('vote.checkout');
+
 });
 
 /*
@@ -300,8 +301,6 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.jawaban.file');
     Route::post('/peserta/{id}/hasil-audisi', [AdminPendaftaranController::class, 'updateHasilAudisi'])
     ->name('admin.peserta.hasil-audisi');
-    Route::post('/peserta/{peserta}/hasil-audisi', [App\Http\Controllers\Admin\PesertaController::class, 'updateHasilAudisi'])
-    ->name('admin.peserta.hasil-audisi');
 
     // G. Aktivasi & Voting
     Route::get('/activation/{event?}', [AktivasiController::class, 'index'])
@@ -314,6 +313,9 @@ Route::middleware('admin.session')->prefix('admin')->group(function () {
         ->name('admin.activation.toggle-tampil-semua');
     Route::post('/activation/{peserta}/toggle-tampil', [AktivasiController::class, 'toggleTampil'])
         ->name('admin.activation.toggle-tampil');
+    // ✅ Pembayaran registrasi manual (dipanggil dari tab "Registrasi" di Dashboard)
+    Route::post('/registrasi/pembayaran', [AktivasiController::class, 'simpanPembayaranRegistrasi'])
+        ->name('admin.registrasi.pembayaran');
     Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])
         ->name('admin.voting.settings');
     Route::post('/voting/settings/{event}', [VotingController::class, 'update'])
