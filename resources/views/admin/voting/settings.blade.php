@@ -16,9 +16,9 @@
     <div class="flex min-h-screen">
         @include('admin.partials.sidebar', ['active' => 'voting-settings', 'event' => $event])
 
-        <main class="flex-1 min-w-0 p-6 pb-24 ml-[235px]">
-            <h1 class="text-2xl font-bold m-0">Pengaturan Event & Voting</h1>
-            <p class="text-[#73716c] text-[12px] mt-1 max-w-2xl mb-5">
+        <main class="flex-1 min-w-0 p-4 sm:p-6 pb-24 ml-0 md:ml-[235px]">
+            <h1 class="text-xl sm:text-2xl font-bold m-0">Pengaturan Event & Voting</h1>
+            <p class="text-[#73716c] text-[12px] mt-1.5 max-w-2xl mb-6">
                 Konfigurasi status publikasi, periode voting, format tampilan hasil, dan catatan rekening settlement.
             </p>
 
@@ -37,14 +37,14 @@
                 <form method="POST" action="{{ route('admin.voting.settings.update', $event) }}">
                     @csrf
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
                         {{-- STATUS VOTING --}}
-                        <div class="bg-white border border-[#e3ded6] rounded-xl p-5">
-                            <div class="flex items-start justify-between gap-4 mb-3">
+                        <div class="bg-white border border-[#e3ded6] rounded-xl p-5 flex flex-col">
+                            <div class="flex items-start justify-between gap-4 mb-4">
                                 <div>
                                     <h2 class="font-bold text-[15px] m-0">Status Voting</h2>
-                                    <p class="text-[11px] text-[#73716c] mt-1">
+                                    <p class="text-[11px] text-[#73716c] mt-1 leading-relaxed">
                                         Aktifkan untuk membuka voting. Nonaktifkan untuk menutup voting — pengunjung tetap bisa lihat kandidat & hasil.
                                     </p>
                                 </div>
@@ -58,92 +58,93 @@
 
                             {{-- Status indicator --}}
                             @if ($event->voting_aktif)
-                                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center justify-between text-[12px]">
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3.5 flex items-center justify-between gap-3 text-[12px] mt-3">
                                     <div>
                                         <strong class="block text-emerald-800">✅ Voting Aktif</strong>
                                         <span class="text-emerald-700">Pengunjung bisa vote kandidat sekarang.</span>
                                     </div>
-                                    <span class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap ml-3">AKTIF</span>
+                                    <span class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap shrink-0">AKTIF</span>
                                 </div>
                             @else
-                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between text-[12px]">
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3.5 flex items-center justify-between gap-3 text-[12px] mt-3">
                                     <div>
                                         <strong class="block text-gray-700">⏸️ Voting Ditutup</strong>
                                         <span class="text-gray-500">Pengunjung tidak bisa vote — tapi bisa lihat kandidat.</span>
                                     </div>
-                                    <span class="bg-gray-500 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap ml-3">DITUTUP</span>
+                                    <span class="bg-gray-500 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap shrink-0">DITUTUP</span>
                                 </div>
                             @endif
                         </div>
 
                         {{-- Periode Waktu & Countdown --}}
                         <div class="bg-white border border-[#e3ded6] rounded-xl p-5">
-                            <div class="flex items-start gap-3 mb-3">
+                            <h2 class="font-bold text-[15px] m-0">Periode Waktu & Countdown</h2>
+                            <p class="text-[11px] text-[#73716c] mt-1 mb-4 leading-relaxed">Jadwal pembukaan dan penutupan otomatis sistem voting.</p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
-                                    <h2 class="font-bold text-[15px] m-0">Periode Waktu & Countdown</h2>
-                                    <p class="text-[11px] text-[#73716c] mt-1">Jadwal pembukaan dan penutupan otomatis sistem voting.</p>
+                                    <label class="block text-[11px] font-bold text-[#73716c] mb-1">Mulai Pemilihan (Kick-off)</label>
+                                    <input type="datetime-local" id="votingMulai" name="voting_mulai"
+                                        value="{{ optional($event->voting_mulai)->format('Y-m-d\TH:i') }}"
+                                        class="w-full border border-[#e5e1db] rounded-lg px-3 py-2 text-[12px]">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-[#73716c] mb-1">Batas Akhir Voting (Penutupan)</label>
+                                    <input type="datetime-local" id="votingSelesai" name="voting_selesai"
+                                        value="{{ optional($event->voting_selesai)->format('Y-m-d\TH:i') }}"
+                                        class="w-full border border-[#e5e1db] rounded-lg px-3 py-2 text-[12px]">
                                 </div>
                             </div>
 
-                            <label class="block text-[11px] font-bold text-[#73716c] mb-1">Mulai Pemilihan (Kick-off)</label>
-                            <input type="datetime-local" id="votingMulai" name="voting_mulai"
-                                value="{{ optional($event->voting_mulai)->format('Y-m-d\TH:i') }}"
-                                class="w-full border border-[#e5e1db] rounded-lg px-3 py-2 text-[12px] mb-3">
-
-                            <label class="block text-[11px] font-bold text-[#73716c] mb-1">Batas Akhir Voting (Penutupan)</label>
-                            <input type="datetime-local" id="votingSelesai" name="voting_selesai"
-                                value="{{ optional($event->voting_selesai)->format('Y-m-d\TH:i') }}"
-                                class="w-full border border-[#e5e1db] rounded-lg px-3 py-2 text-[12px] mb-3">
-
-                            <div id="durasiInfo" class="bg-[#f7f5f0] rounded-lg p-2.5 text-[11px] flex justify-between mb-4">
+                            <div id="durasiInfo" class="bg-[#f7f5f0] rounded-lg p-2.5 text-[11px] flex items-center justify-between gap-2 mb-4">
                                 <span>Durasi Aktif: <strong id="durasiTeks">-</strong></span>
-                                <span class="text-[#98958f]">WIB (GMT+7)</span>
+                                <span class="text-[#98958f] shrink-0">WIB (GMT+7)</span>
                             </div>
 
-                            <label class="flex items-start gap-2 mb-3 text-[12px]">
-                                <input type="checkbox" name="auto_freeze_voting" value="1" class="mt-0.5" {{ $event->auto_freeze_voting ? 'checked' : '' }}>
-                                <span>
-                                    <strong class="block">Kunci Suara Otomatis (Auto Freeze)</strong>
-                                    <span class="text-[#73716c] text-[11px]">Tutup perolehan secara sistem tepat saat tenggat waktu tercapai tanpa jeda.</span>
-                                </span>
-                            </label>
+                            <div class="space-y-3">
+                                <label class="flex items-start gap-2 text-[12px]">
+                                    <input type="checkbox" name="auto_freeze_voting" value="1" class="mt-0.5 shrink-0" {{ $event->auto_freeze_voting ? 'checked' : '' }}>
+                                    <span>
+                                        <strong class="block">Kunci Suara Otomatis (Auto Freeze)</strong>
+                                        <span class="text-[#73716c] text-[11px] leading-relaxed">Tutup perolehan secara sistem tepat saat tenggat waktu tercapai tanpa jeda.</span>
+                                    </span>
+                                </label>
 
-                            <label class="flex items-start gap-2 text-[12px]">
-                                <input type="checkbox" name="blackout_h2_voting" value="1" class="mt-0.5" {{ $event->blackout_h2_voting ? 'checked' : '' }}>
-                                <span>
-                                    <strong class="block">Sembunyikan Total Suara</strong>
-                                    <span class="text-[#73716c] text-[11px]">Sembunyikan total suara publik demi unsur kejutan.</span>
-                                </span>
-                            </label>
+                                <label class="flex items-start gap-2 text-[12px]">
+                                    <input type="checkbox" name="blackout_h2_voting" value="1" class="mt-0.5 shrink-0" {{ $event->blackout_h2_voting ? 'checked' : '' }}>
+                                    <span>
+                                        <strong class="block">Sembunyikan Total Suara</strong>
+                                        <span class="text-[#73716c] text-[11px] leading-relaxed">Sembunyikan total suara publik demi unsur kejutan.</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
 
                         {{-- Format Tampilan Hasil Vote --}}
-                        <div class="bg-white border border-[#e3ded6] rounded-xl p-5">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex items-start gap-3">
-                                    <div>
-                                        <h2 class="font-bold text-[15px] m-0">Format Tampilan Hasil Vote</h2>
-                                    </div>
-                                </div>
-                                <span class="bg-white border border-gold text-gold text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap">TAMPILAN PUBLIK</span>
+                        <div class="bg-white border border-[#e3ded6] rounded-xl p-5 md:col-span-2">
+                            <div class="flex items-start justify-between gap-3 mb-4">
+                                <h2 class="font-bold text-[15px] m-0">Format Tampilan Hasil Vote</h2>
+                                <span class="bg-white border border-gold text-gold text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap shrink-0">TAMPILAN PUBLIK</span>
                             </div>
 
-                            @foreach ([
-                                'angka' => ['Angka Vote Asli', 'Menampilkan jumlah nominal suara terkumpul riil (Contoh: 1.420 suara)', '1.420 Suara'],
-                                'persentase' => ['Persentase (%)', 'Menampilkan persentase proporsional dari total suara masuk (Contoh: 34,8%)', '34,8%'],
-                                'keduanya' => ['Tampilkan Keduanya', 'Menampilkan angka riil diikuti persentase (Contoh: 1.420 suara (34,8%))', '1.420 (34,8%)'],
-                            ] as $value => [$label, $desc, $contoh])
-                                <label class="flex items-center justify-between border rounded-lg p-3 mb-2 cursor-pointer format-option {{ $event->format_hasil_voting === $value ? 'border-gold bg-[#fff8e9]' : 'border-[#e5e1db]' }}">
-                                    <span class="flex items-start gap-2">
-                                        <input type="radio" name="format_hasil_voting" value="{{ $value }}" class="mt-1" {{ $event->format_hasil_voting === $value ? 'checked' : '' }}>
-                                        <span>
-                                            <strong class="block text-[12px]">{{ $label }}</strong>
-                                            <span class="text-[11px] text-[#73716c]">{{ $desc }}</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                @foreach ([
+                                    'angka' => ['Angka Vote Asli', 'Menampilkan jumlah nominal suara terkumpul riil', '1.420 Suara'],
+                                    'persentase' => ['Persentase (%)', 'Menampilkan persentase proporsional dari total suara masuk', '34,8%'],
+                                    'keduanya' => ['Tampilkan Keduanya', 'Menampilkan angka riil diikuti persentase', '1.420 (34,8%)'],
+                                ] as $value => [$label, $desc, $contoh])
+                                    <label class="flex flex-col gap-2.5 border rounded-lg p-3.5 cursor-pointer format-option {{ $event->format_hasil_voting === $value ? 'border-gold bg-[#fff8e9]' : 'border-[#e5e1db]' }}">
+                                        <span class="flex items-start gap-2">
+                                            <input type="radio" name="format_hasil_voting" value="{{ $value }}" class="mt-0.5 shrink-0" {{ $event->format_hasil_voting === $value ? 'checked' : '' }}>
+                                            <span>
+                                                <strong class="block text-[12px]">{{ $label }}</strong>
+                                                <span class="text-[11px] text-[#73716c] leading-relaxed">{{ $desc }}</span>
+                                            </span>
                                         </span>
-                                    </span>
-                                    <span class="text-[11px] font-mono border border-[#e5e1db] rounded px-2 py-1 whitespace-nowrap ml-2">{{ $contoh }}</span>
-                                </label>
-                            @endforeach
+                                        <span class="text-[11px] font-mono border border-[#e5e1db] rounded px-2 py-1 bg-[#faf8f4] text-center">{{ $contoh }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
 
