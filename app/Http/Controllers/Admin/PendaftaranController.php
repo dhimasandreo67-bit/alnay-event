@@ -318,12 +318,13 @@ class PendaftaranController extends Controller
         }
 
         // 2. Update field audisi
-        $updateData = [
-            'hasil_audisi' => $request->hasil_audisi,
-        ];
+        // ✅ FIX: sebelumnya nilai ini cuma dikumpulkan ke $updateData tapi
+        // tidak pernah diterapkan ke $peserta, jadi save() di bawah tidak
+        // menyimpan perubahan apapun. Sekarang di-set langsung ke model.
+        $peserta->hasil_audisi = $request->hasil_audisi;
         if ($request->hasil_audisi === 'lolos') {
-            $updateData['sudah_audisi']   = true;
-            $updateData['tanggal_audisi'] = now();
+            $peserta->sudah_audisi   = true;
+            $peserta->tanggal_audisi = now();
         }
 
         if ($request->has('catatan_admin')) {

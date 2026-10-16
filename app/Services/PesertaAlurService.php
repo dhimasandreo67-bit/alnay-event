@@ -109,7 +109,7 @@ class PesertaAlurService
                 'status'           => 'diterima',        // ✅ langsung diterima
                 'status_registrasi'=> 'lunas',            // ✅ anggap lunas
                 'tampil_di_publik' => true,               // ✅ langsung tampil
-                'kandidat_voting'  => true,               // ✅ bisa divote
+                'kandidat_voting'  => false,              // ✅ FIX: ini peserta pendaftaran biasa, bukan kandidat voting
                 'hasil_audisi'     => null,               // ✅ nggak ada audisi
             ]);
 
