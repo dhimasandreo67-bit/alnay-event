@@ -152,41 +152,46 @@ class PendaftaranController extends Controller
     public function show(Request $request, $id)
     {
         $peserta = Peserta::with([
-            'user:id,nama,foto_url,foto_custom',
-            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,voting_mulai,voting_selesai,auto_freeze_voting,tampilkan_hasil_voting,format_hasil_voting,status',
-            'jawabans.pertanyaan:id,label,tipe_input,tag_tampilan',
-        ])
-            ->select('id', 'event_id', 'user_id', 'galeri_foto', 'tampil_di_publik')
-            ->findOrFail($id);
+            'user',
+            'event',
+            'jawabans.pertanyaan',
+            'pembayaran',
+            'pembayaranRegistrasi',
+        ])->findOrFail($id);
 
         // Cek akses publik: kalau tampil_di_publik = false & bukan admin → 404
         if (!$peserta->tampil_di_publik && !auth('admin')->check()) {
             abort(404);
         }
 
+        // Kalau request JSON → return JSON
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json($peserta);
         }
 
-        return view('voting.index', [
-            'pesertaId' => $id,
+        // Return view admin peserta show
+        return view('admin.peserta.show', [
             'peserta' => $peserta,
         ]);
     }
-
     /**
      * GET /admin/peserta/{id}/edit
      * Redirect ke halaman aktivasi karena view edit terpisah tidak tersedia
      */
     public function edit($id)
     {
-        $peserta = Peserta::findOrFail($id);
-        
-        // Redirect ke halaman aktivasi event terkait
-        return redirect()->route('admin.activation', [
-            'event' => $peserta->event_id,
-            'mode' => 'pendaftaran'
-        ])->with('info', 'Halaman edit form khusus tidak tersedia. Silakan kelola status & data peserta melalui halaman Aktivasi.');
+        $peserta = Peserta::with([
+            'user',
+            'event',
+            'jawabans.pertanyaan',
+            'pembayaran',
+            'pembayaranRegistrasi',
+        ])->findOrFail($id);
+
+        return view('admin.peserta.edit', [
+            'peserta' => $peserta,
+            'event'   => $peserta->event,
+        ]);
     }
 
     /**
