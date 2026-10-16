@@ -359,6 +359,16 @@
             color: var(--gold);
         }
 
+        /* ✅ Garis indikator posisi saat menyisipkan field baru di tengah kanvas */
+        .drop-indicator {
+            height: 3px;
+            background: var(--gold);
+            border-radius: 3px;
+            margin: 6px 2px;
+            box-shadow: 0 0 0 4px rgba(195, 139, 34, 0.15);
+            pointer-events: none;
+        }
+
         .empty {
             border: 2px dashed #d8d0c4;
             border-radius: var(--radius);
@@ -860,6 +870,43 @@
             let selected = null;
             let draggedQuestion = null;
             let draggedLibraryItem = null;
+            let pendingInsertTarget = null; // ✅ posisi sisip untuk field baru dari library
+
+            // ✅ Garis indikator posisi sisip (dipindah-pindah sesuai posisi kursor saat drag)
+            const dropIndicator = document.createElement('div');
+            dropIndicator.className = 'drop-indicator';
+
+            function showDropIndicatorAt(afterElement) {
+                if (afterElement && afterElement.parentNode === list) {
+                    list.insertBefore(dropIndicator, afterElement);
+                } else {
+                    list.appendChild(dropIndicator);
+                }
+            }
+
+            function hideDropIndicator() {
+                if (dropIndicator.parentNode) {
+                    dropIndicator.parentNode.removeChild(dropIndicator);
+                }
+            }
+
+            // ✅ Cari elemen .question yang ada TEPAT DI BAWAH posisi kursor (y),
+            // dipakai bersama untuk reorder elemen lama maupun sisip elemen baru.
+            // Return null artinya kursor berada di bawah semua elemen (taruh di akhir).
+            function getQuestionAfterPoint(y) {
+                const questions = [...list.querySelectorAll('.question')].filter(q => q !== draggedQuestion);
+                let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+
+                for (const q of questions) {
+                    const rect = q.getBoundingClientRect();
+                    const offset = y - (rect.top + rect.height / 2);
+                    if (offset < 0 && offset > closest.offset) {
+                        closest = { offset, element: q };
+                    }
+                }
+
+                return closest.element;
+            }
 
             function resolveEventId() {
                 const fromUrl = window.location.pathname.match(/form-builder\/(\d+)/);
@@ -1031,7 +1078,7 @@
 
             let isAddingField = false;
 
-            function addField(type, label) {
+            function addField(type, label, insertBeforeEl = null) {
                 if (!type) return;
                 if (isAddingField) return;
                 isAddingField = true;
@@ -1081,7 +1128,13 @@
                     <div class="preview"></div>
                 `;
 
-                    list.appendChild(element);
+                    // ✅ Sisipkan di posisi yang diminta (hasil drag atau elemen terpilih);
+                    // kalau tidak ada target yang valid, tetap taruh di akhir seperti biasa.
+                    if (insertBeforeEl && insertBeforeEl.parentNode === list) {
+                        list.insertBefore(element, insertBeforeEl);
+                    } else {
+                        list.appendChild(element);
+                    }
 
                     bindQuestion(element);
                     renderField(element);
@@ -1138,7 +1191,10 @@
                 if (item.dataset.label.includes('Upload')) item.dataset.type = 'file';
 
                 item.addEventListener('click', function() {
-                    addField(item.dataset.type, item.dataset.label);
+                    // ✅ Kalau ada elemen yang sedang dipilih, sisipkan field baru tepat
+                    // setelahnya — bukan selalu di paling bawah.
+                    const insertBeforeEl = selected ? selected.nextElementSibling : null;
+                    addField(item.dataset.type, item.dataset.label, insertBeforeEl);
                 });
 
                 item.addEventListener('dragstart', function(event) {
@@ -1150,21 +1206,35 @@
 
                 item.addEventListener('dragend', function() {
                     draggedLibraryItem = null;
+                    pendingInsertTarget = null;
+                    hideDropIndicator();
                 });
             });
 
             list.addEventListener('dragover', function(event) {
                 event.preventDefault();
+
                 if (draggedQuestion) {
-                    const target = event.target.closest('.question');
-                    if (!target || target === draggedQuestion) return;
-                    const rect = target.getBoundingClientRect();
-                    const before = event.clientY < rect.top + rect.height / 2;
-                    if (before) {
-                        list.insertBefore(draggedQuestion, target);
+                    const afterElement = getQuestionAfterPoint(event.clientY);
+                    if (afterElement) {
+                        list.insertBefore(draggedQuestion, afterElement);
                     } else {
-                        list.insertBefore(draggedQuestion, target.nextSibling);
+                        list.appendChild(draggedQuestion);
                     }
+                    return;
+                }
+
+                // ✅ Menyeret field baru dari library — tampilkan garis indikator
+                // persis di posisi tempat field akan disisipkan.
+                if (draggedLibraryItem) {
+                    pendingInsertTarget = getQuestionAfterPoint(event.clientY);
+                    showDropIndicatorAt(pendingInsertTarget);
+                }
+            });
+
+            list.addEventListener('dragleave', function(event) {
+                if (draggedLibraryItem && !list.contains(event.relatedTarget)) {
+                    hideDropIndicator();
                 }
             });
 
@@ -1183,9 +1253,11 @@
                     const type = event.dataTransfer.getData('text/field-type');
                     const label = event.dataTransfer.getData('text/field-label');
                     if (type && label && !draggedQuestion) {
-                        addField(type, label);
+                        addField(type, label, pendingInsertTarget);
                         saveDraftNow();
                     }
+                    pendingInsertTarget = null;
+                    hideDropIndicator();
                 });
 
                 list.addEventListener('drop', function(event) {
@@ -1195,9 +1267,11 @@
                     const label = event.dataTransfer.getData('text/field-label');
 
                     if (type && label && !draggedQuestion) {
-                        addField(type, label);
+                        addField(type, label, pendingInsertTarget);
                         saveDraftNow();
                     }
+                    pendingInsertTarget = null;
+                    hideDropIndicator();
                 });
 
                 if (dropzone) {
@@ -1218,9 +1292,11 @@
                         const type = event.dataTransfer.getData('text/field-type');
                         const label = event.dataTransfer.getData('text/field-label');
                         if (type && label && !draggedQuestion) {
-                            addField(type, label);
+                            addField(type, label, pendingInsertTarget);
                             saveDraftNow();
                         }
+                        pendingInsertTarget = null;
+                        hideDropIndicator();
                     });
                 }
             }
