@@ -294,46 +294,49 @@
     <nav class="admin-sidebar__nav" aria-label="Event dan peserta">
                 <p class="admin-sidebar__section">Event & Peserta</p>
 
-        {{-- 1. Verifikasi Pendaftaran Peserta — tampil kalau pendaftaran_aktif atau ada peserta menunggu --}}
-        @if(($event?->pendaftaran_aktif ?? true) || (!empty($menungguReview) && $menungguReview > 0))
-            <a class="admin-sidebar__link {{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}"
-               href="{{ route('admin.dashboard', $event?->id) }}"
-               style="--i: 0">
-                <span class="admin-sidebar__step">1</span>
-                <span class="admin-sidebar__label">Verifikasi Pendaftaran Peserta</span>
+        {{-- 1. Verifikasi Pendaftaran Peserta — SELALU tampil --}}
+    <a class="admin-sidebar__link {{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}"
+    href="{{ route('admin.dashboard', $event?->id) }}"
+    style="--i: 0">
+        <span class="admin-sidebar__step">1</span>
+        <span class="admin-sidebar__label">Verifikasi Pendaftaran Peserta</span>
 
-                @if(!empty($menungguReview) && $menungguReview > 0)
-                    <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
-                @endif
-            </a>
+        @if(!empty($menungguReview) && $menungguReview > 0)
+            <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
         @endif
+    </a>
 
-        {{-- 2. Form Pendaftaran Event — tampil kalau pendaftaran_aktif --}}
-        @if($event?->pendaftaran_aktif ?? true)
-            <a class="admin-sidebar__link {{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}"
-               href="{{ isset($event) ? route('admin.form-builder', $event->id) : route('admin.form-builder') }}"
-               style="--i: 1">
-                <span class="admin-sidebar__step">2</span>
-                <span class="admin-sidebar__label">Form Pendaftaran Event</span>
-            </a>
-        @endif
+    {{-- 2. Form Pendaftaran Event — SELALU tampil --}}
+    <a class="admin-sidebar__link {{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}"
+    href="{{ isset($event) ? route('admin.form-builder', $event->id) : route('admin.form-builder') }}"
+    style="--i: 1">
+        <span class="admin-sidebar__step">2</span>
+        <span class="admin-sidebar__label">Form Pendaftaran Event</span>
+    </a>
 
-        {{-- 3. Kelola Event — SELALU tampil --}}
-        <a class="admin-sidebar__link {{ in_array($active ?? '', ['events-create', 'events-index']) ? 'is-active' : '' }}"
-           href="{{ route('admin.events.index') }}"
-           style="--i: 2">
-            <span class="admin-sidebar__step">3</span>
-            <span class="admin-sidebar__label">Kelola Event</span>
-        </a>
+    {{-- 3. Kelola Event — SELALU tampil --}}
+    <a class="admin-sidebar__link {{ in_array($active ?? '', ['events-create', 'events-index']) ? 'is-active' : '' }}"
+    href="{{ route('admin.events.index') }}"
+    style="--i: 2">
+        <span class="admin-sidebar__step">3</span>
+        <span class="admin-sidebar__label">Kelola Event</span>
+    </a>
 
-        {{-- 4. Aktivasi Akun Peserta — tampil kalau butuh_registrasi --}}
-        @if($event?->butuh_registrasi ?? false)
-            <a class="admin-sidebar__link {{ ($active ?? '') === 'activation' ? 'is-active' : '' }}"
-               href="{{ isset($event) ? route('admin.activation', $event->id) : '#' }}"
-               style="--i: 3">
-                <span class="admin-sidebar__step">4</span>
-                <span class="admin-sidebar__label">Aktivasi Akun Peserta</span>
-            </a>
+    {{-- 4. Aktivasi Akun Peserta — SELALU tampil --}}
+    <a class="admin-sidebar__link {{ ($active ?? '') === 'activation' ? 'is-active' : '' }}"
+    href="{{ isset($event) ? route('admin.activation', $event->id) : '#' }}"
+    style="--i: 3">
+        <span class="admin-sidebar__step">4</span>
+        <span class="admin-sidebar__label">Aktivasi Akun Peserta</span>
+    </a>
+
+    {{-- 5. Kelola Peserta Tampil — SELALU tampil --}}
+    <a class="admin-sidebar__link {{ ($active ?? '') === 'peserta-tampil' ? 'is-active' : '' }}"
+    href="{{ isset($event) ? route('admin.peserta-tampil', $event->id) : '#' }}"
+    style="--i: 4">
+        <span class="admin-sidebar__step">5</span>
+        <span class="admin-sidebar__label">Kelola Peserta Tampil</span>
+    </a>
         @endif
 
         {{-- 5. Kelola Peserta Tampil — SELALU tampil --}}
