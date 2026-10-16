@@ -220,6 +220,7 @@
 </head>
 
 <body class="bg-[#faf9f6] text-[#15233d]">
+    @include('partials.back-to-top')
 
     @php
         $blackoutAktif = false;

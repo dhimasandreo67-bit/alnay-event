@@ -214,6 +214,7 @@
 <body class="min-h-screen bg-[#FFF8F1] text-[#1E1B18]">
 
     @include('partials.header')
+    @include('partials.back-to-top')
 
     <main class="max-w-5xl mx-auto px-5 md:px-6 py-6 md:py-8">
 

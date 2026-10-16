@@ -488,6 +488,7 @@
 </head>
 
 <body class="text-[#15233d]">
+    @include('partials.back-to-top')
 
     @php
         // =====================================================
