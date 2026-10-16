@@ -969,38 +969,78 @@
                                             ? round(($p->total_vote / $totalUntukPersen) * 100, 2)
                                             : 0;
                                     $juara = $p->id === $top3Raw[0]->id ? 1 : ($p->id === $top3Raw[1]->id ? 2 : 3);
-                                    $border =
-                                        $juara == 1
-                                            ? 'border-2 border-[#c99a32] shadow-md'
-                                            : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
-                                    $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[210px] sm:h-[210px]';
+
+                                    // ============================================================
+                                    // PALET MEDALI — emas / perak / perunggu
+                                    // Setiap juara punya: border, glow shadow, badge, warna
+                                    // inisial, gradien bar, tinggi kartu, dan label.
+                                    // ============================================================
+                                    $palet = [
+                                        1 => [
+                                            'border'   => 'border-2 border-[#d4af37]',
+                                            'glow'     => 'shadow-[0_18px_40px_-12px_rgba(212,175,55,0.55)]',
+                                            'badge'    => 'bg-gradient-to-r from-[#f8e6a0] via-[#d4af37] to-[#a67c1a] text-[#3a2c08] ring-1 ring-white/50',
+                                            'initText' => 'text-[#b8860b]',
+                                            'initBg'   => 'from-[#fdf8e8] to-[#f3e3b0]',
+                                            'bar'      => 'from-[#d4af37] to-[#f5d78e]',
+                                            'height'   => 'h-[230px] sm:h-[270px]',
+                                            'label'    => 'Juara 1',
+                                        ],
+                                        2 => [
+                                            'border'   => 'border-2 border-[#c0c0c0]',
+                                            'glow'     => 'shadow-[0_18px_40px_-12px_rgba(150,150,150,0.5)]',
+                                            'badge'    => 'bg-gradient-to-r from-[#f2f2f2] via-[#c0c0c0] to-[#8a8a8a] text-[#2a2a2a] ring-1 ring-white/60',
+                                            'initText' => 'text-[#8f8f8f]',
+                                            'initBg'   => 'from-[#f6f6f6] to-[#e2e2e2]',
+                                            'bar'      => 'from-[#a8a8a8] to-[#e0e0e0]',
+                                            'height'   => 'h-[220px] sm:h-[240px]',
+                                            'label'    => 'Juara 2',
+                                        ],
+                                        3 => [
+                                            'border'   => 'border-2 border-[#cd7f32]',
+                                            'glow'     => 'shadow-[0_18px_40px_-12px_rgba(205,127,50,0.5)]',
+                                            'badge'    => 'bg-gradient-to-r from-[#e9b47b] via-[#cd7f32] to-[#8b5a2b] text-white ring-1 ring-white/40',
+                                            'initText' => 'text-[#b06a2b]',
+                                            'initBg'   => 'from-[#fbf0e2] to-[#f2dcc0]',
+                                            'bar'      => 'from-[#cd7f32] to-[#e6a86d]',
+                                            'height'   => 'h-[210px] sm:h-[210px]',
+                                            'label'    => 'Juara 3',
+                                        ],
+                                    ][$juara];
                                 @endphp
 
                                 <div class="swiper-slide">
                                     <div
-                                        class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }}">
+                                        class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 {{ $palet['border'] }} {{ $palet['glow'] }}">
 
-                                        <div class="relative overflow-hidden {{ $height }}">
+                                        <div class="relative overflow-hidden {{ $palet['height'] }}">
                                             @if ($fotoP)
                                                 <img src="{{ $fotoP }}" alt="{{ $namaP }}"
                                                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                                             @else
                                                 <div
-                                                    class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
+                                                    class="w-full h-full bg-gradient-to-br {{ $palet['initBg'] }} flex items-center justify-center">
                                                     <span
-                                                        class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisialP }}</span>
+                                                        class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
                                                 </div>
                                             @endif
 
                                             <span
-                                                class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
+                                                class="absolute top-3 right-3 inline-flex items-center gap-1 {{ $palet['badge'] }} text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md backdrop-blur-sm">
                                                 @if ($juara == 1)
-                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                    {{-- Mahkota --}}
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                         <path
                                                             d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                                                     </svg>
+                                                @else
+                                                    {{-- Bintang medali --}}
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path
+                                                            d="M12 2.5l2.7 5.6 6.2.9-4.5 4.3 1 6.1L12 16.5 6.6 19.4l1-6.1L3.1 9l6.2-.9z" />
+                                                    </svg>
                                                 @endif
-                                                Juara {{ $juara }}
+                                                {{ $palet['label'] }}
                                             </span>
                                         </div>
 
@@ -1032,7 +1072,7 @@
                                             </div>
 
                                             <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
-                                                <div class="h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full transition-all duration-700"
+                                                <div class="h-full bg-gradient-to-r {{ $palet['bar'] }} rounded-full transition-all duration-700"
                                                     style="width: {{ $persenP }}%"></div>
                                             </div>
                                         </div>
