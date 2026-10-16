@@ -73,7 +73,7 @@ class AktivasiController extends Controller
     /**
      * POST /admin/activation/:peserta/verifikasi
      */
-    public function verifikasi(Peserta $peserta): RedirectResponse
+    public function verifikasi(Request $request, Peserta $peserta): RedirectResponse
     {
         $pembayaran = $this->pembayaranTerbaik($peserta);
 
@@ -81,8 +81,14 @@ class AktivasiController extends Controller
             return back()->with('error', 'Peserta ini belum punya transaksi pembayaran.');
         }
 
+        // ✅ Ambil mode dari request — biar redirect balik ke tab yang sama
+        $mode = $request->input('mode', 'pendaftaran');
+
         return redirect()
-            ->route('admin.activation', $peserta->event_id)
+            ->route('admin.activation', [
+                'event' => $peserta->event_id,
+                'mode'  => $mode,
+            ])
             ->with('success', "Status pembayaran " . ($peserta->nama_pendaftaran ?: $peserta->user->nama) . " berhasil disinkronkan.");
     }
 

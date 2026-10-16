@@ -268,6 +268,7 @@
                             {{-- Tombol Sinkronkan --}}
                             <form action="{{ route('admin.activation.verifikasi', $f['id']) }}" method="POST">
                                 @csrf
+                                <input type="hidden" name="mode" value="pendaftaran">
                                 <button type="submit"
                                     class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gold text-white font-bold rounded-md hover:bg-[#a3721a] transition text-[12px]">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -384,6 +385,7 @@
                         <form action="{{ route('admin.activation.verifikasi', $f['id']) }}" method="POST"
                             class="mb-3">
                             @csrf
+                            <input type="hidden" name="mode" value="registrasi">
                             <button type="submit"
                                 class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gold text-white font-bold rounded-md hover:bg-[#a3721a] transition text-[12px]">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
