@@ -561,12 +561,12 @@
                                 $vStatus = 'event_belum_mulai';
                             } elseif (!$e->voting_aktif) {
                                 $vStatus = 'ditutup';
-                            } elseif (!$vMulai || $now->lt($vMulai)) {
+                            } elseif ($vMulai && $now->lt($vMulai)) {   // ← cek $vMulai != null dulu
                                 $vStatus = 'belum';
                             } elseif ($vAkhir && $now->gt($vAkhir)) {
                                 $vStatus = 'selesai';
                             } else {
-                                $vStatus = 'jalan';
+                                $vStatus = 'jalan';                      // ← default: jalan
                             }
                             $sisaHari = $vAkhir ? max((int) $now->copy()->startOfDay()->diffInDays($vAkhir->copy()->startOfDay(), false), 0) : null;
                             $teksSisa = $sisaHari === null ? '' : ($sisaHari === 0 ? 'hari ini hari terakhir' : 'sisa ' . $sisaHari . ' hari');
