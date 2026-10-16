@@ -23,8 +23,21 @@
 <body class="min-h-screen bg-[#faf9f6] text-[#15233d] antialiased">
 
     @php
-        $isPreview = request()->routeIs('admin.preview-form');
-    @endphp
+    $isPreview = request()->routeIs('admin.preview-form');
+    $isAdminMode = $isAdminMode ?? false;
+
+    // ✅ Cek apakah form builder punya field "nama"
+    $adaFieldNama = false;
+    if (isset($questions)) {
+        foreach ($questions as $q) {
+            $labelLower = strtolower(trim($q->label ?? ''));
+            if (in_array($labelLower, ['nama', 'name', 'nama lengkap', 'nama pendaftaran'])) {
+                $adaFieldNama = true;
+                break;
+            }
+        }
+    }
+@endphp
 
     <main class="mx-auto max-w-3xl px-5 pb-10 pt-6 sm:pt-8">
 
@@ -78,7 +91,11 @@
                 </h1>
 
                 <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-gray-300">
-                    Isi formulir di bawah untuk mendaftar event ini. Pastikan data yang kamu masukkan sudah benar.
+                    @if ($isAdminMode)
+                        <strong>Mode Admin:</strong> Isi formulir untuk menambah peserta manual. Peserta akan langsung tampil & bisa divote.
+                    @else
+                        Isi formulir di bawah untuk mendaftar event ini. Pastikan data yang kamu masukkan sudah benar.
+                    @endif
                 </p>
 
                 <div class="mt-4 flex flex-wrap gap-2">
@@ -174,7 +191,13 @@
         ->exists();
     }
 
-        if ($isPreview) {
+            // ✅ ADMIN MODE — skip semua cek, biar admin bisa input
+    if ($isAdminMode) {
+        // Admin mode — nggak ada cek pendaftaran — langsung form
+        $pendaftaranDitutup = false;
+        $alasanTutup = null;
+    } elseif ($isPreview) {
+        // Preview mode — cek pendaftaran_dibuka aja
         if (!($event->pendaftaran_aktif ?? true)) {
             $pendaftaranDitutup = true;
             $alasanTutup = 'Pendaftaran peserta tidak diaktifkan untuk event ini.';
@@ -183,6 +206,7 @@
             $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup (Toggle Pendaftaran Nonaktif).';
         }
     } else {
+        // User mode — cek semua
         if ($sudahTerdaftar) {
             $pendaftaranDitutup = true;
             $alasanTutup = 'Kamu sudah terdaftar dengan akun ini pada event yang sama. Satu akun hanya dapat mendaftar sekali.';
@@ -226,11 +250,41 @@
                 </div>
             @else
                 {{-- ================== FORM PENDAFTARAN ================== --}}
-                <form method="POST" action="{{ route('public.registration.store', $event) }}"
-                    enctype="multipart/form-data" id="formPendaftaran" class="mt-5">
-                    @csrf
+                <form method="POST" 
+                action="{{ $isAdminMode ? route('admin.peserta-tampil.store-form', $event->id) : route('public.registration.store', $event) }}"
+                enctype="multipart/form-data" id="formPendaftaran" class="mt-5">
+                @csrf
 
-                    @php
+                {{-- Admin mode: input nama + email manual — HANYA kalau form builder nggak ada field nama --}}
+                @if ($isAdminMode && !$adaFieldNama)
+                    <div class="rounded-2xl border border-[#ece5d7] bg-white p-5 shadow-sm sm:p-6 mb-5">
+                        <h2 class="font-display text-lg font-bold text-[#0a1526] mb-4">Data Peserta</h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[13px] font-semibold text-[#0a1526] mb-1">
+                                    Nama Pendaftaran <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="nama_pendaftaran" required maxlength="100"
+                                    value="{{ old('nama_pendaftaran') }}"
+                                    placeholder="Contoh: John Doe"
+                                    class="w-full rounded-lg border border-[#e3ded6] bg-[#fdfcf9] px-3 py-2 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-2 focus:ring-[#c99a32]/20">
+                            </div>
+
+                            <div>
+                                <label class="block text-[13px] font-semibold text-[#0a1526] mb-1">
+                                    Email <span class="text-[#98958f] font-normal">(Opsional)</span>
+                                </label>
+                                <input type="email" name="email_manual" maxlength="255"
+                                    value="{{ old('email_manual') }}"
+                                    placeholder="Contoh: johndoe@example.com"
+                                    class="w-full rounded-lg border border-[#e3ded6] bg-[#fdfcf9] px-3 py-2 text-sm focus:border-[#c99a32] focus:outline-none focus:ring-2 focus:ring-[#c99a32]/20">
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                @php
                         $pertanyaans = $questions ?? $event->pertanyaans()->orderBy('urutan')->get();
 
                         // Jumlah pertanyaan yang benar-benar diisi (judul & sub judul tidak dihitung)

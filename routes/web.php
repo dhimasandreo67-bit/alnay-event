@@ -266,6 +266,14 @@ Route::post('/peserta-tampil/{peserta}/toggle', [\App\Http\Controllers\Admin\Pes
     ->name('admin.peserta-tampil.toggle');
 Route::post('/peserta-tampil/{event}/toggle-semua', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'toggleSemua'])
     ->name('admin.peserta-tampil.toggle-semua');
+Route::post('/peserta-tampil/{event}/store', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'store'])
+    ->name('admin.peserta-tampil.store');
+
+
+Route::get('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'create'])
+    ->name('admin.peserta-tampil.create');
+Route::post('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'storeForm'])
+    ->name('admin.peserta-tampil.store-form');
 
     // A. Dashboard
 
