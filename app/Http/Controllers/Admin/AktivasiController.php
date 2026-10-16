@@ -11,10 +11,10 @@ use Illuminate\View\View;
 
 class AktivasiController extends Controller
 {
-    /**
+        /**
      * GET /admin/activation/:event?
      */
-        public function index(?Event $event = null): View
+    public function index(?Event $event = null): View
     {
         if (!$event) {
             $eventId = session('active_event_id');
@@ -24,18 +24,23 @@ class AktivasiController extends Controller
         }
 
         $finalis = collect();
-            if ($event) {
-                $mode = request()->query('mode', 'pendaftaran');
 
-                $query = Peserta::where('event_id', $event->id)
-                    ->where('status', 'diterima')
-                    ->where('kandidat_voting', false)
-                    ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan']);
+        if ($event) {
+            $mode = request()->query('mode', 'pendaftaran');
+
+            $query = Peserta::where('event_id', $event->id)
+                ->where('status', 'diterima')
+                ->where('kandidat_voting', false)
+                ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan']);
 
             // Mode Registrasi — cuma tampil yang sudah lolos audisi (kalau event butuh audisi)
             if ($mode === 'registrasi' && $event->butuh_audisi) {
                 $query->where('hasil_audisi', 'lolos');
             }
+
+            $finalis = $query->latest('id')->get()
+                ->map(fn (Peserta $peserta) => $this->transform($peserta));
+        }
 
         $totalFinalis = $finalis->count();
         $lunas = $finalis->where('statusAkun', 'aktif')->count();
