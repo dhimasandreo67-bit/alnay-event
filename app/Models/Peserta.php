@@ -17,7 +17,7 @@ class Peserta extends Model
 
     public $timestamps = false;
 
-        protected $fillable = [
+    protected $fillable = [
         'event_id',
         'user_id',
         'nama_pendaftaran',
@@ -42,7 +42,7 @@ class Peserta extends Model
         'tanggal_daftar' => 'datetime',
         'galeri_foto' => 'array',
         'answers' => 'array',
-        'sudah_audisi' => 'boolean',      
+        'sudah_audisi' => 'boolean',
         'tanggal_audisi' => 'datetime',
         'tampil_di_publik' => 'boolean',
     ];
@@ -113,7 +113,7 @@ class Peserta extends Model
         return in_array($this->status_registrasi, ['dp', 'lunas'], true);
     }
 
-            public function isVotable(): bool
+    public function isVotable(): bool
     {
         $event = $this->event;
 
@@ -166,5 +166,54 @@ class Peserta extends Model
         }
 
         return $this->user?->email ?? '-';
+    }
+
+    /**
+     * Foto utama peserta — dari jawaban form (upload gambar)
+     * Fallback: galeri_foto → foto user → avatar
+     */
+    public function fotoUtama(): ?string
+    {
+        // 1. Cari jawaban dengan tipe file / label foto
+        $jawabanFoto = $this->jawabans
+            ->first(function ($j) {
+                $tipe = strtolower($j->pertanyaan?->tipe_input ?? '');
+                $label = strtolower($j->pertanyaan?->label ?? '');
+
+                $isFileTipe = in_array($tipe, ['file', 'upload_gambar', 'upload gambar', 'image', 'gambar'], true);
+                $isLabelGambar = preg_match('/upload gambar|foto|gambar|image/i', $label);
+
+                return ($isFileTipe || $isLabelGambar) && $j->jawaban;
+            });
+
+        if ($jawabanFoto && $jawabanFoto->jawaban) {
+            $path = is_array($jawabanFoto->jawaban)
+                ? ($jawabanFoto->jawaban[0] ?? null)
+                : $jawabanFoto->jawaban;
+
+            if ($path) {
+                return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+            }
+        }
+
+        // 2. Fallback — galeri_foto
+        if (!empty($this->galeri_foto) && is_array($this->galeri_foto)) {
+            $first = $this->galeri_foto[0] ?? null;
+            if ($first) {
+                return str_starts_with($first, 'http') ? $first : asset('storage/' . $first);
+            }
+        }
+
+        // 3. Fallback — foto custom user
+        if ($this->user?->foto_custom) {
+            return asset('storage/' . $this->user->foto_custom);
+        }
+
+        // 4. Fallback — foto Google
+        if ($this->user?->foto_url) {
+            return $this->user->foto_url;
+        }
+
+        return null;
     }
 }

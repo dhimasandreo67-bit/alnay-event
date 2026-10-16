@@ -266,7 +266,7 @@
 
             <div class="flex gap-4 items-start">
                 <div class="shrink-0 relative">
-                    <img src="{{ $peserta->foto ? asset('storage/' . $peserta->foto) : ($peserta->user->foto_custom ? asset('storage/' . $peserta->user->foto_custom) : ($peserta->user->foto_url ?? 'https://ui-avatars.com/api/?name=' . $peserta->user->nama)) }}"
+                    <img src="{{ $peserta->fotoUtama() ?? 'https://ui-avatars.com/api/?name=' . urlencode($peserta->namaTampil()) }}"
                         class="w-20 h-24 object-cover rounded-xl border border-[#CDC5BC]/30 shadow-md">
                 </div>
 

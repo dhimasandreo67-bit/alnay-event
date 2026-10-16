@@ -624,7 +624,7 @@
                 return [
                     'id' => $p->id,
                     'nama' => $nama,
-                    'foto' => $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : $p->user?->foto_url,
+                    'foto' => $p->fotoUtama(),
                     'inisial' => $inisial($nama),
                     'vote_raw' => (int) $p->total_vote,
                     'vote' => number_format($p->total_vote, 0, ',', '.'),
@@ -952,9 +952,7 @@
                             @foreach ($top3 as $i => $p)
                                 @php
                                     $namaP = $p->namaTampil();
-                                    $fotoP = $p->user?->foto_custom
-                                        ? asset('storage/' . $p->user->foto_custom)
-                                        : $p->user?->foto_url;
+                                    $fotoP = $p->fotoUtama();
                                     $inisialP = strtoupper(
                                         implode(
                                             '',
@@ -1101,9 +1099,7 @@
                             @php
                                 $rank = $i + 4;
                                 $namaR = $ps->namaTampil();
-                                $fotoR = $ps->user?->foto_custom
-                                    ? asset('storage/' . $ps->user->foto_custom)
-                                    : $ps->user?->foto_url;
+                                $fotoR = $ps->fotoUtama();
                                 $persenR = $totalUntukPersen > 0 ? round(($ps->total_vote / $totalUntukPersen) * 100, 1) : 0;
                                 $voteR = number_format($ps->total_vote, 0, ',', '.');
                                 $formatR = $event->format_hasil_voting ?? 'keduanya';

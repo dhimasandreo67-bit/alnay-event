@@ -240,7 +240,7 @@
                 'id' => $p->id,
                 'nomor' => str_pad($i + 1, 2, '0', STR_PAD_LEFT),
                 'nama' => $p->namaTampil(),
-                'foto' => $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : $p->user?->foto_url,
+                'foto' => $p->fotoUtama(),
                 'persen' => $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 2) : 0,
                 'vote' => $p->total_vote,
             ];
