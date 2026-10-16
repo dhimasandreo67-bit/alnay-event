@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <title>Detail Event & Kandidat - {{ $event->nama }} | ALNAY.ID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" href="{{ asset('images/alnaylogo.png') }}">
@@ -197,8 +198,6 @@
 
         /* ============================================ */
         /* REVEAL UP — ENTRANCE ANIMATION                */
-        /* "backwards" (bukan "both") supaya transform   */
-        /* hover tidak ditimpa nilai akhir animasi       */
         /* ============================================ */
         .reveal-up {
             animation: revealUp .6s cubic-bezier(.22, 1, .36, 1) backwards;
@@ -371,7 +370,6 @@
             align-items: center;
         }
 
-        /* ---- MOBILE: coverflow blur ---- */
         @media (max-width: 767px) {
             .top3Swiper .swiper-slide {
                 width: 80%;
@@ -422,13 +420,11 @@
             }
         }
 
-        /* ---- DESKTOP/TABLET: 3 kolom biasa, tanpa blur ---- */
         @media (min-width: 768px) {
             .top3Swiper {
                 padding: 20px 0 30px 0;
             }
 
-            /* Desktop: tidak digeser, 3 kartu statis di tengah */
             .top3Swiper .swiper-wrapper {
                 display: flex;
                 justify-content: center;
@@ -484,6 +480,120 @@
                 font-size: 10px !important;
             }
         }
+
+        /* ==================== ANIMASI SCROLL REVEAL ==================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-zoom {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-zoom.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .reveal-fade {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        .reveal-fade.visible {
+            opacity: 1;
+        }
+
+        .stagger-1 { transition-delay: 0.05s; }
+        .stagger-2 { transition-delay: 0.1s; }
+        .stagger-3 { transition-delay: 0.15s; }
+        .stagger-4 { transition-delay: 0.2s; }
+        .stagger-5 { transition-delay: 0.25s; }
+        .stagger-6 { transition-delay: 0.3s; }
+        .stagger-7 { transition-delay: 0.35s; }
+        .stagger-8 { transition-delay: 0.4s; }
+
+        html { scroll-behavior: smooth; }
+
+        .banner-parallax {
+            transition: transform 0.1s linear;
+        }
+
+        @keyframes popIn {
+            0%   { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+        .countdown-block.visible {
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ==================== BACK TO TOP BUTTON STYLES ==================== */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 99;
+            background: linear-gradient(135deg, #c99a32, #b88625);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(201, 154, 50, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border: none;
+        }
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .back-to-top:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(201, 154, 50, 0.6);
+            background: linear-gradient(135deg, #d4a742, #c69220);
+        }
+        .back-to-top svg {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
 
@@ -491,9 +601,6 @@
     @include('partials.back-to-top')
 
     @php
-        // =====================================================
-        // HELPER
-        // =====================================================
         $formatAngka = function ($angka) {
             if ($angka >= 1000000) {
                 return round($angka / 1000000, 1) . 'M';
@@ -517,15 +624,10 @@
 
         $ketentuanVoting = $pecahBaris($event->syarat_ketentuan ?? '');
 
-        // =====================================================
-        // LOGIKA TURUNAN
-        // =====================================================
         $tz = 'Asia/Jakarta';
         $now = \Carbon\Carbon::now($tz);
-        // Definisi blackout (dari controller → view)
         $blackout = (bool) ($blackoutAktif ?? false);
 
-        // Voting OFF ATAU blackout → sembunyikan SEMUA tampilan vote
         $sembunyikanVote = !$event->voting_aktif || $blackout;
 
         $mulai = $event->tanggal_mulai ? \Carbon\Carbon::parse($event->tanggal_mulai, $tz)->locale('id') : null;
@@ -549,7 +651,6 @@
 
         $periode = $selesai ? $rentang($mulai, $selesai) : ($mulai ? 'Mulai ' . $rentang($mulai) : '-');
 
-        // ---- Jadwal Event (alur baru: Pendaftaran → Audisi → Registrasi → Voting → Pengumuman) ----
         $bukaDaftar = $event->pembukaan_pendaftaran_tanggal
             ? \Carbon\Carbon::parse($event->pembukaan_pendaftaran_tanggal, $tz)->locale('id')
             : null;
@@ -578,7 +679,6 @@
             ];
         }
 
-        // Audisi hanya tampil kalau event ini memang memakai audisi
         if ($event->ada_audisi ?? true) {
             $jadwal[] = [
                 'nama' => 'Audisi',
@@ -603,7 +703,6 @@
             'tanggal' => 'Setelah voting berakhir',
         ];
 
-        // ---- Hitung mundur ----
         $cdLabel = $event->voting_aktif ? ($selesai ? 'Sisa Waktu Voting' : 'Voting Sedang Berjalan') : 'Voting Selesai';
         $detik = $selesai ? max(0, $selesai->timestamp - $now->timestamp) : 0;
         $tampilCountdown = $event->voting_aktif && $selesai && $detik > 0;
@@ -613,10 +712,6 @@
         $cdMenit = intdiv($detik % 3600, 60);
         $cdDetik = $detik % 60;
 
-        // ---- Kandidat ----
-        // Nomor di pojok kartu = peringkat (urutan suara).
-        // Saat blackout, kartu diurutkan berdasarkan id dan nomor diganti "?"
-        // supaya tidak membocorkan peringkat.
         $kandidat = $pesertas
             ->map(function ($p) use ($inisial) {
                 $nama = $p->namaTampil();
@@ -624,7 +719,7 @@
                 return [
                     'id' => $p->id,
                     'nama' => $nama,
-                    'foto' => $p->fotoUtama(),
+                    'foto' => $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : $p->user?->foto_url,
                     'inisial' => $inisial($nama),
                     'vote_raw' => (int) $p->total_vote,
                     'vote' => number_format($p->total_vote, 0, ',', '.'),
@@ -632,7 +727,6 @@
             })
             ->values();
 
-        // Saat blackout, urutan kartu mengikuti nomor urut tetap (bukan suara)
         if ($sembunyikanVote) {
             $kandidat = $kandidat->sortBy('id')->values();
         }
@@ -647,13 +741,12 @@
 
         {{-- EVENT BANNER --}}
         <section
-            class="event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
+            class="banner-parallax reveal-zoom event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
             @if ($event->banner)
                 <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
                     class="block h-[220px] w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02] sm:h-[285px] md:h-[350px]"
                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
 
-                {{-- Fallback kalau gambar gagal load --}}
                 <div
                     class="hidden h-[220px] w-full bg-gradient-to-br from-[#0a1526] to-[#1a2942] items-center justify-center sm:h-[285px] md:h-[350px]">
                     <div class="text-center">
@@ -677,14 +770,12 @@
                 </div>
             @endif
 
-            {{-- Overlay gradient di bawah --}}
             <div
                 class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a1526]/40 to-transparent">
             </div>
 
-            {{-- Badge status — floating glassmorphism --}}
             <span
-                class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
+                class="reveal stagger-2 absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
                 {{ $event->voting_aktif
                     ? 'border-emerald-400/30 bg-emerald-950/70 text-emerald-300'
                     : 'border-orange-400/30 bg-orange-950/70 text-orange-300' }}">
@@ -704,8 +795,7 @@
 
         {{-- EVENT INFORMATION --}}
         <section
-            class="section-reveal relative -mt-5 mx-2 overflow-hidden rounded-[20px] border border-[#ebe7df] bg-white shadow-[0_18px_45px_-15px_rgba(21,35,61,.12)]">
-            {{-- Garis emas atas --}}
+            class="reveal stagger-2 section-reveal relative -mt-5 mx-2 overflow-hidden rounded-[20px] border border-[#ebe7df] bg-white shadow-[0_18px_45px_-15px_rgba(21,35,61,.12)]">
             <div class="h-[3px] w-full bg-gradient-to-r from-[#c99a32] via-[#e0b254] to-[#c99a32]"></div>
 
             <div class="p-5 md:p-6">
@@ -730,31 +820,77 @@
                             {{ $event->nama }}
                         </h1>
 
-                        <div class="relative mt-2 max-w-3xl">
+                        <div class="relative mt-2 max-w-3xl" x-data="{ openModal: false }">
                             <p id="deskripsiEvent"
                                 style="transition: max-height .45s cubic-bezier(.22, 1, .36, 1)"
-                                class="max-h-[78px] overflow-hidden text-xs leading-relaxed text-gray-500 md:max-h-none md:overflow-visible md:text-sm">
+                                class="reveal stagger-1 max-h-[78px] overflow-hidden text-xs leading-relaxed text-gray-500 md:max-h-none md:overflow-visible md:text-sm">
                                 {{ $event->deskripsi ?: 'Deskripsi belum diisi.' }}
                             </p>
 
-                            {{-- Efek pudar di bawah teks yang terpotong (mobile) --}}
                             <div id="deskripsiFade"
-                                class="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white via-white/80 to-transparent opacity-0 transition-opacity duration-300 md:hidden">
+                                class="reveal stagger-2 pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white via-white/80 to-transparent opacity-0 transition-opacity duration-300 md:hidden">
                             </div>
+
+                            <button type="button" id="btnSelengkapnya" aria-expanded="false"
+                                @click="openModal = true"
+                                class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#a37b2a] transition hover:text-[#c99a32] md:hidden">
+                                <span id="btnSelengkapnyaText">Lihat selengkapnya</span>
+                                <svg id="btnSelengkapnyaIcon" class="h-3 w-3 transition-transform duration-300"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {{-- Modal Deskripsi Lengkap --}}
+                            <template x-teleport="body">
+                                <div x-show="openModal" x-cloak @keydown.escape.window="openModal = false"
+                                    class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+                                    role="dialog" aria-modal="true">
+                                    <div x-show="openModal" x-transition:enter="transition ease-out duration-300"
+                                        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                                        x-transition:leave="transition ease-in duration-200"
+                                        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                                        @click="openModal = false"
+                                        class="fixed inset-0 bg-black/60 backdrop-blur-md z-40 cursor-pointer">
+                                    </div>
+
+                                    <div x-show="openModal" x-transition:enter="transition ease-out duration-300"
+                                        x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                        x-transition:leave="transition ease-in duration-200"
+                                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                        x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                                        class="relative z-50 bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden my-auto">
+                                        
+                                        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shrink-0">
+                                            <h3 class="text-base sm:text-lg font-bold text-[#0a1526]">
+                                                Deskripsi Lengkap Event
+                                            </h3>
+                                            <button @click="openModal = false" type="button"
+                                                class="p-2 text-gray-400 hover:text-[#c99a32] hover:bg-gray-100 rounded-full transition-all focus:outline-none cursor-pointer">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div class="p-6 overflow-y-auto text-sm text-[#5c5c5c] leading-relaxed whitespace-pre-line">
+                                            {{ $event->deskripsi }}
+                                        </div>
+
+                                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 text-right shrink-0">
+                                            <button @click="openModal = false" type="button"
+                                                class="rounded-lg bg-[#15233d] px-5 py-2.5 text-[11px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#1f3357]">
+                                                Tutup
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
-                        {{-- Hanya mobile, dan hanya muncul kalau teks terpotong (diatur JS) --}}
-                        <button type="button" id="btnSelengkapnya" aria-expanded="false"
-                            class="mt-1.5 hidden items-center gap-1 text-[11px] font-semibold text-[#a37b2a] transition hover:text-[#c99a32] md:hidden">
-                            <span id="btnSelengkapnyaText">Lihat selengkapnya</span>
-                            <svg id="btnSelengkapnyaIcon" class="h-3 w-3 transition-transform duration-300"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-
-                        <div class="mt-3 flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
-                            {{-- Baris 1: tanggal --}}
+                        <div class="reveal stagger-3 mt-3 flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
                             <span
                                 class="inline-flex items-center gap-1.5 rounded-full border border-[#eee8da] bg-[#faf8f2] px-2.5 py-1 text-[10px] text-gray-600">
                                 <svg class="h-3 w-3 text-[#c99a32]" fill="none" stroke="currentColor"
@@ -765,7 +901,6 @@
                                 {{ $periode }}
                             </span>
 
-                            {{-- Baris 2: biaya vote + tempat --}}
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span
                                     class="inline-flex items-center rounded-full border border-[#eee8da] bg-[#faf8f2] px-2.5 py-1 text-[10px] text-gray-600">
@@ -789,30 +924,27 @@
                     </div>
 
                     {{-- COUNTDOWN --}}
-                    <div class="relative mt-8 self-start overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4">
-                        {{-- Glow gold di pojok --}}
+                    <div class="reveal-zoom relative mt-8 self-start overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4">
                         <div
                             class="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#c99a32]/20 blur-3xl">
                         </div>
 
                         <div class="relative z-10">
-                            {{-- Header Label Status --}}
                             <div class="flex items-center justify-between border-b border-white/10 pb-3">
                                 <span
-                                    class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#c5b388]">
+                                    class="reveal stagger-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#c5b388]">
                                     <span class="h-2 w-2 rounded-full bg-[#c99a32]"></span>
                                     {{ $cdLabel }}
                                 </span>
                                 <span class="text-[10px] font-medium text-gray-400">Timer</span>
                             </div>
 
-                            {{-- Countdown Display (berjalan real-time) --}}
                             @if ($tampilCountdown)
                                 <div id="countdown" data-target="{{ $selesai->timestamp * 1000 }}"
                                     class="mt-4 grid grid-cols-4 gap-1.5">
                                     @foreach ([['cdHari', 'Hari', $cdHari], ['cdJam', 'Jam', $cdJam], ['cdMenit', 'Menit', $cdMenit], ['cdDetik', 'Detik', $cdDetik]] as [$cdId, $cdNama, $cdNilai])
                                         <div
-                                            class="countdown-item rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
+                                            class="countdown-item reveal stagger-2 rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
                                             <span id="{{ $cdId }}"
                                                 class="font-display block text-lg font-bold leading-none tracking-tight text-[#f5d78e] tabular-nums">{{ sprintf('%02d', $cdNilai) }}</span>
                                             <span
@@ -826,10 +958,9 @@
                                 </p>
                             @endif
 
-                            {{-- Stat Boxes --}}
                             <div class="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
                                 <div
-                                    class="rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                    class="reveal-left stagger-3 stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm transition-transform duration-200 hover:scale-105 hover:bg-white/10">
                                     <p class="font-display text-base font-bold text-[#f5d78e]">
                                         {{ $jumlahPeserta }}
                                     </p>
@@ -839,7 +970,7 @@
                                 </div>
 
                                 <div
-                                    class="rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm transition-transform duration-200 hover:scale-105 hover:bg-white/10">
+                                    class="reveal-right stagger-5 stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm transition-transform duration-200 hover:scale-105 hover:bg-white/10">
                                     @if ($sembunyikanVote)
                                         <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-5 w-5 text-[#f5d78e]"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -867,14 +998,12 @@
         @php
             $top3Raw = $pesertas->take(3);
 
-            // Tag juara ASLI sebelum reorder
             $top3Raw->each(function ($p, $i) {
                 $p->juara_asli = $i + 1;
             });
 
             $totalUntukPersen = $totalSuara > 0 ? $totalSuara : 1;
 
-            // Reorder: juara 2 - juara 1 - juara 3
             $top3 = collect();
             if ($top3Raw->count() >= 2) {
                 $top3->push($top3Raw[1]);
@@ -886,12 +1015,11 @@
                 $top3->push($top3Raw[2]);
             }
 
-            // Peringkat 4 – 6 (daftar ringkas di bawah Top 3)
             $peringkat46 = $pesertas->slice(3, 3)->values();
         @endphp
 
         @if ($sembunyikanVote)
-            <section class="section-reveal mt-7">
+            <section class="section-reveal reveal mt-7">
                 <div
                     class="overflow-hidden rounded-[18px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed] shadow-sm">
                     <div class="relative px-6 pt-10 pb-8 text-center md:px-12 md:pt-12 md:pb-10">
@@ -922,7 +1050,7 @@
                 </div>
             </section>
         @else
-            <section class="section-reveal mt-7">
+            <section class="section-reveal reveal mt-7">
                 <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between px-5">
                     <div>
                         <div class="mb-2 flex items-center gap-3">
@@ -952,7 +1080,9 @@
                             @foreach ($top3 as $i => $p)
                                 @php
                                     $namaP = $p->namaTampil();
-                                    $fotoP = $p->fotoUtama();
+                                    $fotoP = $p->user?->foto_custom
+                                        ? asset('storage/' . $p->user->foto_custom)
+                                        : $p->user?->foto_url;
                                     $inisialP = strtoupper(
                                         implode(
                                             '',
@@ -968,11 +1098,6 @@
                                             : 0;
                                     $juara = $p->id === $top3Raw[0]->id ? 1 : ($p->id === $top3Raw[1]->id ? 2 : 3);
 
-                                    // ============================================================
-                                    // PALET MEDALI — emas / perak / perunggu
-                                    // Setiap juara punya: border, glow shadow, badge, warna
-                                    // inisial, gradien bar, tinggi kartu, dan label.
-                                    // ============================================================
                                     $palet = [
                                         1 => [
                                             'border'   => 'border-2 border-[#d4af37]',
@@ -1026,13 +1151,11 @@
                                             <span
                                                 class="absolute top-3 right-3 inline-flex items-center gap-1 {{ $palet['badge'] }} text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md backdrop-blur-sm">
                                                 @if ($juara == 1)
-                                                    {{-- Mahkota --}}
                                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                         <path
                                                             d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                                                     </svg>
                                                 @else
-                                                    {{-- Bintang medali --}}
                                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                         <path
                                                             d="M12 2.5l2.7 5.6 6.2.9-4.5 4.3 1 6.1L12 16.5 6.6 19.4l1-6.1L3.1 9l6.2-.9z" />
@@ -1081,25 +1204,21 @@
 
                         </div>
 
-                        {{-- Pagination dots --}}
                         @if ($top3->count() > 1)
                             <div class="top3Pagination"></div>
                         @endif
                     </div>
                 @endif
 
-                {{-- ============================================ --}}
-                {{-- PERINGKAT 4 – 6 (daftar ringkas)              --}}
-                {{-- Ikut tersembunyi saat blackout karena berada  --}}
-                {{-- di cabang @else yang sama dengan Top 3.       --}}
-                {{-- ============================================ --}}
                 @if ($peringkat46->count() > 0)
-                    <div class="mt-1 overflow-hidden rounded-2xl border border-[#ece5d7] bg-white shadow-sm">
+                    <div class="reveal mt-1 overflow-hidden rounded-2xl border border-[#ece5d7] bg-white shadow-sm">
                         @foreach ($peringkat46 as $i => $ps)
                             @php
                                 $rank = $i + 4;
                                 $namaR = $ps->namaTampil();
-                                $fotoR = $ps->fotoUtama();
+                                $fotoR = $ps->user?->foto_custom
+                                    ? asset('storage/' . $ps->user->foto_custom)
+                                    : $ps->user?->foto_url;
                                 $persenR = $totalUntukPersen > 0 ? round(($ps->total_vote / $totalUntukPersen) * 100, 1) : 0;
                                 $voteR = number_format($ps->total_vote, 0, ',', '.');
                                 $formatR = $event->format_hasil_voting ?? 'keduanya';
@@ -1108,12 +1227,10 @@
                             <div
                                 class="flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-5 {{ $loop->first ? '' : 'border-t border-[#f3efe4]' }}">
 
-                                {{-- Nomor peringkat --}}
                                 <span class="w-6 shrink-0 font-display text-lg text-[#b5ad9c] sm:w-8 sm:text-xl">
                                     {{ str_pad($rank, 2, '0', STR_PAD_LEFT) }}
                                 </span>
 
-                                {{-- Foto / inisial --}}
                                 <div
                                     class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-[#ece5d7] bg-[#fbf6e9]">
                                     @if ($fotoR)
@@ -1127,7 +1244,6 @@
                                     @endif
                                 </div>
 
-                                {{-- Nama + bar --}}
                                 <div class="min-w-0 flex-1 sm:flex sm:items-center sm:gap-4">
                                     <div class="min-w-0 sm:w-56 sm:shrink-0">
                                         <h3 class="truncate text-[13px] font-semibold text-[#0a1526]">{{ $namaR }}</h3>
@@ -1140,7 +1256,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Nilai --}}
                                 <div class="shrink-0 text-right sm:w-24">
                                     @if ($formatR === 'angka')
                                         <span class="text-sm font-bold text-[#0a1526]">{{ $voteR }}</span>
@@ -1160,7 +1275,7 @@
         @endif
 
         {{-- CANDIDATE SECTION --}}
-        <section id="daftarKandidat" class="section-reveal mt-7 scroll-mt-20">
+        <section id="daftarKandidat" class="section-reveal reveal mt-7 scroll-mt-20">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <div class="mb-1.5 flex items-center gap-3">
@@ -1278,7 +1393,6 @@
                     @endforeach
                 </div>
 
-                {{-- PAGINASI — dibangun oleh JS (disembunyikan otomatis kalau cuma 1 halaman) --}}
                 <div class="mt-5">
                     <nav id="paginasiKandidat" aria-label="Halaman kandidat"
                         class="hidden flex-wrap items-center justify-center gap-1.5"></nav>
@@ -1351,7 +1465,6 @@
 
             <div class="space-y-5 overflow-y-auto px-5 py-4">
 
-                {{-- Cara Voting --}}
                 <div>
                     <h3 class="text-sm font-semibold text-[#15233d]">
                         Cara Voting
@@ -1399,7 +1512,6 @@
                     </div>
                 @endif
 
-                {{-- Jadwal Event --}}
                 <div>
                     <h3 class="text-sm font-semibold text-[#15233d]">
                         Jadwal Event
@@ -1416,14 +1528,12 @@
                                 </p>
 
                                 <p class="mt-0.5 text-[11px] text-gray-500">
-                                    {{ $tahap['tanggal'] }}
                                 </p>
                             </li>
                         @endforeach
                     </ol>
                 </div>
 
-                {{-- Informasi Event --}}
                 <div>
                     <h3 class="text-sm font-semibold text-[#15233d]">
                         Informasi Event
@@ -1461,13 +1571,10 @@
         </div>
     </div>
 
-    <!-- Swiper JS — HARUS DI ATAS init -->
+    <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
-    // ============================================
-    // MODAL SYARAT & KETENTUAN (buka / tutup eksplisit)
-    // ============================================
     (function() {
         var modal = document.getElementById('modalSyarat');
         if (!modal) return;
@@ -1498,10 +1605,6 @@
         });
     })();
 
-    // ============================================
-    // DESKRIPSI EVENT — LIHAT SELENGKAPNYA (mobile)
-    // Terpotong 4 baris + efek pudar, buka/tutup dengan animasi
-    // ============================================
     (function() {
         var teks = document.getElementById('deskripsiEvent');
         var fade = document.getElementById('deskripsiFade');
@@ -1527,9 +1630,7 @@
             btn.classList.toggle('inline-flex', tampil);
         }
 
-        // Hitung ulang kondisi (load, resize, ganti orientasi)
         function atur() {
-            // Desktop/tablet: teks tampil penuh
             if (!mq.matches) {
                 teks.style.maxHeight = '';
                 fade.style.opacity = '0';
@@ -1562,7 +1663,6 @@
             clearTimeout(timer);
 
             if (!terbuka) {
-                // Buka: animasi sampai tinggi penuh, lalu lepas batas tinggi
                 terbuka = true;
                 teks.style.maxHeight = teks.scrollHeight + 'px';
                 fade.style.opacity = '0';
@@ -1570,10 +1670,9 @@
                     if (terbuka) teks.style.maxHeight = 'none';
                 }, 480);
             } else {
-                // Tutup: mulai dari tinggi penuh supaya animasi tetap mulus
                 terbuka = false;
                 teks.style.maxHeight = teks.scrollHeight + 'px';
-                void teks.offsetHeight; // paksa reflow
+                void teks.offsetHeight;
                 teks.style.maxHeight = tinggiTutup() + 'px';
                 fade.style.opacity = '1';
             }
@@ -1591,9 +1690,6 @@
         else mq.addListener(atur);
     })();
 
-    // ============================================
-    // COUNTDOWN REAL-TIME
-    // ============================================
     (function() {
         var box = document.getElementById('countdown');
         if (!box) return;
@@ -1621,11 +1717,6 @@
         timer = setInterval(tick, 1000);
     })();
 
-    // ============================================
-    // DAFTAR KANDIDAT — PENCARIAN + PAGINASI
-    // Mobile / tablet (2 kolom) : 6 kartu per halaman (3 baris)
-    // Desktop (4 kolom)         : 8 kartu per halaman (2 baris)
-    // ============================================
     (function() {
         var input = document.getElementById('searchKandidat');
         var grid = document.getElementById('gridKandidat');
@@ -1649,7 +1740,6 @@
             return Math.max(1, Math.ceil(filtered.length / perPage()));
         }
 
-        // Daftar nomor halaman yang ditampilkan: 1 … (n-1) n (n+1) … last
         function daftarHalaman(tp, cur) {
             if (tp <= 5) {
                 return Array.from({ length: tp }, function(_, i) { return i + 1; });
@@ -1729,7 +1819,6 @@
             var awal = (page - 1) * pp;
             var akhir = awal + pp;
 
-            // Sembunyikan semua, lalu tampilkan yang ada di halaman aktif
             var posisi = new Map();
             filtered.forEach(function(c, i) { posisi.set(c, i); });
 
@@ -1755,16 +1844,12 @@
             render(false);
         });
 
-        // Jumlah kartu per halaman berubah saat ukuran layar berubah
         if (mqDesktop.addEventListener) mqDesktop.addEventListener('change', function() { render(false); });
         else mqDesktop.addListener(function() { render(false); });
 
         render(false);
     })();
 
-    // ============================================
-    // TOP 3 — SWIPER (hanya mobile; desktop statis 3 kolom)
-    // ============================================
     (function() {
         if (typeof Swiper === 'undefined') return;
 
@@ -1803,7 +1888,7 @@
 
         function matikan() {
             if (!swiper) return;
-            swiper.destroy(true, true); // hapus instance + style inline
+            swiper.destroy(true, true);
             swiper = null;
         }
 
@@ -1816,7 +1901,78 @@
         if (mq.addEventListener) mq.addEventListener('change', sinkron);
         else mq.addListener(sinkron);
     })();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // ==================== SCROLL REVEAL (Naik & Turun) ====================
+        const revealElements = document.querySelectorAll(
+            '.reveal, .reveal-left, .reveal-right, .reveal-zoom, .reveal-fade'
+        );
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: '0px 0px -40px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // ==================== PARALLAX BANNER ====================
+        const banner = document.querySelector('.banner-parallax');
+        if (banner) {
+            window.addEventListener('scroll', () => {
+                const y = window.scrollY;
+                if (y < 600) {
+                    banner.style.transform = `translateY(${y * 0.25}px)`;
+                }
+            }, { passive: true });
+        }
+
+        // ==================== COUNTDOWN BLOCKS ====================
+        const countdownBlocks = document.querySelectorAll('.countdown-block');
+        const countObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.5 });
+        countdownBlocks.forEach(el => countObserver.observe(el));
+
+        // ==================== BACK TO TOP BUTTON LOGIC ====================
+        const backToTopBtn = document.getElementById('backToTop');
+        const scrollThreshold = 400;
+        
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > scrollThreshold) {
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    });
 </script>
+
+    {{-- BACK TO TOP BUTTON --}}
+    <button id="backToTop" class="back-to-top" aria-label="Kembali ke atas">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+    </button>
 </body>
 
 </html>

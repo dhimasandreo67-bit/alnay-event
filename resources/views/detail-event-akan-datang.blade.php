@@ -171,106 +171,81 @@
             }
         }
 
-        /* ==================== BACK TO TOP BUTTON (TEMA EMAS) ==================== */
-        .back-to-top {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #d4af37 0%, #b8860b 50%, #d4af37 100%);
-            background-size: 200% 200%;
-            color: #fff;
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 
-                0 4px 15px rgba(212, 175, 55, 0.45),
-                0 0 0 0 rgba(212, 175, 55, 0.4);
+        /* ==================== ANIMASI SCROLL REVEAL ==================== */
+        .reveal {
             opacity: 0;
-            visibility: hidden;
-            transform: translateY(20px) scale(0.9);
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 999;
-            animation: shimmer 3s ease-in-out infinite;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
         }
-
-        .back-to-top.show {
+        .reveal.visible {
             opacity: 1;
-            visibility: visible;
-            transform: translateY(0) scale(1);
+            transform: translateY(0);
         }
 
-        .back-to-top:hover {
-            transform: translateY(-4px) scale(1.08);
-            box-shadow: 
-                0 8px 25px rgba(212, 175, 55, 0.65),
-                0 0 0 6px rgba(212, 175, 55, 0.15);
-            background: linear-gradient(135deg, #f5d76e 0%, #d4af37 50%, #b8860b 100%);
-        }
-
-        .back-to-top:active {
-            transform: translateY(-2px) scale(1.02);
-        }
-
-        .back-to-top svg {
-            width: 22px;
-            height: 22px;
-            stroke: #fff;
-            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-            animation: bounce-up 2s infinite;
-        }
-
-        /* Efek kilau emas */
-        @keyframes shimmer {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes bounce-up {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(-3px); }
-        }
-
-        /* Tooltip kecil */
-        .back-to-top::before {
-            content: 'Ke Atas';
-            position: absolute;
-            right: 60px;
-            background: #1f2937;
-            color: #f5d76e;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 6px;
-            white-space: nowrap;
+        .reveal-left {
             opacity: 0;
-            transform: translateX(8px);
-            transition: all 0.25s ease;
-            pointer-events: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transform: translateX(-60px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-        .back-to-top::after {
-            content: '';
-            position: absolute;
-            right: 54px;
-            border: 5px solid transparent;
-            border-left-color: #1f2937;
-            opacity: 0;
-            transform: translateX(8px);
-            transition: all 0.25s ease;
-            pointer-events: none;
-        }
-
-        .back-to-top:hover::before,
-        .back-to-top:hover::after {
+        .reveal-left.visible {
             opacity: 1;
             transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-zoom {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-zoom.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .reveal-fade {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        .reveal-fade.visible {
+            opacity: 1;
+        }
+
+        /* Stagger delay untuk elemen berurutan */
+        .stagger-1 { transition-delay: 0.05s; }
+        .stagger-2 { transition-delay: 0.1s; }
+        .stagger-3 { transition-delay: 0.15s; }
+        .stagger-4 { transition-delay: 0.2s; }
+        .stagger-5 { transition-delay: 0.25s; }
+        .stagger-6 { transition-delay: 0.3s; }
+        .stagger-7 { transition-delay: 0.35s; }
+        .stagger-8 { transition-delay: 0.4s; }
+
+        /* Smooth scroll */
+        html { scroll-behavior: smooth; }
+
+        /* Parallax ringan untuk banner */
+        .banner-parallax {
+            transition: transform 0.1s linear;
+        }
+
+        @keyframes popIn {
+            0%   { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1);   opacity: 1; }
         }
     </style>
 </head>
@@ -364,14 +339,14 @@
 
         {{-- EVENT BANNER --}}
         <section
-            class="event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
+            class="banner-parallax reveal-zoom event-banner group relative mx-0 mt-4 overflow-hidden rounded-[20px] shadow-[0_18px_40px_-12px_rgba(21,35,61,.25)]">
             @if ($event->banner)
                 <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
                     class="block h-[220px] w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02] sm:h-[285px] md:h-[350px]"
                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
 
                 <div
-                    class="hidden h-[220px] w-full bg-gradient-to-br from-[#0a1526] to-[#1a2942] items-center justify-center sm:h-[285px] md:h-[350px]">
+                    class="hidden h-[220px] w-full bg-gradient-to-br from-[#0a1526] to-[#1a2942] items-center justify-center sm:h-[285px] md:h-[350px] banner-parallax reveal-zoom">
                     <div class="text-center">
                         <p class="font-display text-2xl font-bold text-[#c99a32] tracking-wider sm:text-3xl">
                             {{ $event->nama }}</p>
@@ -399,7 +374,7 @@
 
             {{-- Badge status — floating glassmorphism --}}
             <span
-                class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
+                class="reveal stagger-2 absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
                 {{ $statusPendaftaran === 'Pendaftaran Dibuka'
                     ? 'border-emerald-400/30 bg-emerald-950/70 text-emerald-300'
                     : 'border-rose-400/30 bg-rose-950/70 text-rose-300' }}">
@@ -419,7 +394,7 @@
 
         {{-- EVENT INFORMATION --}}
         <section
-            class="section-reveal relative -mt-5 mx-2 overflow-hidden rounded-[20px] border border-[#ebe7df] bg-white shadow-[0_18px_45px_-15px_rgba(21,35,61,.12)]">
+            class="reveal stagger-2 section-reveal relative -mt-5 mx-2 overflow-hidden rounded-[20px] border border-[#ebe7df] bg-white shadow-[0_18px_45px_-15px_rgba(21,35,61,.12)]">
             {{-- Garis emas atas --}}
             <div class="h-[3px] w-full bg-gradient-to-r from-[#c99a32] via-[#e0b254] to-[#c99a32]"></div>
 
@@ -440,12 +415,12 @@
                         <div class="relative mt-2 max-w-3xl" x-data="{ openModal: false }">
                             <p id="deskripsiEvent"
                                 style="transition: max-height .45s cubic-bezier(.22, 1, .36, 1)"
-                                class="max-h-[78px] overflow-hidden text-xs leading-relaxed text-gray-500 md:max-h-none md:overflow-visible md:text-sm">
+                                class="reveal stagger-1 max-h-[78px] overflow-hidden text-xs leading-relaxed text-gray-500 md:max-h-none md:overflow-visible md:text-sm">
                                 {{ $event->deskripsi ?: 'Deskripsi belum diisi.' }}
                             </p>
 
                             <div id="deskripsiFade"
-                                class="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white via-white/80 to-transparent opacity-0 transition-opacity duration-300 md:hidden">
+                                class="reveal stagger-2 pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white via-white/80 to-transparent opacity-0 transition-opacity duration-300 md:hidden">
                             </div>
 
                             <button type="button" id="btnSelengkapnya" aria-expanded="false"
@@ -507,7 +482,7 @@
                             </template>
                         </div>
 
-                        <div class="mt-3 flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
+                        <div class="reveal stagger-3 mt-3 flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
                             <span
                                 class="inline-flex items-center gap-1.5 rounded-full border border-[#eee8da] bg-[#faf8f2] px-2.5 py-1 text-[10px] text-gray-600">
                                 <svg class="h-3 w-3 text-[#c99a32]" fill="none" stroke="currentColor"
@@ -535,7 +510,7 @@
                     </div>
 
                     {{-- COUNTDOWN / STATUS PENDAFTARAN --}}
-                    <div class="relative mt-8 self-start overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4">
+                    <div class="reveal-zoom relative mt-8 self-start overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#0a1526] to-[#15243b] p-4">
                         <div
                             class="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#c99a32]/20 blur-3xl">
                         </div>
@@ -543,7 +518,7 @@
                         <div class="relative z-10">
                             <div class="flex items-center justify-between border-b border-white/10 pb-3">
                                 <span
-                                    class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#c5b388]">
+                                    class="reveal stagger-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#c5b388]">
                                     @if ($event->pendaftaran_dibuka && $sisaHari !== null)
                                         <span class="relative flex h-2 w-2">
                                             <span
@@ -567,28 +542,28 @@
                             @if (!$event->pendaftaran_dibuka)
                                 <div class="py-5 text-center">
                                     <span
-                                        class="inline-flex items-center gap-2 rounded-full bg-rose-500/10 border border-rose-500/20 px-3 py-1 text-xs font-semibold text-rose-400">
+                                        class="reveal stagger-2 inline-flex items-center gap-2 rounded-full bg-rose-500/10 border border-rose-500/20 px-3 py-1 text-xs font-semibold text-rose-400">
                                         Pendaftaran Ditutup
                                     </span>
                                 </div>
                             @elseif ($sisaHari !== null)
                                 <div id="countdown" class="mt-4 grid grid-cols-3 gap-1.5">
                                     <div
-                                        class="countdown-item rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
+                                        class="countdown-item reveal stagger-2 rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
                                         <span class="font-display block text-lg font-bold leading-none tracking-tight text-[#f5d78e] tabular-nums">
                                             {{ sprintf('%02d', $sisaHari) }}
                                         </span>
                                         <span class="mt-1 block text-[8px] font-semibold uppercase tracking-wider text-gray-400">Hari</span>
                                     </div>
                                     <div
-                                        class="countdown-item rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
+                                        class="countdown-item reveal stagger-4 rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
                                         <span class="font-display block text-lg font-bold leading-none tracking-tight text-[#f5d78e] tabular-nums">
                                             {{ sprintf('%02d', $sisaJam) }}
                                         </span>
                                         <span class="mt-1 block text-[8px] font-semibold uppercase tracking-wider text-gray-400">Jam</span>
                                     </div>
                                     <div
-                                        class="countdown-item rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
+                                        class="countdown-item reveal stagger-7 rounded-lg border border-white/10 bg-white/5 px-1 py-2.5 text-center backdrop-blur-sm hover:bg-white/10">
                                         <span class="font-display block text-lg font-bold leading-none tracking-tight text-[#f5d78e] tabular-nums">
                                             {{ sprintf('%02d', $sisaMenit) }}
                                         </span>
@@ -596,7 +571,7 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="py-5 text-center">
+                                <div class="reveal stagger-2 py-5 text-center">
                                     <span
                                         class="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300">
                                         {{ $statusPendaftaran }}
@@ -606,7 +581,7 @@
 
                             <div class="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
                                 <div
-                                    class="stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm">
+                                    class="reveal-left stagger-3 stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm">
                                     <p class="font-display text-base font-bold text-[#f5d78e]">
                                         {{ $rp($event->biaya_pendaftaran ?? 0) }}
                                     </p>
@@ -616,7 +591,7 @@
                                 </div>
 
                                 <div
-                                    class="stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm">
+                                    class="reveal-right stagger-5 stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm">
                                     <p class="font-display text-base font-bold text-[#f5d78e]">
                                         {{ $event->kuota_peserta ? number_format($event->kuota_peserta, 0, ',', '.') . ' Orang' : 'Tanpa Batas' }}
                                     </p>
@@ -632,7 +607,7 @@
         </section>
 
         {{-- SYARAT & KETENTUAN --}}
-        <section class="section-reveal mt-7">
+        <section class="section-reveal mt-7 reveal-left">
             <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <div class="mb-2 flex items-center gap-3">
@@ -657,45 +632,24 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
                 {{-- KIRI: SYARAT LIST --}}
-                <div
-                    class="group relative bg-white rounded-2xl border border-[#ece5d7] shadow-sm p-6 sm:p-7 transition-all duration-300 hover:border-[#c99a32]/40 hover:shadow-md overflow-hidden">
-                    <span
-                        class="absolute -right-4 -top-6 text-[120px] font-black text-[#c99a32]/5 pointer-events-none select-none leading-none">
-                        S&amp;K
-                    </span>
+                <div class="reveal-left stagger-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 text-lg mb-1">S&K</h3>
+                    <p class="text-gray-500 text-xs mb-1">Ketentuan Peserta</p>
+                    <p class="text-amber-600 text-[10px] font-semibold mb-4 uppercase tracking-wider">Baca dengan teliti sebelum mendaftar</p>
 
-                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#c99a32] via-[#e0b254] to-[#c99a32] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500"></div>
-
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-3 mb-5">
-                            <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f4ede0] text-[#c99a32] transition-all duration-300 group-hover:bg-[#c99a32] group-hover:text-white group-hover:scale-110">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                    <div class="space-y-2">
+                        @forelse ($syaratList as $i => $syarat)
+                            <div class="reveal stagger-{{ min($i + 3, 8) }} flex items-start gap-3 p-3 hover:bg-amber-50/50 rounded-lg transition-colors">
+                                <span class="shrink-0 flex items-center justify-center w-6 h-6 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
+                                    {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
+                                </span>
+                                <span class="text-gray-700 text-sm leading-relaxed">{{ $syarat }}</span>
                             </div>
-                            <div>
-                                <h3 class="text-[15px] font-bold text-[#0a1526]">Ketentuan Peserta</h3>
-                                <p class="text-[11px] text-[#8a8178]">Baca dengan teliti sebelum mendaftar</p>
+                        @empty
+                            <div class="reveal p-4 text-center text-gray-500 text-sm bg-gray-50 rounded-lg">
+                                Syarat & ketentuan belum diisi admin.
                             </div>
-                        </div>
-
-                        <ul class="space-y-3 text-[13px] text-[#4B463F]">
-                            @forelse ($syaratList as $i => $syarat)
-                                <li class="group/item flex items-start gap-3 p-3 rounded-xl bg-[#fdfcf9] border border-[#f4f1e9] hover:border-[#c99a32]/40 hover:bg-[#fdf8ec] transition-all duration-200">
-                                    <span
-                                        class="shrink-0 w-6 h-6 rounded-lg bg-[#f4ede0] text-[#c99a32] text-[11px] font-bold flex items-center justify-center group-hover/item:bg-[#c99a32] group-hover/item:text-white transition-all duration-200">
-                                        {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
-                                    </span>
-                                    <span class="pt-0.5 leading-relaxed">{{ $syarat }}</span>
-                                </li>
-                            @empty
-                                <li class="text-[12px] text-[#8a8178] italic text-center py-6 bg-[#fdfcf9] rounded-xl border border-dashed border-[#e5e1db]">
-                                    Syarat &amp; ketentuan belum diisi admin.
-                                </li>
-                            @endforelse
-                        </ul>
+                        @endforelse
                     </div>
                 </div>
 
@@ -703,10 +657,10 @@
                 <aside class="space-y-4">
                     {{-- CARD: PENDAFTARAN KANDIDAT --}}
                     <div
-                        class="relative bg-gradient-to-br from-[#0a1526] to-[#15243b] rounded-2xl border border-[#1a2942] shadow-lg p-5 sm:p-6 overflow-hidden">
+                        class="reveal-right relative bg-gradient-to-br from-[#0a1526] to-[#15243b] rounded-2xl border border-[#1a2942] shadow-lg p-5 sm:p-6 overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#c99a32]/20 blur-3xl rounded-full pointer-events-none"></div>
 
-                        <div class="relative z-10">
+                        <div class="reveal stagger-1 relative z-10">
                             <div class="flex items-center gap-3 mb-4">
                                 <div
                                     class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c99a32]/20 border border-[#c99a32]/30 text-[#e0b254]">
@@ -721,7 +675,7 @@
                                 </div>
                             </div>
 
-                            <div class="space-y-2.5 text-[12px]">
+                            <div class="reveal stagger-2 space-y-2.5 text-[12px]">
                                 <div class="flex justify-between items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                                     <span class="text-[#c5b388] flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -735,7 +689,7 @@
                                     </span>
                                 </div>
 
-                                <div class="flex justify-between items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="reveal stagger-3 flex justify-between items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                                     <span class="text-[#c5b388] flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -757,13 +711,13 @@
 
                             @if ($bukaPendaftaran)
                                 <a href="{{ route('public.registration', $event) }}"
-                                    class="group/btn mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#c99a32] to-[#b88625] py-3 text-white text-[12px] font-bold shadow-md transition-all duration-300 hover:from-[#b88625] hover:to-[#a3741d] hover:shadow-lg active:scale-[0.98]">
+                                    class="reveal stagger-4 group/btn mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#c99a32] to-[#b88625] py-3 text-white text-[12px] font-bold shadow-md transition-all duration-300 hover:from-[#b88625] hover:to-[#a3741d] hover:shadow-lg active:scale-[0.98]">
                                     <span>Daftar Sebagai Kandidat</span>
                                     <svg class="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                     </svg>
                                 </a>
-                                <p class="mt-2.5 text-[10px] text-[#c5b388] text-center">
+                                <p class="reveal stagger-5 mt-2.5 text-[10px] text-[#c5b388] text-center">
                                     Biaya pendaftaran
                                     <strong class="text-[#e0b254]">
                                         {{ $rp($event->biaya_pendaftaran ?? 0) }}
@@ -771,7 +725,7 @@
                                 </p>
                             @else
                                 <div
-                                    class="mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-white/5 border border-white/10 py-3 text-[12px] font-semibold text-[#c5b388]">
+                                    class="reveal stagger-4 mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-white/5 border border-white/10 py-3 text-[12px] font-semibold text-[#c5b388]">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -783,46 +737,22 @@
                     </div>
 
                     {{-- CARD: JADWAL EVENT --}}
-                    <div
-                        class="bg-white rounded-2xl border border-[#ece5d7] shadow-sm p-5 sm:p-6 transition-all duration-300 hover:border-[#c99a32]/40 hover:shadow-md">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f4ede0] text-[#c99a32]">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="font-display text-[15px] font-bold text-[#0a1526]">Jadwal Event</h3>
-                                <p class="text-[10px] text-[#8a8178] uppercase tracking-wider font-semibold">Timeline kegiatan</p>
-                            </div>
-                        </div>
+                    <div class="reveal-right stagger-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Jadwal Event</h3>
+                        <p class="text-gray-500 text-xs mb-4">Timeline kegiatan</p>
 
-                        <div class="relative space-y-5 text-[12px]">
-                            <div class="absolute left-[7px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-[#c99a32]/40 via-[#c99a32]/20 to-transparent"></div>
-
+                        <div class="space-y-3">
                             @foreach ($jadwal as $tahap)
-                                @php $tgl = explode(' – ', $tahap['tanggal']); @endphp
+                                @php 
+                                    $staggerJadwal = 'stagger-' . min($loop->index + 3, 8);
+                                @endphp
 
-                                <div class="timeline-item relative flex items-start gap-3 pl-0">
-                                    <span
-                                        class="shrink-0 relative z-10 w-4 h-4 rounded-full bg-[#c99a32] ring-4 ring-[#fdf8ec] mt-0.5">
-                                        @if ($loop->last)
-                                            <span class="absolute inset-0 rounded-full bg-[#c99a32] opacity-40"></span>
-                                        @endif
-                                    </span>
-                                    <div class="flex-1">
-                                        <p class="font-bold text-[#0a1526]">{{ $tahap['nama'] }}</p>
-                                        <p class="text-[11px] text-[#6b6b6b] mt-0.5">
-                                            @if (count($tgl) === 2)
-                                                {{ $tgl[0] }}
-                                                <span class="text-[#c99a32] mx-1">→</span>
-                                                {{ $tgl[1] }}
-                                            @else
-                                                {{ $tahap['tanggal'] }}
-                                            @endif
-                                        </p>
+                                <div class="{{ $staggerJadwal }} reveal flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-colors">
+                                    <div class="shrink-0 w-8 h-8 flex items-center justify-center bg-amber-100 text-amber-700 rounded-full font-bold text-xs">
+                                        {{ $loop->iteration }}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 text-sm">{{ $tahap['nama'] }}</h4>
                                     </div>
                                 </div>
                             @endforeach
@@ -832,16 +762,16 @@
             </div>
         </section>
 
-        {{-- ALUR PENDAFTARAN --}}
-        <section class="section-reveal mt-7">
+                {{-- ALUR PENDAFTARAN --}}
+        <section class="reveal section-reveal mt-7">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-8">
                 <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4ede0] border border-[#e8d2ab] text-[#c99a32] text-xs font-semibold mb-2.5">
+                    <div class="reveal-left inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4ede0] border border-[#e8d2ab] text-[#c99a32] text-xs font-semibold mb-2.5">
                         <span class="w-2 h-2 rounded-full bg-[#c99a32] animate-pulse"></span>
                         Panduan Kandidat
                     </div>
-                    <h2 class="font-display text-xl md:text-2xl font-bold text-[#15233d]">Alur Pendaftaran</h2>
-                    <p class="text-gray-500 text-xs md:text-sm mt-1">4 langkah mudah untuk bergabung sebagai kandidat event</p>
+                    <h2 class="reveal stagger-1 font-display text-xl md:text-2xl font-bold text-[#15233d]">Alur Pendaftaran</h2>
+                    <p class="reveal stagger-2 text-gray-500 text-xs md:text-sm mt-1">4 langkah mudah untuk bergabung sebagai kandidat event</p>
                 </div>
             </div>
 
@@ -856,7 +786,7 @@
                 @endphp
 
                 @foreach ($alurPendaftaran as [$nomor, $judul, $deskripsi])
-                    <div class="step-card group relative bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:shadow-[#0a1526]/5 hover:border-[#c99a32]/40 transition-all duration-300 transform hover:-translate-y-2 overflow-hidden flex flex-col justify-between">
+                    <div class=" reveal step-card group relative bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:shadow-[#0a1526]/5 hover:border-[#c99a32]/40 transition-all duration-300 transform hover:-translate-y-2 overflow-hidden flex flex-col justify-between">
                         
                         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#c99a32] to-[#e5c158] opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-x-0 group-hover:scale-x-100 origin-left"></div>
 
@@ -1041,6 +971,53 @@
                     behavior: 'smooth'
                 });
             });
+
+            document.addEventListener('DOMContentLoaded', function () {
+            // ==================== SCROLL REVEAL ====================
+            const revealElements = document.querySelectorAll(
+                '.reveal, .reveal-left, .reveal-right, .reveal-zoom, .reveal-fade'
+            );
+
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    } else {
+                        // Hapus class agar animasi berulang saat scroll naik/turun
+                        entry.target.classList.remove('visible');
+                    }
+                });
+            }, {
+                threshold: 0.12,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            revealElements.forEach(el => revealObserver.observe(el));
+
+            // ==================== PARALLAX BANNER ====================
+            const banner = document.querySelector('.banner-parallax');
+            if (banner) {
+                window.addEventListener('scroll', () => {
+                    const y = window.scrollY;
+                    if (y < 600) {
+                        banner.style.transform = `translateY(${y * 0.25}px)`;
+                    }
+                }, { passive: true });
+            }
+
+            // ==================== COUNTDOWN ANIMATION ====================
+            const countdownBlocks = document.querySelectorAll('.countdown-block');
+            const countObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Animasi "pop" saat pertama kali terlihat
+                        entry.target.style.animation = 'popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    }
+                });
+            }, { threshold: 0.5 });
+            countdownBlocks.forEach(el => countObserver.observe(el));
+        });
     </script>
     {{-- BACK TO TOP BUTTON --}}
     <button id="backToTop" class="back-to-top" aria-label="Kembali ke atas">
