@@ -727,48 +727,57 @@ class PendaftaranController extends Controller
     public function storePembayaranManual(Request $request)
     {
         $request->validate([
-            'peserta_id'   => 'required|exists:peserta_event,id',
-            'total_biaya'  => 'required|numeric|min:0',
-            'jumlah_bayar' => 'required|numeric|min:1',
-            'metode'       => 'required|in:transfer_bank,tunai,qris',
-            'tanggal_bayar'=> 'required|date',
-        ]);
+        'peserta_id'   => 'required|exists:peserta_event,id',
+        'total_biaya'  => 'required|numeric|min:0',
+        'jumlah_bayar' => 'required|numeric|min:1',
+        'metode'       => 'required|in:transfer_bank,tunai,qris',
+        'tanggal_bayar'=> 'required|date',
+    ]);
 
-        $peserta = Peserta::findOrFail($request->peserta_id);
-        $totalBiaya = (int) $request->total_biaya;
-        $jumlahBayar = (int) $request->jumlah_bayar;
+    $peserta = Peserta::findOrFail($request->peserta_id);
+    $totalBiaya = (int) $request->total_biaya;
+    $jumlahBayar = (int) $request->jumlah_bayar;
 
-        DB::transaction(function () use ($request, $peserta, $totalBiaya, $jumlahBayar) {
-            $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
-                ->orderBy('id', 'desc')
-                ->first();
-            
-            $sudahDibayar = $pembayaran?->jumlah ?? 0;
-            $totalSekarang = $sudahDibayar + $jumlahBayar;
-            
-            $isLunas = $totalSekarang >= $totalBiaya;
-            $status = $isLunas ? 'settlement' : 'pending';
+    // Normalisasi waktu bayar: pastikan ada jam (bukan 00:00 dari input date saja)
+    $rawTanggal = $request->input('tanggal_bayar');
+    $tanggalBayar = \Carbon\Carbon::parse($rawTanggal, 'Asia/Jakarta');
+    $hanyaTanggal = !preg_match('/[T\s]\d{1,2}:\d{2}/', (string) $rawTanggal);
+    if ($hanyaTanggal || $tanggalBayar->format('H:i:s') === '00:00:00') {
+        // Ambil jam sekarang WIB jika input hanya tanggal / jam 00:00
+        $tanggalBayar = $tanggalBayar->setTimeFrom(\Carbon\Carbon::now('Asia/Jakarta'));
+    }
 
-            if ($pembayaran) {
-                $pembayaran->update([
-                    'jumlah'            => $totalSekarang,
-                    'tarif_dasar'       => $totalBiaya,
-                    'metode'            => $request->metode,
-                    'status_midtrans'   => $status,
-                    'tanggal_bayar'     => $isLunas ? $request->tanggal_bayar : ($pembayaran->tanggal_bayar ?? null),
-                ]);
-            } else {
-                PembayaranEvent::create([
-                    'peserta_id'        => $peserta->id,
-                    'jumlah'            => $totalSekarang,
-                    'tarif_dasar'       => $totalBiaya,
-                    'metode'            => $request->metode,
-                    'midtrans_order_id' => 'MANUAL-' . date('YmdHis') . '-' . $peserta->id,
-                    'status_midtrans'   => $status,
-                    'tanggal_bayar'     => $isLunas ? $request->tanggal_bayar : null,
-                ]);
-            }
-        });
+    DB::transaction(function () use ($request, $peserta, $totalBiaya, $jumlahBayar, $tanggalBayar) {
+        $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        $sudahDibayar = $pembayaran?->jumlah ?? 0;
+        $totalSekarang = $sudahDibayar + $jumlahBayar;
+        
+        $isLunas = $totalSekarang >= $totalBiaya;
+        $status = $isLunas ? 'settlement' : 'pending';
+
+        if ($pembayaran) {
+            $pembayaran->update([
+                'jumlah'            => $totalSekarang,
+                'tarif_dasar'       => $totalBiaya,
+                'metode'            => $request->metode,
+                'status_midtrans'   => $status,
+                'tanggal_bayar'     => $tanggalBayar,
+            ]);
+        } else {
+            PembayaranEvent::create([
+                'peserta_id'        => $peserta->id,
+                'jumlah'            => $totalSekarang,
+                'tarif_dasar'       => $totalBiaya,
+                'metode'            => $request->metode,
+                'midtrans_order_id' => 'MANUAL-' . date('YmdHis') . '-' . $peserta->id,
+                'status_midtrans'   => $status,
+                'tanggal_bayar'     => $tanggalBayar,
+            ]);
+        }
+    });
 
         if ($request->expectsJson() || $request->ajax()) {
             $peserta->load('pembayaran');
