@@ -88,13 +88,16 @@
                                                 <p class="font-semibold text-[#24211d] truncate">{{ $p->namaTampil() }}
                                                 </p>
                                                 <p class="text-xs text-[#8c8982] truncate">{{ $p->emailTampil() }}</p>
-                                                <p class="text-xs text-[#8c8982] mt-0.5">
-                                                    Registrasi:
-                                                    <span
-                                                        class="font-semibold
-                                                        {{ $p->status_registrasi === 'lunas' ? 'text-emerald-600' : ($p->status_registrasi === 'dp' ? 'text-amber-600' : 'text-rose-500') }}">
-                                                        {{ ucfirst($p->status_registrasi ?? 'belum') }}
+                                                <p class="text-xs text-[#8c8982] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                    <span>Pembayaran:
+                                                        <span class="font-semibold
+                                                            {{ $p->status_bayar_tampil === 'lunas' ? 'text-emerald-600' : ($p->status_bayar_tampil === 'dp' ? 'text-amber-600' : 'text-rose-500') }}">
+                                                            {{ $p->status_bayar_tampil === 'dp' ? 'DP' : ucfirst($p->status_bayar_tampil ?? 'belum') }}
+                                                        </span>
                                                     </span>
+                                                    @if ($p->kandidat_voting)
+                                                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[10px] font-bold">KANDIDAT VOTING</span>
+                                                    @endif
                                                 </p>
                                             </div>
                                         </div>

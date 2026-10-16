@@ -7,17 +7,25 @@ use App\Models\Event;
 use App\Models\JawabanPeserta;
 use App\Models\PenggunaEvent;
 use App\Models\Peserta;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class PesertaTampilController extends Controller
 {
     /**
      * GET /admin/peserta-tampil/{event?}
-     * Halaman kelola tampil/sembunyi peserta
+     *
+     * Siapa yang muncul di halaman ini (2 aturan):
+     * 1. Peserta PENDAFTARAN (mandiri atau manual, kandidat_voting = false):
+     *    harus SUDAH ADA PEMBAYARAN SETTLEMENT dan SUDAH LOLOS AUDISI
+     *    (hasil_audisi = 'lolos').
+     * 2. Peserta KANDIDAT VOTING (kandidat_voting = true): langsung ikut
+     *    tanpa syarat audisi — status pembayarannya ditampilkan apa adanya,
+     *    otomatis "Belum Bayar" kalau belum ada transaksi sama sekali.
      */
-    public function index(?Event $event = null)
+    public function index(?Event $event = null): View
     {
         if (!$event) {
             $eventId = session('active_event_id');
@@ -28,12 +36,26 @@ class PesertaTampilController extends Controller
 
         $pesertas = collect();
         if ($event) {
-            $pesertas = Peserta::where('event_id', $event->id)
+            // 1. Peserta pendaftaran: sudah ada pembayaran settlement + lolos audisi
+            $pendaftaran = Peserta::where('event_id', $event->id)
+                ->where('kandidat_voting', false)
                 ->where('status', 'diterima')
-                ->with(['user', 'pembayaran', 'pembayaranRegistrasi'])
-                ->orderByDesc('tampil_di_publik')
-                ->orderByDesc('id')
+                ->where('hasil_audisi', 'lolos')
+                ->whereHas('pembayaran', fn ($q) => $q->where('status_midtrans', 'settlement'))
+                ->with(['user', 'pembayaran'])
                 ->get();
+
+            // 2. Kandidat voting: langsung ikut apapun status bayarnya
+            $kandidat = Peserta::where('event_id', $event->id)
+                ->where('kandidat_voting', true)
+                ->where('status', 'diterima')
+                ->with(['user', 'pembayaran'])
+                ->get();
+
+            $pesertas = $pendaftaran->concat($kandidat)
+                ->map(fn (Peserta $p) => $this->attachStatusBayar($p, $event))
+                ->sortByDesc('id')
+                ->values();
         }
 
         return view('admin.peserta-tampil.index', [
@@ -44,144 +66,41 @@ class PesertaTampilController extends Controller
     }
 
     /**
-     * GET /admin/peserta-tampil/{event}/tambah
-     * Form tambah peserta manual — mode admin
+     * Hitung & tempelkan status pembayaran (lunas/dp/belum) ke peserta.
+     * Dipakai sama untuk peserta pendaftaran maupun kandidat voting — karena
+     * keduanya memang memakai biaya_pendaftaran sebagai basis tarif (lihat
+     * PendaftaranController@storeManual dan @storeKandidat).
      */
-    public function create(Event $event)
+    private function attachStatusBayar(Peserta $peserta, Event $event): Peserta
     {
-        // Cuma bisa kalau pendaftaran publik mati
-        if ($event->pendaftaran_aktif ?? true) {
-            return redirect()
-                ->route('admin.peserta-tampil', $event->id)
-                ->with('error', 'Event ini pakai pendaftaran publik. Peserta harus daftar sendiri.');
+        $totalBiaya = (int) ($event->biaya_pendaftaran ?? 0);
+        $sudahDibayar = $peserta->pembayaran
+            ->where('status_midtrans', 'settlement')
+            ->sum('jumlah');
+
+        if ($totalBiaya <= 0 || $sudahDibayar >= $totalBiaya) {
+            // Event gratis (tidak ada biaya), atau sudah dibayar penuh → lunas.
+            $statusBayar = 'lunas';
+        } elseif ($sudahDibayar > 0) {
+            $statusBayar = 'dp';
+        } else {
+            // ✅ Baru ditambahkan & belum ada transaksi sama sekali → "Belum Bayar"
+            $statusBayar = 'belum';
         }
 
-        $questions = $event->pertanyaans()->orderBy('urutan')->get();
+        $peserta->setAttribute('status_bayar_tampil', $statusBayar);
+        $peserta->setAttribute('sudah_dibayar_tampil', $sudahDibayar);
+        $peserta->setAttribute('total_biaya_tampil', $totalBiaya);
 
-        return view('registration', [
-            'event'         => $event,
-            'questions'     => $questions,
-            'isAdminMode'   => true,      // ← flag untuk view
-        ]);
-    }
-
-    /**
-     * POST /admin/peserta-tampil/{event}/tambah
-     * Submit form tambah peserta manual
-     */
-    public function storeForm(Request $request, Event $event)
-    {
-        if ($event->pendaftaran_aktif ?? true) {
-            return redirect()
-                ->route('admin.peserta-tampil', $event->id)
-                ->with('error', 'Event ini pakai pendaftaran publik.');
-        }
-
-        $questions = $event->pertanyaans()->get();
-        $namaDariForm = null;
-
-        foreach ($questions as $q) {
-            $labelLower = strtolower(trim($q->label ?? ''));
-            if (in_array($labelLower, ['nama', 'name', 'nama lengkap', 'nama pendaftaran'])) {
-                $namaDariForm = $request->input("answers.{$q->id}");
-                break;
-            }
-        }
-
-        // Nama — dari form builder — atau — dari input manual
-        $nama = $namaDariForm ?? $request->input('nama_pendaftaran');
-
-        if (empty($nama)) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Nama peserta wajib diisi.');
-        }
-
-        // Email — dari input manual — atau — auto-generate
-        $email = $request->input('email_manual');
-
-        if (empty($email)) {
-            // Auto-generate dari nama + timestamp
-            $slug = \Illuminate\Support\Str::slug($nama);
-            $email = $slug . '-' . time() . '@voting.local';
-        }
-
-        try {
-            $peserta = DB::transaction(function () use ($request, $event, $nama, $email, $questions) {
-                // 1. Cari atau buat user
-                $user = PenggunaEvent::query()->firstOrCreate(
-                    ['email' => $email],
-                    [
-                        'google_id' => 'voting-' . Str::uuid(),
-                        'nama'      => $nama,
-                    ]
-                );
-
-                if ($user->nama !== $nama) {
-                    $user->update(['nama' => $nama]);
-                }
-
-                // 2. Cek duplikat
-                $sudahDaftar = Peserta::where('event_id', $event->id)
-                    ->where('user_id', $user->id)
-                    ->whereNotIn('status', ['gugur', 'ditolak'])
-                    ->exists();
-
-                if ($sudahDaftar) {
-                    throw new \Exception('Peserta ini sudah terdaftar di event ini.');
-                }
-
-                // 3. Buat peserta via service — langsung diterima + tampil
-                $peserta = app(\App\Services\PesertaAlurService::class)->tambahManual($event, [
-                    'user_id'          => $user->id,
-                    'nama_pendaftaran' => $nama,
-                ]);
-
-                // 4. Simpan jawaban form
-                foreach ($questions as $question) {
-                    if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
-                        continue;
-                    }
-
-                    $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
-                    $answer ??= $request->input("answers.{$question->id}");
-
-                    if ($answer === null || $answer === '') {
-                        continue;
-                    }
-
-                    if (is_array($answer)) {
-                        $answer = json_encode($answer, JSON_THROW_ON_ERROR);
-                    }
-
-                    JawabanPeserta::create([
-                        'peserta_id'    => $peserta->id,
-                        'pertanyaan_id' => $question->id,
-                        'jawaban'       => $answer,
-                    ]);
-                }
-
-                return $peserta;
-            });
-
-            return redirect()
-                ->route('admin.peserta-tampil', $event->id)
-                ->with('success', 'Peserta "' . $peserta->namaTampil() . '" berhasil ditambahkan.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', $e->getMessage());
-        }
+        return $peserta;
     }
 
     /**
      * POST /admin/peserta-tampil/{peserta}/toggle
      */
-    public function toggle(Peserta $peserta)
+    public function toggle(Request $request, Peserta $peserta): JsonResponse
     {
-        $peserta->tampil_di_publik = !$peserta->tampil_di_publik;
+        $peserta->tampil_di_publik = ! $peserta->tampil_di_publik;
         $peserta->save();
 
         return response()->json([
@@ -194,19 +113,27 @@ class PesertaTampilController extends Controller
     /**
      * POST /admin/peserta-tampil/{event}/toggle-semua
      */
-    public function toggleSemua(Request $request, Event $event)
+    public function toggleSemua(Request $request, Event $event): RedirectResponse
     {
-        $tampil = $request->boolean('tampil');
+        $show = $request->boolean('tampil');
 
         Peserta::where('event_id', $event->id)
             ->where('status', 'diterima')
-            ->update(['tampil_di_publik' => $tampil]);
+            ->where(function ($q) {
+                $q->where('kandidat_voting', true)
+                  ->orWhere(function ($q2) {
+                      $q2->where('kandidat_voting', false)
+                         ->where('hasil_audisi', 'lolos')
+                         ->whereHas('pembayaran', fn ($q3) => $q3->where('status_midtrans', 'settlement'));
+                  });
+            })
+            ->update(['tampil_di_publik' => $show]);
 
         return redirect()
-            ->route('admin.peserta-tampil', $event->id)
-            ->with('success', $tampil
-                ? 'Semua peserta berhasil ditampilkan di publik.'
-                : 'Semua peserta berhasil disembunyikan dari publik.');
+            ->route('admin.peserta-tampil.index', $event->id)
+            ->with('success', $show
+                ? 'Semua peserta berhasil ditampilkan di halaman publik.'
+                : 'Semua peserta berhasil disembunyikan dari halaman publik.');
     }
 
     /**
