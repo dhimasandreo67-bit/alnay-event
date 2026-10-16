@@ -334,18 +334,9 @@
     <a class="admin-sidebar__link {{ ($active ?? '') === 'peserta-tampil' ? 'is-active' : '' }}"
     href="{{ isset($event) ? route('admin.peserta-tampil', $event->id) : '#' }}"
     style="--i: 4">
-        <span class="admin-sidebar__step">5</span>
+                <span class="admin-sidebar__step">5</span>
         <span class="admin-sidebar__label">Kelola Peserta Tampil</span>
     </a>
-        @endif
-
-        {{-- 5. Kelola Peserta Tampil — SELALU tampil --}}
-        <a class="admin-sidebar__link {{ ($active ?? '') === 'peserta-tampil' ? 'is-active' : '' }}"
-           href="{{ isset($event) ? route('admin.peserta-tampil', $event->id) : '#' }}"
-           style="--i: 4">
-            <span class="admin-sidebar__step">5</span>
-            <span class="admin-sidebar__label">Kelola Peserta Tampil</span>
-        </a>
     </nav>
 
     {{-- Nav: Voting --}}
