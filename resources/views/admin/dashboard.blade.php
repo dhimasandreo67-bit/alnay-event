@@ -979,9 +979,10 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
-                            Tanggal Bayar <span class="text-red-500">*</span>
+                            Waktu Bayar <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="tanggal_bayar" required value="{{ date('Y-m-d') }}"
+                        <input type="datetime-local" name="tanggal_bayar" required
+                               value="{{ now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i') }}"
                                class="w-full text-xs border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
                     </div>
                 </div>
