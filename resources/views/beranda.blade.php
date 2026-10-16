@@ -239,10 +239,81 @@
             -webkit-line-clamp: unset;
             overflow: visible;
         }
+
+        /* ==================== ANIMASI SCROLL ==================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-zoom {
+            opacity: 0;
+            transform: scale(0.85);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-zoom.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Stagger delay untuk elemen berurutan */
+        .stagger-1 { transition-delay: 0.05s; }
+        .stagger-2 { transition-delay: 0.1s; }
+        .stagger-3 { transition-delay: 0.15s; }
+        .stagger-4 { transition-delay: 0.2s; }
+        .stagger-5 { transition-delay: 0.25s; }
+        .stagger-6 { transition-delay: 0.3s; }
+        .stagger-7 { transition-delay: 0.35s; }
+        .stagger-8 { transition-delay: 0.4s; }
+
+        /* Smooth scroll untuk seluruh halaman */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Parallax ringan untuk hero */
+        .hero-parallax {
+            transition: transform 0.1s linear;
+        }
     </style>
 </head>
 
 <body class="text-[#17233b] antialiased">
+    @include('partials.back-to-top')
 
     @php
         $tab = request()->query('tab', 'terkini');
@@ -275,7 +346,7 @@
     @include('partials.header')
 
     {{-- HERO --}}
-    <section class="relative overflow-hidden px-5 pt-8 pb-10 md:px-8 md:pt-12 md:pb-6 bg-gradient-to-b from-[#fdfbf7] via-white to-transparent max-w-[1200px] mx-auto">
+    <section class="hero-parallax relative overflow-hidden px-5 pt-8 pb-10 md:px-8 md:pt-12 md:pb-6 bg-gradient-to-b from-[#fdfbf7] via-white to-transparent max-w-[1200px] mx-auto">
         <div class="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#c99a32]/10 blur-[120px] rounded-full"></div>
 
         <div class="relative mx-auto flex max-w-[1200px] flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -288,12 +359,12 @@
                     Platform Event &amp; Voting Resmi ALNAY.ID
                 </div>
 
-                <h1 class="display-font font-bold text-[34px] leading-[1.18] text-[#111827] sm:text-[42px] md:text-[48px] tracking-tight">
+                <h1 class="reveal display-font font-bold text-[34px] leading-[1.18] text-[#111827] sm:text-[42px] md:text-[48px] tracking-tight">
                     Selamat Datang di <br class="hidden sm:inline" />
                     <span class="gold-shimmer">Event &amp; Vote Kandidat</span>
                 </h1>
 
-                <p class="mt-4 max-w-[580px] text-[14px] leading-relaxed text-[#555] sm:text-[15px] md:text-[16px]">
+                <p class=" reveal mt-4 max-w-[580px] text-[14px] leading-relaxed text-[#555] sm:text-[15px] md:text-[16px]">
                     Temukan event yang sedang berlangsung, dukung peserta favoritmu, dan ikuti hasil suaranya secara langsung.
                 </p>
 
@@ -340,7 +411,7 @@
 
             {{-- ==================== HERO CAROUSEL ==================== --}}
             @if ($heroEvents->count() > 0)
-                <div class="hero-carousel-wrapper relative" id="heroCarousel">
+                <div class="hero-carousel-wrapper reveal-zoom relative" id="heroCarousel">
 
                     <div class="hero-carousel-viewport" style="clip-path: inset(0px 0px 0px 0px round 16px);">
                         <div class="hero-carousel-track flex items-stretch transition-transform duration-500 ease-out" style="will-change: transform;">
@@ -562,10 +633,10 @@
             {{-- ==================== EVENT AKAN DATANG ==================== --}}
             @if ($eventAkanDatangLainnya->count() > 0)
                 <section class="mt-12">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 reveal-right">
                         <div>
-                            <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">Event Akan Datang</h2>
-                            <p class="mt-0.5 text-[13px] text-[#6b6b6b]">Pilihan event menarik yang siap dibuka mendatang</p>
+                            <h2 class="reveal-left display-font text-2xl font-bold text-[#111827] md:text-[26px]">Event Akan Datang</h2>
+                            <p class="reveal-left stagger-2 mt-0.5 text-[13px] text-[#6b6b6b]">Pilihan event menarik yang siap dibuka mendatang</p>
                         </div>
                         <div class="inline-flex items-center gap-1 self-start sm:self-auto rounded-xl bg-[#f5f3ef] p-1 border border-[#ebe7df]">
                             <button type="button" id="btn-view-grid" title="Tampilan Grid"
@@ -589,7 +660,7 @@
                         @foreach ($eventAkanDatangLainnya as $event)
                             @php $bukaPendaftaran = (int) ($event->pendaftaran_dibuka ?? 0) === 1; @endphp
 
-                            <div class="event-card card-shadow rounded-[16px] border border-[#ededed] bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col">
+                            <div class="event-card card-shadow rounded-[16px] border border-[#ededed] bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col reveal stagger-{{ min($idx + 1, 8) }}">
                                 <a href="{{ $routeDetail($event) }}" class="event-banner-wrapper relative block h-[200px] w-full shrink-0 bg-[#efe6d3] overflow-hidden group">
                                     @if ($event->banner)
                                         <img src="{{ asset('storage/' . $event->banner) }}" alt="{{ $event->nama }}"
@@ -683,10 +754,10 @@
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
             Cara Vote
         </span>
-        <h3 class="display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
+        <h3 class="reveal display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
             Cara Memberikan Vote
         </h3>
-        <p class="mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
+        <p class="reveal stagger-2 mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
             Empat langkah mudah untuk mendukung kandidat favoritmu.
         </p>
     </div>
@@ -697,7 +768,7 @@
         @foreach ($caraVote as $langkah)
             @php $utama = $langkah['utama'] ?? false; @endphp
 
-            <div class="group relative rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl z-10 overflow-hidden {{ $utama ? 'border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] shadow-md hover:border-[#c99a32]' : 'border border-[#ece5d7] bg-white shadow-sm hover:border-[#c99a32]/50' }}">
+            <div class="group relative rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl z-10 overflow-hidden {{ $utama ? 'border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] shadow-md hover:border-[#c99a32]' : 'border border-[#ece5d7] bg-white shadow-sm hover:border-[#c99a32]/50' }} reveal-{{ $idx % 2 === 0 ? 'left' : 'right' }} stagger-{{ $idx + 1 }}">
                 <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">{{ $langkah['no'] }}</span>
 
                 <div class="relative z-10">
@@ -772,7 +843,7 @@
                                 <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
                             </div>
                             <p class="text-[10px] uppercase tracking-[0.35em] text-[#c99a32] font-bold mb-4">Peringkat Sementara</p>
-                            <h2 class="display-font text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
+                            <h2 class="reveal-left isplay-font text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
                                 Siapa yang akan<br class="hidden sm:block"> membawa pulang mahkota?
                             </h2>
                             <p class="max-w-xl mx-auto text-[13px] md:text-[15px] leading-[1.8] text-[#5a5750]">
@@ -844,7 +915,7 @@
                                     };
                                 @endphp
 
-                                <div class="flex items-center gap-4 p-4 rounded-lg {{ $warnaRank }}">
+                                <div class="flex items-center gap-4 p-4 rounded-lg {{ $warnaRank }} reveal stagger-{{ min($idx + 1, 8) }}">
                                     <div class="text-2xl font-bold w-8 text-center shrink-0">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</div>
                                     <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">{{ $inisial }}</div>
                                     <div class="flex-1 min-w-0">
@@ -883,10 +954,10 @@
 
             {{-- ==================== FAQ ==================== --}}
             <section class="mb-6 mt-14">
-                <h2 class="display-font text-2xl font-bold text-[#111827] md:text-[26px]">Pertanyaan Umum</h2>
+                <h2 class="reveal-right display-font text-2xl font-bold text-[#111827] md:text-[26px]">Pertanyaan Umum</h2>
                 <p class="mt-1 text-[13px] text-[#6b6b6b] md:text-[14px]">Hal yang sering ditanyakan seputar event</p>
 
-                <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
+                <div class="reveal stagger-{{ $idx + 1 }} mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
                     <div class="space-y-3.5">
                         @foreach ($faq as $index => $item)
                             @if ($index % 2 === 0)
@@ -1289,8 +1360,68 @@
                 btn.textContent = 'Sembunyikan ↑';
             }
         }
-    </script>
 
+        // ==================== ANIMASI SCROLL (Intersection Observer) ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom');
+            
+            const revealOptions = {
+                threshold: 0.15,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const revealObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Opsional: stop observing setelah visible (untuk animasi sekali)
+                        // observer.unobserve(entry.target);
+                    } else {
+                        // Hapus comment di bawah jika ingin animasi berulang saat scroll naik/turun
+                        entry.target.classList.remove('visible');
+                    }
+                });
+            }, revealOptions);
+            
+            revealElements.forEach(el => revealObserver.observe(el));
+            
+            // ==================== PARALLAX RINGAN UNTUK HERO ====================
+            const heroSection = document.querySelector('.hero-parallax');
+            if (heroSection) {
+                window.addEventListener('scroll', function() {
+                    const scrolled = window.scrollY;
+                    if (scrolled < 800) {
+                        heroSection.style.transform = `translateY(${scrolled * 0.3}px)`;
+                    }
+                });
+            }
+            
+            // ==================== ANIMASI COUNTER UNTUK STATISTIK ====================
+            const counterElements = document.querySelectorAll('.counter-animate');
+            const counterObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const target = parseInt(el.dataset.target);
+                        let current = 0;
+                        const increment = target / 50;
+                        const timer = setInterval(() => {
+                            current += increment;
+                            if (current >= target) {
+                                el.textContent = target.toLocaleString('id-ID');
+                                clearInterval(timer);
+                            } else {
+                                el.textContent = Math.floor(current).toLocaleString('id-ID');
+                            }
+                        }, 30);
+                        counterObserver.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            counterElements.forEach(el => counterObserver.observe(el));
+        });
+    </script>
 </body>
 
 </html>
