@@ -1166,23 +1166,7 @@
             @if($event && isset($pertanyaans) && $pertanyaans->count() > 0)
                 <form id="formKandidatVoting" action="{{ route('admin.kandidat.store', $event->id) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                     @csrf
-                    
-                    {{-- Field Dasar Wajib --}}
-                    <div class="bg-[#faf8f4] p-4 rounded-xl border border-[#e7e2da] space-y-4">
-                        <p class="text-xs font-bold text-[#8c8982] uppercase tracking-wide mb-2">Informasi Dasar</p>
-                        
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap Kandidat <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama" required placeholder="Masukkan nama lengkap"
-                                class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] focus:ring-1 focus:ring-[#C28E27]">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Alamat Email <span class="text-red-500">*</span></label>
-                            <input type="email" name="email" required placeholder="email@domain.com"
-                                class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] focus:ring-1 focus:ring-[#C28E27]">
-                        </div>
-                    </div>
+            
 
                     {{-- Field Dinamis dari Form Builder --}}
                     <div class="space-y-4">
