@@ -35,10 +35,10 @@ class DetailEventController extends Controller
      */
     public function akanDatang(Event $event)
     {
-        // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
         $jumlahPeserta = Peserta::where('event_id', $event->id)
-            ->where('status', 'diterima')
-            ->count();
+        ->where('status', 'diterima')
+        ->where('tampil_di_publik', true)
+        ->count();
 
         $sisaHariPendaftaran = $event->batas_pendaftaran_tanggal
             ? (int) now()->diffInDays($event->batas_pendaftaran_tanggal, false)
@@ -57,10 +57,10 @@ class DetailEventController extends Controller
      */
     public function selesai(Event $event)
     {
-        // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
         $pesertas = Peserta::with('user')
             ->where('event_id', $event->id)
             ->where('status', 'diterima')
+            ->where('tampil_di_publik', true)
             ->orderByDesc('total_vote')
             ->get();
 
@@ -86,20 +86,20 @@ class DetailEventController extends Controller
     // ==========================================
 
     private function getPesertas(Event $event)
-    {
-        // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
-        $query = Peserta::with(['user', 'jawaban.pertanyaan'])
-            ->where('event_id', $event->id)
-            ->where('status', 'diterima');
+        {
+            $query = Peserta::with(['user', 'jawabans.pertanyaan'])
+                ->where('event_id', $event->id)
+                ->where('status', 'diterima')
+                ->where('tampil_di_publik', true);
 
-        // Kalau blackout aktif — acak urutan biar gak bocorin peringkat
-        if ($this->isBlackoutAktif($event)) {
-            return $query->inRandomOrder()->get();
+            // Kalau blackout aktif — acak urutan biar gak bocorin peringkat
+            if ($this->isBlackoutAktif($event)) {
+                return $query->inRandomOrder()->get();
+            }
+
+            // Normal — urut vote terbanyak
+            return $query->orderByDesc('total_vote')->get();
         }
-
-        // Normal — urut vote terbanyak
-        return $query->orderByDesc('total_vote')->get();
-    }
 
     private function getTotalSuara(Event $event)
     {

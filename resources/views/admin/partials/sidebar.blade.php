@@ -292,25 +292,33 @@
 
     {{-- Nav: Event & Peserta --}}
     <nav class="admin-sidebar__nav" aria-label="Event dan peserta">
-        <p class="admin-sidebar__section">Event &amp; Peserta</p>
+                <p class="admin-sidebar__section">Event & Peserta</p>
 
-        <a class="admin-sidebar__link {{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}"
-           href="{{ route('admin.dashboard', $event?->id) }}"
-           style="--i: 0">
-            <span class="admin-sidebar__step">1</span>
-            <span class="admin-sidebar__label">Verifikasi Pendaftaran Peserta</span>
-            @if(!empty($menungguReview) && $menungguReview > 0)
-                <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
-            @endif
-        </a>
+        {{-- 1. Verifikasi Pendaftaran Peserta — tampil kalau pendaftaran_aktif atau ada peserta menunggu --}}
+        @if(($event?->pendaftaran_aktif ?? true) || (!empty($menungguReview) && $menungguReview > 0))
+            <a class="admin-sidebar__link {{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}"
+               href="{{ route('admin.dashboard', $event?->id) }}"
+               style="--i: 0">
+                <span class="admin-sidebar__step">1</span>
+                <span class="admin-sidebar__label">Verifikasi Pendaftaran Peserta</span>
 
-        <a class="admin-sidebar__link {{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}"
-           href="{{ isset($event) ? route('admin.form-builder', $event->id) : route('admin.form-builder') }}"
-           style="--i: 1">
-            <span class="admin-sidebar__step">2</span>
-            <span class="admin-sidebar__label">Form Pendaftaran Event</span>
-        </a>
+                @if(!empty($menungguReview) && $menungguReview > 0)
+                    <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
+                @endif
+            </a>
+        @endif
 
+        {{-- 2. Form Pendaftaran Event — tampil kalau pendaftaran_aktif --}}
+        @if($event?->pendaftaran_aktif ?? true)
+            <a class="admin-sidebar__link {{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}"
+               href="{{ isset($event) ? route('admin.form-builder', $event->id) : route('admin.form-builder') }}"
+               style="--i: 1">
+                <span class="admin-sidebar__step">2</span>
+                <span class="admin-sidebar__label">Form Pendaftaran Event</span>
+            </a>
+        @endif
+
+        {{-- 3. Kelola Event — SELALU tampil --}}
         <a class="admin-sidebar__link {{ in_array($active ?? '', ['events-create', 'events-index']) ? 'is-active' : '' }}"
            href="{{ route('admin.events.index') }}"
            style="--i: 2">
@@ -318,11 +326,22 @@
             <span class="admin-sidebar__label">Kelola Event</span>
         </a>
 
-        <a class="admin-sidebar__link {{ ($active ?? '') === 'activation' ? 'is-active' : '' }}"
-           href="{{ isset($event) ? route('admin.activation', $event->id) : '#' }}"
-           style="--i: 3">
-            <span class="admin-sidebar__step">4</span>
-            <span class="admin-sidebar__label">Aktivasi Akun Peserta</span>
+        {{-- 4. Aktivasi Akun Peserta — tampil kalau butuh_registrasi --}}
+        @if($event?->butuh_registrasi ?? false)
+            <a class="admin-sidebar__link {{ ($active ?? '') === 'activation' ? 'is-active' : '' }}"
+               href="{{ isset($event) ? route('admin.activation', $event->id) : '#' }}"
+               style="--i: 3">
+                <span class="admin-sidebar__step">4</span>
+                <span class="admin-sidebar__label">Aktivasi Akun Peserta</span>
+            </a>
+        @endif
+
+        {{-- 5. Kelola Peserta Tampil — SELALU tampil --}}
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'peserta-tampil' ? 'is-active' : '' }}"
+           href="{{ isset($event) ? route('admin.peserta-tampil', $event->id) : '#' }}"
+           style="--i: 4">
+            <span class="admin-sidebar__step">5</span>
+            <span class="admin-sidebar__label">Kelola Peserta Tampil</span>
         </a>
     </nav>
 
@@ -330,31 +349,41 @@
     <nav class="admin-sidebar__nav" aria-label="Voting">
         <p class="admin-sidebar__section">Voting</p>
 
+        {{-- 6. Pengaturan Event & Voting --}}
         <a class="admin-sidebar__link {{ ($active ?? '') === 'voting-settings' ? 'is-active' : '' }}"
            href="{{ isset($event) ? route('admin.voting.settings', $event->id) : '#' }}"
-           style="--i: 4">
-            <span class="admin-sidebar__step">5</span>
+           style="--i: 5">
+            <span class="admin-sidebar__step">6</span>
             <span class="admin-sidebar__label">Pengaturan Event &amp; Voting</span>
         </a>
 
+        {{-- 7. Daftar Voter --}}
         <a class="admin-sidebar__link {{ ($active ?? '') === 'voters' ? 'is-active' : '' }}"
            href="{{ isset($event) ? route('admin.voters', $event->id) : '#' }}"
-           style="--i: 5">
-            <span class="admin-sidebar__step">6</span>
+           style="--i: 6">
+            <span class="admin-sidebar__step">7</span>
             <span class="admin-sidebar__label">Daftar Voter</span>
         </a>
 
+        {{-- 8. Leaderboard Suara Voting --}}
         <a class="admin-sidebar__link {{ ($active ?? '') === 'leaderboard' ? 'is-active' : '' }}"
            href="{{ isset($event) ? route('admin.leaderboard', $event->id) : '#' }}"
-           style="--i: 6">
-            <span class="admin-sidebar__step">7</span>
+           style="--i: 7">
+            <span class="admin-sidebar__step">8</span>
             <span class="admin-sidebar__label">Leaderboard Suara Voting</span>
+        </a>
+
+        {{-- 9. Profile --}}
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'profile' ? 'is-active' : '' }}"
+           href="{{ route('admin.profile') }}"
+           style="--i: 8">
+            <span class="admin-sidebar__step">9</span>
+            <span class="admin-sidebar__label">Profile</span>
         </a>
     </nav>
 
     {{-- Spacer supaya user card nempel di bawah --}}
     <div class="admin-sidebar__spacer"></div>
-
     {{-- User Card --}}
     @php
         $adminName = session('admin_name', 'MAS RADEN');

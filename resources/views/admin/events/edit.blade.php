@@ -87,6 +87,84 @@
                         @enderror
                     </div>
 
+                                       {{-- ===== SECTION 1B: ALUR EVENT ===== --}}
+                    <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
+                        <div class="mb-4 pb-3 border-b border-[#e5e1db]">
+                            <h2 class="font-bold text-slate-800">Alur Event</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Centang tahapan yang dilalui peserta — ringkasan di bawah update otomatis</p>
+                        </div>
+
+                        {{-- SAKLAR ALUR --}}
+                        <div class="space-y-3">
+                            <p class="text-[11px] font-bold text-[#73716c] uppercase mb-2">Saklar Alur</p>
+
+                            {{-- Pendaftaran Publik --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="hidden" name="pendaftaran_aktif" value="0">
+                                <input type="checkbox" name="pendaftaran_aktif" value="1" id="toggle-pendaftaran"
+                                    {{ old('pendaftaran_aktif', $event->pendaftaran_aktif ?? true) ? 'checked' : '' }}
+                                    class="mt-0.5 w-4 h-4 text-[#C28E27] border-slate-300 rounded focus:ring-[#C28E27]">
+                                <span>
+                                    <strong class="block text-[12px] text-slate-800">Pendaftaran Publik</strong>
+                                    <span class="text-[11px] text-[#73716c]">Publik bisa daftar sendiri lewat form. Kalau dimatikan, admin yang input peserta manual.</span>
+                                </span>
+                            </label>
+
+                            {{-- Butuh Audisi --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="hidden" name="butuh_audisi" value="0">
+                                <input type="checkbox" name="butuh_audisi" value="1" id="toggle-audisi"
+                                    {{ old('butuh_audisi', $event->butuh_audisi ?? true) ? 'checked' : '' }}
+                                    class="mt-0.5 w-4 h-4 text-[#C28E27] border-slate-300 rounded focus:ring-[#C28E27]">
+                                <span>
+                                    <strong class="block text-[12px] text-slate-800">Butuh Audisi</strong>
+                                    <span class="text-[11px] text-[#73716c]">Peserta yang sudah bayar harus diseleksi admin (Terima/Tolak)</span>
+                                </span>
+                            </label>
+
+                            {{-- Butuh Registrasi --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="hidden" name="butuh_registrasi" value="0">
+                                <input type="checkbox" name="butuh_registrasi" value="1" id="toggle-registrasi"
+                                    {{ old('butuh_registrasi', $event->butuh_registrasi ?? true) ? 'checked' : '' }}
+                                    class="mt-0.5 w-4 h-4 text-[#C28E27] border-slate-300 rounded focus:ring-[#C28E27]">
+                                <span>
+                                    <strong class="block text-[12px] text-slate-800">Butuh Registrasi</strong>
+                                    <span class="text-[11px] text-[#73716c]">Peserta harus bayar biaya registrasi setelah lolos audisi</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        {{-- DETAIL AUDISI — muncul kalau Butuh Audisi checked --}}
+                        <div id="detail-audisi" class="mt-4 pt-4 border-t border-[#e5e1db] hidden">
+                            <p class="text-[11px] font-bold text-[#73716c] uppercase mb-3">Detail Audisi</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-bold mb-1.5 text-[12px]">Tanggal Audisi <span class="text-[#98958f] font-normal">(Opsional)</span></label>
+                                    <input type="date" name="tanggal_audisi"
+                                        value="{{ old('tanggal_audisi', $event->tanggal_audisi?->format('Y-m-d')) }}"
+                                        class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9] focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition">
+                                    <p class="text-[11px] text-slate-500 mt-1">Biarkan kosong jika belum ditentukan.</p>
+                                </div>
+                                <div>
+                                    <label class="block font-bold mb-1.5 text-[12px]">Lokasi Audisi <span class="text-[#98958f] font-normal">(Opsional)</span></label>
+                                    <input type="text" name="audisi_lokasi"
+                                        value="{{ old('audisi_lokasi', $event->audisi_lokasi) }}"
+                                        placeholder="Contoh: Gedung Serbaguna"
+                                        class="w-full border border-[#e5e1db] rounded-md p-2.5 bg-[#fcfbf9] focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- RINGKASAN --}}
+                        <div class="mt-4 pt-4 border-t border-[#e5e1db]">
+                            <p class="text-[11px] font-bold text-[#73716c] uppercase mb-2">Ringkasan Alur</p>
+                            <div id="alur-ringkasan" class="text-[12px] text-slate-700 bg-[#faf8f2] rounded-lg px-3 py-2.5 border border-[#e5e1db]">
+                                Daftar → Bayar → Audisi → Registrasi → Tampil → Vote
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- ===== SECTION 2: INFORMASI UTAMA ===== --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
                         <div class="mb-4 pb-3 border-b border-[#e5e1db]">
@@ -162,8 +240,8 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block font-bold mb-1.5">Biaya Pendaftaran (Rp)</label>
+                            <div id="field-biaya-pendaftaran">
+                                    <label class="block font-bold mb-1.5">Biaya Pendaftaran (Rp)</label>
                                 <div class="relative">
                                     <span
                                         class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">Rp</span>
@@ -222,7 +300,7 @@
                     </div>
 
                                         {{-- ===== SECTION 3B: REGISTRASI ===== --}}
-                    <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
+                    <div id="field-registrasi" class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
                         <div class="mb-4 pb-3 border-b border-[#e5e1db]">
                             <h2 class="font-bold text-slate-800">Registrasi</h2>
                             <p class="text-xs text-slate-500 mt-0.5">Biaya registrasi setelah peserta lolos audisi</p>
@@ -261,56 +339,6 @@
                         </div>
                     </div>
 
-                    {{-- ============================================
-    CARD: PENGATURAN AUDISI
-============================================= --}}
-<div class="bg-white rounded-xl border border-[#e7e2da] p-6 shadow-sm">
-    {{-- Header Card --}}
-    <div class="mb-5 flex items-start gap-3 border-b border-[#e7e2da] pb-4">
-        <div>
-            <h3 class="text-sm font-bold text-[#24211d]">Pengaturan Audisi</h3>
-            <p class="mt-0.5 text-xs text-[#8c8982]">Atur status, tanggal, dan lokasi audisi peserta. Bersifat opsional.</p>
-        </div>
-    </div>
-
-    {{-- Isi Card --}}
-    <div class="grid gap-5 lg:grid-cols-2">
-        {{-- Tanggal Audisi (Opsional) --}}
-        <div>
-            <label class="mb-1 block text-xs font-semibold text-gray-700">
-                Tanggal Audisi <span class="font-normal text-[#8c8982]">(Opsional)</span>
-            </label>
-            <input type="date" name="tanggal_audisi"
-                   value="{{ old('tanggal_audisi', $event->tanggal_audisi?->format('Y-m-d')) }}"
-                   class="w-full rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-3 py-2.5 text-sm outline-none focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20">
-            <p class="mt-1 text-[11px] text-[#8c8982]">Biarkan kosong jika tanggal belum ditentukan.</p>
-        </div>
-
-        {{-- Lokasi Audisi (Opsional) --}}
-        <div>
-            <label class="mb-1 block text-xs font-semibold text-gray-700">
-                Lokasi Audisi <span class="font-normal text-[#8c8982]">(Opsional)</span>
-            </label>
-            <input type="text" name="audisi_lokasi"
-                   value="{{ old('audisi_lokasi', $event->audisi_lokasi) }}" placeholder="Contoh: Gedung Serbaguna Lt. 2"
-                   class="w-full rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-3 py-2.5 text-sm outline-none focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20">
-            <p class="mt-1 text-[11px] text-[#8c8982]">Biarkan kosong jika lokasi belum ditentukan.</p>
-        </div>
-
-        {{-- Toggle Audisi Aktif --}}
-        <div class="flex items-center justify-between rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-4 py-3 lg:col-span-2">
-            <div>
-                <p class="text-xs font-semibold text-gray-700">Audisi Aktif</p>
-                <p class="mt-0.5 text-[11px] text-[#8c8982]">Aktifkan jika event ini memerlukan proses audisi peserta.</p>
-            </div>
-            <label class="relative inline-flex cursor-pointer items-center">
-                <input type="checkbox" name="audisi_aktif" value="1" class="peer sr-only"
-                       @checked(old('audisi_aktif', $event->audisi_aktif))>
-                <div class="h-6 w-11 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#C28E27] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:ring-4 peer-focus:ring-[#C28E27]/20"></div>
-            </label>
-        </div>
-    </div>
-</div>
 
                     {{-- ===== SECTION 4: JADWAL & LOKASI ===== --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
@@ -527,9 +555,59 @@
         </main>
     </div>
 
-    @include('admin.partials.sidebar', ['active' => 'events-index', 'event' => $event])
+        @include('admin.partials.sidebar', ['active' => 'events-index', 'event' => $event])
 
-    {{-- Script sama seperti sebelumnya — gak diubah --}}
+    {{-- Script: Alur Event — Ringkasan & Show/Hide --}}
+<script>
+    function updateRingkasan() {
+        const tP = document.getElementById('toggle-pendaftaran')?.checked;
+        const tA = document.getElementById('toggle-audisi')?.checked;
+        const tR = document.getElementById('toggle-registrasi')?.checked;
+        const el = document.getElementById('alur-ringkasan');
+        if (!el) return;
+
+        // Show/hide Detail Audisi — muncul kalau Butuh Audisi checked
+        const detailAudisi = document.getElementById('detail-audisi');
+        if (detailAudisi) {
+            detailAudisi.classList.toggle('hidden', !tA);
+        }
+
+        // Show/hide field Biaya Pendaftaran — muncul kalau Pendaftaran Publik checked
+        const fieldBiaya = document.getElementById('field-biaya-pendaftaran');
+        if (fieldBiaya) {
+            fieldBiaya.classList.toggle('hidden', !tP);
+        }
+
+        // Show/hide field Registrasi — muncul kalau Butuh Registrasi checked
+        const fieldReg = document.getElementById('field-registrasi');
+        if (fieldReg) {
+            fieldReg.classList.toggle('hidden', !tR);
+        }
+
+        // Ringkasan
+        let steps = [];
+        if (tP) {
+            steps.push('Daftar', 'Bayar');
+        } else {
+            steps.push('Input Manual Admin');
+        }
+        if (tA) steps.push('Audisi');
+        if (tR) steps.push('Registrasi');
+        steps.push('Tampil', 'Vote');
+
+        el.textContent = steps.join(' → ');
+    }
+
+    // Attach ke 3 checkbox
+    document.querySelectorAll('#toggle-pendaftaran, #toggle-audisi, #toggle-registrasi').forEach(el => {
+        el.addEventListener('change', updateRingkasan);
+    });
+
+    // Init saat halaman load
+    document.addEventListener('DOMContentLoaded', updateRingkasan);
+</script>
+
+        {{-- Script lama — gak diubah --}}
     <script>
         document.getElementById('biaya_pendaftaran')?.addEventListener('input', function() {
             const hargaBaru = parseInt(this.value.replace(/\D/g, '')) || 0;

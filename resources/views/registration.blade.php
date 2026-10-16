@@ -168,16 +168,17 @@
     $sudahTerdaftar = false;
 
     if (!$isPreview && $currentUser) {
-        // Query ini SENGAJA dibuat identik dengan pengecekan di storePublic(),
-        // supaya "diblokir di sini" = "ditolak kalau submit" (konsisten).
         $sudahTerdaftar = \App\Models\Peserta::where('event_id', $event->id)
-            ->where('user_id', $currentUser->id)
-            ->whereIn('status', ['diterima'])
-            ->exists();
+        ->where('user_id', $currentUser->id)
+        ->whereNotIn('status', ['gugur', 'ditolak'])
+        ->exists();
     }
 
-    if ($isPreview) {
-        if (!$event->pendaftaran_dibuka) {
+        if ($isPreview) {
+        if (!($event->pendaftaran_aktif ?? true)) {
+            $pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran peserta tidak diaktifkan untuk event ini.';
+        } elseif (!$event->pendaftaran_dibuka) {
             $pendaftaranDitutup = true;
             $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup (Toggle Pendaftaran Nonaktif).';
         }
@@ -188,6 +189,9 @@
         } elseif (in_array($event->status, ['sedang_berlangsung', 'telah_berakhir'])) {
             $pendaftaranDitutup = true;
             $alasanTutup = 'Event ini sedang berlangsung / telah berakhir — pendaftaran peserta baru sudah ditutup.';
+        } elseif (!($event->pendaftaran_aktif ?? true)) {
+            $pendaftaranDitutup = true;
+            $alasanTutup = 'Pendaftaran peserta tidak diaktifkan untuk event ini.';
         } elseif (!$event->pendaftaran_dibuka) {
             $pendaftaranDitutup = true;
             $alasanTutup = 'Pendaftaran untuk event ini sedang ditutup oleh admin.';

@@ -27,6 +27,7 @@ class BerandaController extends Controller
                 // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
                 $ev->stat_jumlah_peserta = Peserta::where('event_id', $ev->id)
                     ->where('status', 'diterima')
+                    ->where('tampil_di_publik', true)
                     ->count();
                     
                 $ev->stat_total_suara = Voting::where('event_id', $ev->id)
@@ -74,6 +75,7 @@ class BerandaController extends Controller
             // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
             $peringkatTerkini = Peserta::where('event_id', $eventBerlangsung->id)
                 ->where('status', 'diterima')
+                ->where('tampil_di_publik', true)
                 ->orderByDesc('total_vote')
                 ->take(3)
                 ->with('user')
@@ -93,8 +95,6 @@ class BerandaController extends Controller
 
         if (! $eventBerlangsung && $eventBaruSelesai) {
             $eventPeringkatAkhir = $eventBaruSelesai;
-            
-            // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
             $peringkatAkhir = Peserta::where('event_id', $eventBaruSelesai->id)
                 ->where('status', 'diterima')
                 ->orderByDesc('total_vote')

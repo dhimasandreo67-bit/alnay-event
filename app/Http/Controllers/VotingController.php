@@ -46,15 +46,16 @@ class VotingController extends Controller
 
 
         //    Kunci HANYA kalau auto_freeze_voting aktif
-        if ($event->auto_freeze_voting && $event->voting_selesai && now()->gt($event->voting_selesai)) {
-            return response()->json([
-                'message' => 'Voting sudah ditutup pada ' . $event->voting_selesai->format('d M Y, H:i') . ' WIB',
-            ], 403);
-        }
+        // Cek periode voting — sudah lewat?
+if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
+    return response()->json([
+        'message' => 'Voting sudah ditutup pada ' . $event->voting_selesai->format('d M Y, H:i') . ' WIB',
+    ], 403);
+}
 
         // 4. Cek status peserta
-        if ($peserta->status !== 'diterima') {
-            return response()->json(['message' => 'Peserta ini belum berstatus diterima.'], 403);
+        if (!$peserta->isVotable()) {
+            return response()->json(['message' => 'Peserta ini belum bisa divote.'], 403);
         }
 
         $data = $request->validate([
@@ -194,36 +195,52 @@ class VotingController extends Controller
     /**
      * GET /voting/{orderId}/instruksi
      */
-    /**
- * GET /voting/{orderId}/instruksi
- */
-public function instruksiPembayaran($orderId)
-{
-    $voting = Voting::with(['peserta.user', 'peserta.event'])
-        ->where('midtrans_order_id', $orderId)
-        ->firstOrFail();
+    public function instruksiPembayaran($orderId)
+    {
+        $voting = Voting::with(['peserta.user', 'peserta.event'])
+            ->where('midtrans_order_id', $orderId)
+            ->firstOrFail();
 
-    $event = $voting->peserta?->event ?? $voting->event;
+        $event = $voting->peserta?->event ?? $voting->event;
 
-    // ============================================
-    // Cek blackout H-2
-    // ============================================
-    $blackoutAktif = false;
-
-    if ($event && $event->blackout_h2_voting && $event->voting_selesai) {
-        $selisihJam = now()->diffInHours($event->voting_selesai, false);
-        if ($selisihJam <= 48) {
-            $blackoutAktif = true;
+        $blackoutAktif = false;
+        if ($event && $event->blackout_h2_voting && $event->voting_selesai) {
+            $selisihJam = now()->diffInHours($event->voting_selesai, false);
+            if ($selisihJam <= 48) {
+                $blackoutAktif = true;
+            }
         }
+
+        return view('voting.instruksi', [
+            'voting'        => $voting,
+            'peserta'       => $voting->peserta,
+            'event'         => $event,
+            'blackoutAktif' => $blackoutAktif,
+        ]);
     }
 
-    return view('voting.instruksi', [
-        'voting'          => $voting,
-        'peserta'         => $voting->peserta,
-        'event'           => $event,
-        'blackoutAktif'   => $blackoutAktif,  // ← TAMBAH
-    ]);
-}
+    /**
+     * GET /voting/{orderId}/status
+     * Cek status pembayaran voting via AJAX (untuk tombol "Saya Sudah Bayar")
+     */
+    public function cekStatus($orderId)
+    {
+        $voting = Voting::where('midtrans_order_id', $orderId)->first();
+
+        if (! $voting) {
+            return response()->json([
+                'status_midtrans' => 'failed',
+                'message' => 'Transaksi tidak ditemukan.'
+            ], 404);
+        }
+
+        return response()->json([
+            'status_midtrans' => $voting->status_midtrans,
+            'redirect_url'    => $voting->status_midtrans === 'settlement' 
+                ? '/peserta/' . $voting->peserta_id 
+                : null,
+        ]);
+    }
 
     /**
      * POST /voting/midtrans/webhook
@@ -282,9 +299,8 @@ public function instruksiPembayaran($orderId)
 
                     // ✅ Cek auto freeze — HANYA untuk order non-admin
                     $freezeAktif = ! $isAdminOrder
-                        && $event->auto_freeze_voting
-                        && $event->voting_selesai
-                        && now()->gt($event->voting_selesai);
+                    && $event->voting_selesai
+                    && now()->gt($event->voting_selesai);
 
                     if ($freezeAktif) {
                         \Log::warning('Vote settlement setelah freeze — suara TIDAK dihitung', [
@@ -443,10 +459,11 @@ public function instruksiPembayaran($orderId)
                 'harga_per_vote',
                 'tampilkan_hasil_voting',
                 'format_hasil_voting',
-                'voting_aktif',           // ✅ TAMBAH — biar frontend tahu status voting
-                'voting_mulai',           // ✅ TAMBAH — info jadwal
-                'voting_selesai',         // ✅ TAMBAH
-                'auto_freeze_voting',     // ✅ TAMBAH
+                'voting_aktif',
+                'voting_mulai',
+                'voting_selesai',
+                'auto_freeze_voting',
+                'status',               
             ]) : null,
         ]);
     }
@@ -454,13 +471,11 @@ public function instruksiPembayaran($orderId)
     /**
      * GET /event/{event}/peserta/{peserta}/dukungan-terkini
      */
-    public function dukunganTerkini(Event $event, Peserta $peserta)
+        public function dukunganTerkini(Event $event, Peserta $peserta)
     {
-        $adminLogin = Auth::guard('admin')->check();
-
-        if (! $event->tampilkan_hasil_voting && ! $adminLogin) {
-            return response()->json(['message' => 'Dukungan terkini untuk event ini belum ditampilkan ke publik.'], 403);
-        }
+        // ✅ HAPUS pengecekan tampilkan_hasil_voting di sini agar aktivitas recent selalu transparan
+        // $adminLogin = Auth::guard('admin')->check();
+        // if (! $event->tampilkan_hasil_voting && ! $adminLogin) { ... }
 
         if ($peserta->event_id !== $event->id) {
             return response()->json(['message' => 'Peserta ini bukan bagian dari event tersebut.'], 404);
@@ -523,6 +538,7 @@ public function instruksiPembayaran($orderId)
     {
         $data = $request->validate([
             'voting_aktif' => ['nullable', 'boolean'],
+            'tampilkan_hasil_voting' => ['nullable', 'boolean'],
             'format_hasil_voting' => ['required', 'in:angka,persentase,keduanya'],
             'voting_mulai' => ['nullable', 'date'],
             'voting_selesai' => ['nullable', 'date', 'after_or_equal:voting_mulai'],
@@ -552,6 +568,7 @@ public function instruksiPembayaran($orderId)
     {
         $validated = $request->validate([
             'voting_aktif' => 'boolean',
+            'tampilkan_hasil_voting' => 'boolean',
             'voting_mulai' => 'nullable|date',
             'voting_selesai' => 'nullable|date|after_or_equal:voting_mulai',
             'auto_freeze_voting' => 'boolean',

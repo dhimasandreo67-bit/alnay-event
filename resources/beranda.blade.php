@@ -337,7 +337,8 @@
                         @foreach ($eventAkanDatangLainnya as $event)
 
                             @php
-                                $bukaPendaftaran = (int) ($event->pendaftaran_dibuka ?? 0) === 1;
+                                $bukaPendaftaran = (int) ($event->pendaftaran_dibuka ?? 0) === 1
+                                    && ($event->pendaftaran_aktif ?? true);
                             @endphp
                             <div class="card-shadow rounded-[12px] border border-[#ededed] bg-white overflow-hidden">
                                 <div class="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-0">

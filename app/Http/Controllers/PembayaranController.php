@@ -19,11 +19,15 @@ class PembayaranController extends Controller
             abort(403, 'Bukan pendaftaran milik kamu.');
         }
 
-        // 2. Cek status peserta — harus 'diterima' admin dulu
-        if ($peserta->status !== 'diterima') {
+        // Cek sudah lunas?
+        $sudahLunas = \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)
+            ->where('status_midtrans', 'settlement')
+            ->exists();
+
+        if ($sudahLunas) {
             return response()->json([
-                'message' => 'Pendaftaran belum diterima admin.',
-            ], 403);
+                'message' => 'Pendaftaran ini sudah dibayar.',
+            ], 400);
         }
 
         // 3. Cek sudah pernah bayar lunas?
@@ -108,41 +112,53 @@ class PembayaranController extends Controller
 
         // 1. Verifikasi signature Midtrans
         $signature = hash(
-            'sha512',
-            (string) $request->input('order_id')
-                . (string) $request->input('status_code')
-                . (string) $request->input('gross_amount')
-                . config('services.midtrans.server_key')
-        );
+        'sha512',
+        $request->order_id .
+        $request->status_code .
+        $request->gross_amount .
+        config('services.midtrans.server_key')
+    );
 
-        if (!hash_equals($signature, (string) $request->input('signature_key'))) {
-            \Log::warning('Midtrans webhook: signature tidak valid', $request->all());
-            return response()->json(['message' => 'Signature tidak valid'], 403);
-        }
-
-        // 2. Cari pembayaran
-        $pembayaran = PembayaranEvent::where('midtrans_order_id', $request->order_id)
-            ->first();
-
-        if (!$pembayaran) {
-            \Log::warning('Midtrans webhook: order_id tidak ditemukan', [
-                'order_id' => $request->order_id,
-            ]);
-            return response()->json(['message' => 'Order tidak ditemukan'], 200);
-        }
-
-        // 3. Update data pembayaran
-        $pembayaran->update([
-            'midtrans_transaction_id' => $request->transaction_id,
-            'status_midtrans'         => $request->transaction_status,
-            'metode'                  => $request->payment_type,
-            'tanggal_bayar'           => $request->transaction_status === 'settlement'
-                ? now()
-                : $pembayaran->tanggal_bayar,
+    if (!hash_equals($signature, (string) $request->input('signature_key'))) {
+        \Log::warning('Midtrans webhook: signature tidak valid', [
+            'calculated' => $signature,
+            'received'   => $request->signature_key,
+            'order_id'   => $request->order_id,
         ]);
-
-        return response()->json(['message' => 'OK']);
+        return response()->json(['message' => 'Signature tidak valid'], 403);
     }
+
+    // 2. Cari pembayaran
+    $pembayaran = PembayaranEvent::where('midtrans_order_id', $request->order_id)
+        ->first();
+
+    if (!$pembayaran) {
+        \Log::warning('Midtrans webhook: order_id tidak ditemukan', [
+            'order_id' => $request->order_id,
+        ]);
+        return response()->json(['message' => 'Order tidak ditemukan'], 200);
+    }
+
+
+    $pembayaran->update([
+        'midtrans_transaction_id' => $request->transaction_id,
+        'status_midtrans'         => $request->transaction_status,
+        'metode'                  => $request->payment_type,
+        'tanggal_bayar'           => in_array($request->transaction_status, ['settlement', 'capture'])
+            ? now()
+            : $pembayaran->tanggal_bayar,
+    ]);
+
+    // 4. ✅ TRIGGER: hanya kalau settlement / capture
+    if (in_array($request->transaction_status, ['settlement', 'capture'])) {
+        $peserta = $pembayaran->peserta;
+        if ($peserta) {
+            app(\App\Services\PesertaAlurService::class)->setelahBayar($peserta);
+        }
+    }
+
+    return response()->json(['message' => 'OK']);
+}
 
     // GET /peserta/{peserta}/pembayaran
     public function show(Request $request, Peserta $peserta)
@@ -151,10 +167,15 @@ class PembayaranController extends Controller
             abort(403, 'Bukan pendaftaran milik kamu.');
         }
 
-        if ($peserta->status !== 'diterima') {
+        // Cek status — boleh bayar kalau belum lunas
+        $sudahLunas = \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)
+            ->where('status_midtrans', 'settlement')
+            ->exists();
+
+        if ($sudahLunas) {
             return redirect()
                 ->route('profil-user')
-                ->with('error', 'Pendaftaran belum diterima admin.');
+                ->with('status', 'Pendaftaran ini sudah dibayar.');
         }
 
         $semuaPembayaran = $peserta->pembayaran instanceof \Illuminate\Support\Collection
@@ -186,8 +207,13 @@ class PembayaranController extends Controller
             return response()->json(['message' => 'Bukan pendaftaran milik kamu.'], 403);
         }
 
-        if ($peserta->status !== 'diterima') {
-            return response()->json(['message' => 'Pendaftaran belum diterima admin.'], 403);
+        // Cek sudah lunas? — kalau sudah, nggak boleh charge lagi
+        $sudahLunas = \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)
+            ->where('status_midtrans', 'settlement')
+            ->exists();
+
+        if ($sudahLunas) {
+            return response()->json(['message' => 'Pendaftaran ini sudah dibayar.'], 400);
         }
 
         $request->validate([
@@ -212,11 +238,17 @@ class PembayaranController extends Controller
             ->latest('id')
             ->first();
 
-        if ($pembayaran && $pembayaran->qr_string && $pembayaran->payment_method === $request->payment_method) {
-            return response()->json([
-                'redirect_url' => route('peserta.pembayaran.instruksi', $peserta->id),
-            ]);
-        }
+        if ($pembayaran
+                && $pembayaran->payment_method === $request->payment_method
+                && (
+                    ($request->payment_method === 'qris' && $pembayaran->qr_string)
+                    || ($request->payment_method === 'bri_va' && $pembayaran->va_number)
+                )
+            ) {
+                return response()->json([
+                    'redirect_url' => route('peserta.registrasi.instruksi', $peserta->id),
+                ]);
+            }
 
         $orderId = 'PENDAFTARAN-' . $peserta->id . '-' . Str::random(8);
 

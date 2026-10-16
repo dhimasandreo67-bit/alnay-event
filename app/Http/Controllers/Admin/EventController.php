@@ -86,7 +86,7 @@ class EventController extends Controller
     ]);
 }
 
-    // POST /admin/events
+        // POST /admin/events
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -107,13 +107,13 @@ class EventController extends Controller
             'kuota_peserta'             => 'nullable|integer',
             'banner'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'tanggal_audisi'            => 'nullable|date',
-            'audisi_aktif'              => 'boolean',
-            'tanggal_audisi'            => 'nullable|date',
-            'audisi_aktif'              => 'boolean',
-            'audisi_lokasi'             => 'nullable|string|max:255'
+            'audisi_lokasi'             => 'nullable|string|max:255',
+            'pendaftaran_aktif'         => 'nullable|boolean',
+            'butuh_audisi'              => 'nullable|boolean',
+            'butuh_registrasi'          => 'nullable|boolean',
         ]);
 
-                // Handle banner — file atau base64 (restore)
+        // Handle banner — file atau base64 (restore)
         if ($request->hasFile('banner')) {
             $validated['banner'] = $request->file('banner')->store('banners', 'public');
         } elseif ($request->filled('banner_base64')) {
@@ -131,8 +131,7 @@ class EventController extends Controller
             }
         }
 
-        // 3 kolom ini NOT NULL tanpa default di database
-                // 3 kolom ini NOT NULL tanpa default di database
+        // 3 kolom NOT NULL tanpa default
         $validated['biaya_pendaftaran'] ??= 0;
         $validated['harga_per_vote'] ??= 0;
         $validated['mode_penilaian'] ??= 'voting';
@@ -140,8 +139,15 @@ class EventController extends Controller
         // Default pendaftaran dibuka untuk event baru
         $validated['pendaftaran_dibuka'] = 1;
 
-        // Setelah validate, sebelum create:
-        $validated['audisi_aktif']  = $request->boolean('audisi_aktif');
+        // 3 saklar alur — dari checkbox
+        $validated['pendaftaran_aktif'] = $request->boolean('pendaftaran_aktif');
+        $validated['butuh_audisi'] = $request->boolean('butuh_audisi');
+        $validated['butuh_registrasi'] = $request->boolean('butuh_registrasi');
+
+        // audisi_aktif — sync dengan butuh_audisi
+        $validated['audisi_aktif'] = $validated['butuh_audisi'];
+
+        // Field opsional audisi
         $validated['tanggal_audisi'] = $request->filled('tanggal_audisi') ? $request->tanggal_audisi : null;
         $validated['audisi_lokasi'] = $request->filled('audisi_lokasi') ? $request->audisi_lokasi : null;
 
@@ -177,14 +183,16 @@ class EventController extends Controller
             'pembukaan_pendaftaran_waktu'   => 'nullable',
             'batas_pendaftaran_tanggal' => 'nullable|date',
             'batas_pendaftaran_waktu'   => 'nullable',
-            'tanggal_audisi' => 'nullable|date',
-            'audisi_aktif' => 'boolean',
-            'audisi_lokasi' => 'nullable|string|max:255',
+            'tanggal_audisi'            => 'nullable|date',
+            'pendaftaran_aktif'         => 'nullable|boolean',    
+            'butuh_audisi'              => 'nullable|boolean',    
+            'butuh_registrasi'          => 'nullable|boolean',    
         ]);
 
-        // ✅ PERBAIKAN: Pertahankan nilai lama jika checkbox tidak dikirim
-        // Checkbox HTML hanya mengirim value saat DICENTANG.
-        // Jika tidak dicentang, field tidak ada di request → $request->has() = false
+        $validated['pendaftaran_aktif'] = $request->boolean('pendaftaran_aktif');
+        $validated['butuh_audisi'] = $request->boolean('butuh_audisi');
+        $validated['butuh_registrasi'] = $request->boolean('butuh_registrasi');
+       
         if ($request->has('pendaftaran_dibuka')) {
             $validated['pendaftaran_dibuka'] = $request->boolean('pendaftaran_dibuka');
         } else {
@@ -215,9 +223,8 @@ class EventController extends Controller
                 }
             }
         }
-        
-        // ✅ Checkbox tidak dicentang = tidak dikirim browser → paksa jadi false
-        $validated['audisi_aktif'] = $request->boolean('audisi_aktif');
+  
+        $validated['audisi_aktif'] = $validated['butuh_audisi'];
         // ✅ Input tanggal kosong = simpan NULL (karena opsional)
         $validated['tanggal_audisi'] = $request->filled('tanggal_audisi') ? $request->tanggal_audisi : null;
         // ✅ Lokasi audisi — kosong = NULL (konsisten dgn tanggal)

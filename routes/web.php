@@ -110,6 +110,9 @@ Route::post('/midtrans/webhook', function (\Illuminate\Http\Request $request) {
     if (str_starts_with($orderId, 'PENDAFTARAN-')) {
         return app(\App\Http\Controllers\PembayaranController::class)->webhook($request);
     }
+    if (str_starts_with($orderId, 'REGISTRASI-')) {
+    return app(\App\Http\Controllers\RegistrasiController::class)->webhook($request);
+    }
 
     \Log::warning('Midtrans webhook: order_id tidak dikenal', ['order_id' => $orderId]);
     return response()->json(['status' => 'unknown order'], 200);
@@ -125,6 +128,10 @@ Route::post('/midtrans/callback', function (\Illuminate\Http\Request $request) {
 
     if (str_starts_with($orderId, 'PENDAFTARAN-')) {
         return app(\App\Http\Controllers\PembayaranController::class)->webhook($request);
+    }
+
+    if (str_starts_with($orderId, 'REGISTRASI-')) {
+        return app(\App\Http\Controllers\RegistrasiController::class)->webhook($request);
     }
 
     \Log::warning('Midtrans callback: order_id tidak dikenal', ['order_id' => $orderId]);
@@ -186,6 +193,24 @@ Route::middleware('pelanggan')->group(function () {
     // Cek status (polling)
     Route::get('/peserta/{peserta}/pembayaran/status', [PembayaranController::class, 'statusPembayaran'])
         ->name('peserta.pembayaran.status');
+    
+            // ============================================
+    // REGISTRASI (setelah lolos audisi)
+    // ============================================
+    Route::get('/peserta/{peserta}/registrasi', [App\Http\Controllers\RegistrasiController::class, 'show'])
+        ->name('peserta.registrasi.show');
+
+    Route::post('/peserta/{peserta}/registrasi/bayar', [App\Http\Controllers\RegistrasiController::class, 'bayar'])
+        ->name('peserta.registrasi.bayar');
+
+    Route::post('/peserta/{peserta}/registrasi/charge', [App\Http\Controllers\RegistrasiController::class, 'charge'])
+        ->name('peserta.registrasi.charge');
+
+    Route::get('/peserta/{peserta}/registrasi/instruksi', [App\Http\Controllers\RegistrasiController::class, 'instruksi'])
+        ->name('peserta.registrasi.instruksi');
+
+    Route::get('/peserta/{peserta}/registrasi/status', [App\Http\Controllers\RegistrasiController::class, 'status'])
+        ->name('peserta.registrasi.status');
 
     // Voting
     Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
@@ -233,6 +258,14 @@ Route::get('/admin/login', [WebAuthController::class, 'showLogin'])->name('admin
 Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.login.store');
 
 Route::middleware('admin.session')->prefix('admin')->group(function () {
+
+// Kelola Peserta Tampil
+Route::get('/peserta-tampil/{event?}', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'index'])
+    ->name('admin.peserta-tampil');
+Route::post('/peserta-tampil/{peserta}/toggle', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'toggle'])
+    ->name('admin.peserta-tampil.toggle');
+Route::post('/peserta-tampil/{event}/toggle-semua', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'toggleSemua'])
+    ->name('admin.peserta-tampil.toggle-semua');
 
     // A. Dashboard
 

@@ -46,6 +46,11 @@ Route::post('/peserta/midtrans/webhook', function (\Illuminate\Http\Request $req
         return app(\App\Http\Controllers\PembayaranController::class)->webhook($request);
     }
 
+    // ✅ TAMBAH INI
+    if (str_starts_with($orderId, 'REGISTRASI-')) {
+        return app(\App\Http\Controllers\RegistrasiController::class)->webhook($request);
+    }
+
     return response()->json(['status_code' => '200', 'status_message' => 'OK']);
 });
 

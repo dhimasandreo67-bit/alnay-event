@@ -21,13 +21,16 @@ class Event extends Model
     'form_fields',
     'banner',
     'status',
+    'pendaftaran_aktif', 
+    'butuh_audisi',      
+    'butuh_registrasi',  
     'pendaftaran_dibuka',
     'tampil_di_beranda',
     'syarat_ketentuan',
     'biaya_pendaftaran',
     'harga_per_vote',
-    'harga_registrasi',        // ← TAMBAH
-    'harga_registrasi_dp',     // ← TAMBAH
+    'harga_registrasi',   
+    'harga_registrasi_dp',
     'tanggal_mulai',
     'waktu_mulai',
     'tanggal_selesai',
@@ -72,7 +75,10 @@ class Event extends Model
         'voting_selesai' => 'datetime',
         'tampilkan_hasil_voting' => 'boolean',
         'tanggal_audisi' => 'date',
-        'audisi_aktif'   => 'boolean'
+        'audisi_aktif'   => 'boolean',
+        'pendaftaran_aktif' => 'boolean',
+        'butuh_audisi' => 'boolean',     
+        'butuh_registrasi' => 'boolean', 
     ];
 
     // protected $appends = ['status', 'status_label'];

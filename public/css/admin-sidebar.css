@@ -111,5 +111,7 @@
 @media (min-width: 901px) {
     body:has(.admin-sidebar) main[class*="ml-[235px]"] {
         margin-left: 235px !important;
+        width: calc(100% - 235px) !important;
+        max-width: calc(100% - 235px) !important;
     }
 }

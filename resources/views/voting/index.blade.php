@@ -379,12 +379,12 @@
                       <div class="mt-2.5 grid gap-2 mx-auto w-full max-w-[420px] md:max-w-none"
                         style="grid-template-columns: repeat(${Math.min(fotoList.length, 5)}, minmax(0, 1fr));">
                     ${fotoList.map((url,i) => `
-                            <button type="button"
-                                onclick="gantiFoto(${i})"
-                                class="thumb aspect-square overflow-hidden rounded-lg border border-[#D8D0C6] bg-[#EFE7DC] hover:border-[#C28E27]">
-                                <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
-                            </button>
-                        `).join('')}
+                                <button type="button"
+                                    onclick="gantiFoto(${i})"
+                                    class="thumb aspect-square overflow-hidden rounded-lg border border-[#D8D0C6] bg-[#EFE7DC] hover:border-[#C28E27]">
+                                    <img src="${esc(url)}" class="w-full h-full object-cover" alt="">
+                                </button>
+                            `).join('')}
                 </div>` : '';
 
             const nomor = String(p.id).padStart(2, '0');
@@ -454,8 +454,8 @@
                             </p>
                             <p class="mt-1 text-[10px] text-[#6A6259] italic">Menjaga ketegangan</p>
                         </div>`;
-                } else {
-                    blokPersentase = `
+                    } else {
+                        blokPersentase = `
                         <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
                             <div class="mb-1 flex items-center justify-between">
                                 <p class="text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Persentase Suara</p>
@@ -466,8 +466,8 @@
                                 <div class="progress-bar h-full rounded-full bg-[#7F5700]" style="width:${Math.min(100,statistik.persentase)}%"></div>
                             </div>
                         </div>`;
+                    }
                 }
-            }
             }
 
             const gridCols = format === 'keduanya' ? 'sm:grid-cols-2' : '';
@@ -634,7 +634,7 @@
 
         ${blokLokasi}
         ${blokProfil}
-        ${blokStatistik}
+                ${blokStatistik}
 
         ${
             (() => {
@@ -646,7 +646,6 @@
                         </div>`;
                 }
 
-                // ✅ PRIORITAS 2: Toggle ON, tapi jadwal kick-off belum tiba
                 if (p.event?.voting_mulai && new Date(p.event.voting_mulai) > new Date()) {
                     return `
                         <div class="block w-full cursor-not-allowed rounded-xl border border-blue-100 bg-blue-50 py-3.5 text-center text-sm font-semibold text-blue-700">
@@ -662,20 +661,19 @@
                         class="vote-button block w-full rounded-xl bg-[#C28E27] py-3.5 text-center text-sm font-semibold tracking-wide text-[#FFF8F1] text-reveal text-reveal-5">
                         Rp ${formatAngka(hargaPerVote)} / Vote
                     </a>`;
-            })()
+                        })()
         }
 
     ${blokDukungan}
     </div>`;
-                } catch (e) {
-                    console.error('muatPeserta error:',e);
-                    tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');
-                }
-            }
+        } catch (e) {
+            console.error('muatPeserta error:', e);
+            tampilkanError('Terjadi kesalahan saat memuat data. Cek Console untuk detail.');
+        }
+    }
 
-            // Boot
-            muatPeserta();
+    // Boot
+    muatPeserta();
     </script>
 </body>
-
 </html>

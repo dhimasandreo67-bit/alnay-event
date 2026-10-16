@@ -17,22 +17,24 @@ class Peserta extends Model
 
     public $timestamps = false;
 
-    protected $fillable = [
+        protected $fillable = [
         'event_id',
         'user_id',
         'nama_pendaftaran',
         'status',
+        'jalur',
+        'hasil_audisi',
+        'sudah_audisi',
+        'tanggal_audisi',
+        'status_registrasi',
         'hasil_akhir',
         'skor_akhir',
         'catatan_admin',
         'galeri_foto',
         'total_vote',
         'answers',
-        'sudah_audisi',        
-        'tanggal_audisi',      
-        'status_registrasi',
         'tampil_di_publik',
-        'kandidat_voting', 
+        'kandidat_voting',
     ];
 
     protected $casts = [
@@ -109,6 +111,17 @@ class Peserta extends Model
     public function sudahBayarDp(): bool
     {
         return in_array($this->status_registrasi, ['dp', 'lunas'], true);
+    }
+
+            public function isVotable(): bool
+    {
+        $event = $this->event;
+
+        if (!$event) return false;
+        if (!$event->voting_aktif) return false;
+        if ($this->status !== 'diterima') return false;
+
+        return true;
     }
 
     public function namaTampil(): string

@@ -26,7 +26,7 @@ class PendaftaranController extends Controller
     public function storeManual(Request $request, Event $event): JsonResponse
     {
         $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
-        
+
         $rules = [
             'nama'  => ['required', 'string', 'max:100', 'regex:/^[A-Za-z\s\.\'\-,]+$/u'],
             'email' => ['required', 'email', 'max:255'],
@@ -86,23 +86,31 @@ class PendaftaranController extends Controller
             }
 
             // 3. ✅ BUAT PESERTA: Status LANGSUNG 'diterima'
-            $pesertaData = [
+            // 3. ✅ BUAT PESERTA via Service — biar konsisten dengan saklar
+            $peserta = app(\App\Services\PesertaAlurService::class)->tambahManual($event, [
                 'user_id'          => $user->id,
                 'nama_pendaftaran' => $data['nama'],
-                'status'           => 'diterima', // ✅ TIDAK ADA 'menunggu_review'
-                'kandidat_voting'  => false,
-            ];
+                'jawabans'         => [], // nanti diisi jawaban di bawah
+            ]);
 
-            if (Schema::hasColumn('peserta_event', 'updated_at')) {
-                $pesertaData['updated_at'] = now();
+            // 4. ✅ KONDISIONAL — beda per alur
+            // Kalau pendaftaran publik MATI (Voting Saja) → bypass → langsung Lunas
+            // Kalau pendaftaran publik HIDUP → track → peserta baru "Belum Bayar"
+            $bypassPembayaran = !($event->pendaftaran_aktif ?? true);
+
+            if ($bypassPembayaran && $event->biaya_pendaftaran > 0) {
+                $jumlah = (int) $event->biaya_pendaftaran;
+                \App\Models\PembayaranEvent::create([
+                    'peserta_id'        => $peserta->id,
+                    'jumlah'            => $jumlah,
+                    'tarif_dasar'       => $jumlah,
+                    'metode'            => 'manual_admin',
+                    'midtrans_order_id' => 'ADMIN-MANUAL-' . date('YmdHis') . '-' . $peserta->id,
+                    'status_midtrans'   => 'settlement',
+                    'tanggal_bayar'     => now(),
+                ]);
             }
-
-            $peserta = $event->pesertas()->create($pesertaData);
-
-            // 4. ✅ TIDAK membuat record pembayaran otomatis — peserta yang baru
-            // ditambah manual harus berstatus "Belum Bayar" secara default.
-            // Admin pakai tombol "Bayar"/"Tambah DP" di tabel kalau peserta
-            // ini memang sudah membayar.
+            // Kalau pendaftaran publik HIDUP — nggak buat record — admin track manual
 
             // 5. Simpan jawaban Form Builder
             foreach ($questions as $question) {
@@ -141,53 +149,44 @@ class PendaftaranController extends Controller
      * GET /admin/peserta/{id}
      * Detail peserta
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $peserta = Peserta::with([
-            'user',
-            'event',
-            'pembayaran',
-            'jawabans.pertanyaan',
-        ])->findOrFail($id);
+            'user:id,nama,foto_url,foto_custom',
+            'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,voting_mulai,voting_selesai,auto_freeze_voting,tampilkan_hasil_voting,format_hasil_voting,status',
+            'jawabans.pertanyaan:id,label,tipe_input,tag_tampilan',
+        ])
+            ->select('id', 'event_id', 'user_id', 'galeri_foto', 'tampil_di_publik')
+            ->findOrFail($id);
 
-        // Filter: skip field "nama" & heading/subheading
-        $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
+        // Cek akses publik: kalau tampil_di_publik = false & bukan admin → 404
+        if (!$peserta->tampil_di_publik && !auth('admin')->check()) {
+            abort(404);
+        }
 
-        $peserta->setRelation(
-            'jawabans',
-            $peserta->jawabans
-                ->filter(function ($jawaban) use ($namaKeywords) {
-                    if (in_array($jawaban->pertanyaan?->tipe_input, ['heading', 'subheading'], true)) {
-                        return false;
-                    }
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($peserta);
+        }
 
-                    $label = strtolower(trim($jawaban->pertanyaan?->label ?? ''));
-                    if (in_array($label, $namaKeywords, true)) {
-                        return false;
-                    }
-
-                    return true;
-                })
-                ->values()
-        );
-
-        return view('admin.peserta.show', compact('peserta'));
+        return view('voting.index', [
+            'pesertaId' => $id,
+            'peserta' => $peserta,
+        ]);
     }
 
     /**
      * GET /admin/peserta/{id}/edit
-     * Form edit data peserta
+     * Redirect ke halaman aktivasi karena view edit terpisah tidak tersedia
      */
     public function edit($id)
     {
-        $peserta = Peserta::with([
-            'user',
-            'event',
-            'pembayaran',
-            'jawabans.pertanyaan',
-        ])->findOrFail($id);
-
-        return view('admin.peserta.edit', compact('peserta'));
+        $peserta = Peserta::findOrFail($id);
+        
+        // Redirect ke halaman aktivasi event terkait
+        return redirect()->route('admin.activation', [
+            'event' => $peserta->event_id,
+            'mode' => 'pendaftaran'
+        ])->with('info', 'Halaman edit form khusus tidak tersedia. Silakan kelola status & data peserta melalui halaman Aktivasi.');
     }
 
     /**
@@ -201,7 +200,9 @@ class PendaftaranController extends Controller
         $request->validate([
             'nama'  => ['required', 'string', 'max:100'],
             'email' => [
-                'required', 'email', 'max:255',
+                'required',
+                'email',
+                'max:255',
                 Rule::unique('pengguna_event', 'email')->ignore($peserta->user_id),
             ],
         ]);
@@ -274,14 +275,20 @@ class PendaftaranController extends Controller
     {
         $peserta = Peserta::findOrFail($id);
 
-        // Hapus relasi
-        JawabanPeserta::where('peserta_id', $peserta->id)->delete();
-        PembayaranEvent::where('peserta_id', $peserta->id)->delete();
-        $peserta->delete();
+        DB::transaction(function () use ($peserta) {
+            // Hapus semua relasi — biar FK nggak nge-block
+            \App\Models\JawabanPeserta::where('peserta_id', $peserta->id)->delete();
+            \App\Models\PembayaranEvent::where('peserta_id', $peserta->id)->delete();
+            \App\Models\PembayaranRegistrasi::where('peserta_id', $peserta->id)->delete();
+            \App\Models\Voting::where('peserta_id', $peserta->id)->delete();
+
+            // Baru hapus peserta
+            $peserta->delete();
+        });
 
         return redirect()
             ->route('admin.dashboard')
-            ->with('success', 'Data peserta, jawaban, dan pembayaran berhasil dihapus.');
+            ->with('success', 'Data peserta, jawaban, pembayaran, dan voting berhasil dihapus.');
     }
 
     /**
@@ -290,22 +297,30 @@ class PendaftaranController extends Controller
      */
     public function updateHasilAudisi(Request $request, $id)
     {
-        // ✅ Validasi: tambahkan catatan_admin sebagai nullable
         $request->validate([
             'hasil_audisi'  => 'required|in:lolos,tidak_lolos',
-            'catatan_admin' => 'nullable|string|max:1000', // ✅ TAMBAHKAN INI
+            'catatan_admin' => 'nullable|string|max:1000',
         ]);
 
         $peserta = Peserta::findOrFail($id);
+        $service = app(\App\Services\PesertaAlurService::class);
 
-        // ✅ Set langsung ke properti model (bukan lewat update() mass-assignment),
-        // supaya TETAP tersimpan walau 'hasil_audisi'/'catatan_admin' belum ada
-        // di $fillable milik model Peserta. update() akan diam-diam membuang
-        // field yang tidak fillable tanpa error — itu sebabnya status kembali
-        // ke semula setelah refresh.
-        $peserta->hasil_audisi = $request->hasil_audisi;
+        // 1. Update status via service — biar tampil_di_publik di-handle
+        if ($request->hasil_audisi === 'lolos') {
+            $service->terima($peserta);
+        } else {
+            $service->tolak($peserta, $request->catatan_admin);
+        }
 
-        // ✅ Simpan catatan_admin jika ada (bahkan string kosong)
+        // 2. Update field audisi
+        $updateData = [
+            'hasil_audisi' => $request->hasil_audisi,
+        ];
+        if ($request->hasil_audisi === 'lolos') {
+            $updateData['sudah_audisi']   = true;
+            $updateData['tanggal_audisi'] = now();
+        }
+
         if ($request->has('catatan_admin')) {
             $peserta->catatan_admin = $request->catatan_admin;
         }
@@ -528,13 +543,13 @@ class PendaftaranController extends Controller
 
         // Bersihkan BOM
         $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
-        $headers    = array_map(fn ($h) => strtolower(trim($h)), $headers);
+        $headers    = array_map(fn($h) => strtolower(trim($h)), $headers);
 
         // Petakan pertanyaan
         $questions = $event->pertanyaans()
             ->whereNotIn('tipe_input', ['heading', 'subheading'])
             ->get()
-            ->keyBy(fn ($q) => strtolower(trim($q->label)));
+            ->keyBy(fn($q) => strtolower(trim($q->label)));
 
         $importedCount = 0;
 
@@ -597,11 +612,11 @@ class PendaftaranController extends Controller
                     $user->update(['nama' => $nama]);
                 }
 
-                // 2. Buat Peserta - status langsung 'diterima'
                 $pesertaData = [
                     'user_id'          => $user->id,
                     'nama_pendaftaran' => $nama,
-                    'status'           => 'diterima', // ✅ Langsung diterima
+                    'status'           => 'diterima',
+                    'tampil_di_publik' => true,         
                 ];
 
                 if (Schema::hasColumn('peserta_event', 'updated_at')) {
@@ -686,13 +701,13 @@ class PendaftaranController extends Controller
                 ]);
             }
 
-            // 3. ✅ PERBAIKAN: Buat peserta dengan kandidat_voting = true
             $pesertaData = [
-                'user_id'          => $user->id,
-                'nama_pendaftaran' => $request->nama, // ✅ Gunakan $request->nama, bukan $data['nama']
-                'status'           => 'diterima',
-                'kandidat_voting'  => true,           // ✅ Gunakan nama kolom 'kandidat_voting' dan set ke true
-            ];
+            'user_id'          => $user->id,
+            'nama_pendaftaran' => $request->nama,
+            'status'           => 'diterima',
+            'tampil_di_publik' => true,     
+            'kandidat_voting'  => true,
+        ];
 
             if (\Illuminate\Support\Facades\Schema::hasColumn('peserta_event', 'updated_at')) {
                 $pesertaData['updated_at'] = now();
@@ -709,8 +724,8 @@ class PendaftaranController extends Controller
                     'tarif_dasar'       => $jumlah,
                     'metode'            => null,
                     'midtrans_order_id' => 'KANDIDAT-' . date('YmdHis') . '-' . $peserta->id,
-                    'status_midtrans'   => 'pending',
-                    'tanggal_bayar'     => null,
+                    'status_midtrans'   => 'settlement',
+                    'tanggal_bayar'     => now(),
                 ]);
             }
 
@@ -724,60 +739,63 @@ class PendaftaranController extends Controller
      * POST /admin/kandidat/pembayaran
      * Simpan pembayaran manual untuk kandidat voting
      */
+        /**
+     * POST /admin/kandidat/pembayaran
+     * Simpan pembayaran manual untuk kandidat voting
+     */
     public function storePembayaranManual(Request $request)
     {
         $request->validate([
-        'peserta_id'   => 'required|exists:peserta_event,id',
-        'total_biaya'  => 'required|numeric|min:0',
-        'jumlah_bayar' => 'required|numeric|min:1',
-        'metode'       => 'required|in:transfer_bank,tunai,qris',
-        'tanggal_bayar'=> 'required|date',
-    ]);
+            'peserta_id'    => 'required|exists:peserta_event,id',
+            'total_biaya'   => 'required|numeric|min:0',
+            'jumlah_bayar'  => 'required|numeric|min:1',
+            'metode'        => 'required|in:transfer_bank,tunai,qris',
+            'tanggal_bayar' => 'required|date',
+        ]);
 
-    $peserta = Peserta::findOrFail($request->peserta_id);
-    $totalBiaya = (int) $request->total_biaya;
-    $jumlahBayar = (int) $request->jumlah_bayar;
+        $peserta = Peserta::findOrFail($request->peserta_id);
+        $totalBiaya = (int) $request->total_biaya;
+        $jumlahBayar = (int) $request->jumlah_bayar;
 
-    // Normalisasi waktu bayar: pastikan ada jam (bukan 00:00 dari input date saja)
-    $rawTanggal = $request->input('tanggal_bayar');
-    $tanggalBayar = \Carbon\Carbon::parse($rawTanggal, 'Asia/Jakarta');
-    $hanyaTanggal = !preg_match('/[T\s]\d{1,2}:\d{2}/', (string) $rawTanggal);
-    if ($hanyaTanggal || $tanggalBayar->format('H:i:s') === '00:00:00') {
-        // Ambil jam sekarang WIB jika input hanya tanggal / jam 00:00
-        $tanggalBayar = $tanggalBayar->setTimeFrom(\Carbon\Carbon::now('Asia/Jakarta'));
-    }
-
-    DB::transaction(function () use ($request, $peserta, $totalBiaya, $jumlahBayar, $tanggalBayar) {
-        $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
-            ->orderBy('id', 'desc')
-            ->first();
-        
-        $sudahDibayar = $pembayaran?->jumlah ?? 0;
-        $totalSekarang = $sudahDibayar + $jumlahBayar;
-        
-        $isLunas = $totalSekarang >= $totalBiaya;
-        $status = $isLunas ? 'settlement' : 'pending';
-
-        if ($pembayaran) {
-            $pembayaran->update([
-                'jumlah'            => $totalSekarang,
-                'tarif_dasar'       => $totalBiaya,
-                'metode'            => $request->metode,
-                'status_midtrans'   => $status,
-                'tanggal_bayar'     => $tanggalBayar,
-            ]);
-        } else {
-            PembayaranEvent::create([
-                'peserta_id'        => $peserta->id,
-                'jumlah'            => $totalSekarang,
-                'tarif_dasar'       => $totalBiaya,
-                'metode'            => $request->metode,
-                'midtrans_order_id' => 'MANUAL-' . date('YmdHis') . '-' . $peserta->id,
-                'status_midtrans'   => $status,
-                'tanggal_bayar'     => $tanggalBayar,
-            ]);
+        // ✅ Normalisasi waktu bayar: pastikan ada jam (bukan 00:00 dari input date saja)
+        $rawTanggal = $request->input('tanggal_bayar');
+        $tanggalBayar = \Carbon\Carbon::parse($rawTanggal, 'Asia/Jakarta');
+        $hanyaTanggal = !preg_match('/[T\s]\d{1,2}:\d{2}/', (string) $rawTanggal);
+        if ($hanyaTanggal || $tanggalBayar->format('H:i:s') === '00:00:00') {
+            $tanggalBayar = $tanggalBayar->setTimeFrom(\Carbon\Carbon::now('Asia/Jakarta'));
         }
-    });
+
+        DB::transaction(function () use ($request, $peserta, $totalBiaya, $jumlahBayar, $tanggalBayar) {
+            $pembayaran = PembayaranEvent::where('peserta_id', $peserta->id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $sudahDibayar = $pembayaran?->jumlah ?? 0;
+            $totalSekarang = $sudahDibayar + $jumlahBayar;
+
+            $isLunas = $totalSekarang >= $totalBiaya;
+            $status = $isLunas ? 'settlement' : 'pending';
+
+            if ($pembayaran) {
+                $pembayaran->update([
+                    'jumlah'          => $totalSekarang,
+                    'tarif_dasar'     => $totalBiaya,
+                    'metode'          => $request->metode,
+                    'status_midtrans' => $status,
+                    'tanggal_bayar'   => $tanggalBayar,
+                ]);
+            } else {
+                PembayaranEvent::create([
+                    'peserta_id'        => $peserta->id,
+                    'jumlah'            => $totalSekarang,
+                    'tarif_dasar'       => $totalBiaya,
+                    'metode'            => $request->metode,
+                    'midtrans_order_id' => 'MANUAL-' . date('YmdHis') . '-' . $peserta->id,
+                    'status_midtrans'   => $status,
+                    'tanggal_bayar'     => $tanggalBayar,
+                ]);
+            }
+        });
 
         if ($request->expectsJson() || $request->ajax()) {
             $peserta->load('pembayaran');

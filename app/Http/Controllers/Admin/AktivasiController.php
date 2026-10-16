@@ -32,14 +32,9 @@ class AktivasiController extends Controller
                     ->where('kandidat_voting', false)
                     ->with(['user', 'pembayaran', 'pembayaranRegistrasi', 'jawabans.pertanyaan']);
 
-                // Mode Registrasi — samakan dengan tab Registrasi di Dashboard
-                // (peserta diterima + lolos audisi)
-                if ($mode === 'registrasi') {
-                    $query->where('hasil_audisi', 'lolos');
-                }
-
-                $finalis = $query->latest('id')->get()
-                    ->map(fn (Peserta $peserta) => $this->transform($peserta));
+            // Mode Registrasi — cuma tampil yang sudah lolos audisi (kalau event butuh audisi)
+            if ($mode === 'registrasi' && $event->butuh_audisi) {
+                $query->where('hasil_audisi', 'lolos');
             }
 
         $totalFinalis = $finalis->count();
@@ -94,9 +89,31 @@ class AktivasiController extends Controller
     {
         $peserta->sudah_audisi = ! $peserta->sudah_audisi;
         $peserta->tanggal_audisi = $peserta->sudah_audisi ? now() : null;
+
+        // ✅ Set hasil_audisi juga — biar sinkron dengan /profil-user
+        if ($peserta->sudah_audisi) {
+            $peserta->hasil_audisi = 'lolos';
+        } else {
+            $peserta->hasil_audisi = null;
+        }
+
         $peserta->save();
 
-        $status = $peserta->sudah_audisi ? 'ditandai sudah audisi' : 'dibatalkan audisinya';
+        // ✅ TRIGGER ALUR — sync status & tampil_di_publik
+        $service = app(\App\Services\PesertaAlurService::class);
+        
+        if ($peserta->sudah_audisi) {
+            // Lolos audisi → status 'diterima' + tampil_di_publik true
+            $service->terima($peserta);
+        } else {
+            // Batalkan audisi → balikin ke 'menunggu_audisi' + sembunyikan
+            $peserta->update([
+                'status' => 'menunggu_audisi',
+                'tampil_di_publik' => false,
+            ]);
+        }
+
+        $status = $peserta->sudah_audisi ? 'ditandai lolos audisi' : 'dibatalkan audisinya';
 
         return redirect()
             ->route('admin.activation', ['event' => $peserta->event_id, 'mode' => 'registrasi'])

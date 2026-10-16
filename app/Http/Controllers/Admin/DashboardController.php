@@ -66,11 +66,11 @@ class DashboardController extends Controller
         // STATISTIK AUDISI
         // ============================================
         $audisiQuery = $event
-            ? Peserta::where('event_id', $event->id)
-                ->where('kandidat_voting', false)
-                ->where('status', 'diterima')
-                ->whereHas('pembayaran', fn ($q) => $q->where('status_midtrans', 'settlement'))
-            : null;
+        ? Peserta::where('event_id', $event->id)
+            ->where('kandidat_voting', false)
+            ->whereIn('status', ['menunggu_audisi', 'diterima', 'ditolak'])
+            ->whereHas('pembayaran', fn ($q) => $q->where('status_midtrans', 'settlement'))
+        : null;
 
         $totalAudisi = $audisiQuery ? (clone $audisiQuery)->count() : 0;
 

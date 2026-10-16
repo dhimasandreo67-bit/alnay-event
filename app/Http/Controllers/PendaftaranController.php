@@ -20,14 +20,26 @@ class PendaftaranController extends Controller
     // DARI HAN: form pendaftaran publik (Blade) di /daftar/{event}
     // =====================================================================
 
-    public function showPublicForm(Event $event)
-    {
-        return view('registration', [
-            'event' => $event,
-            'questions' => $event->pertanyaans()->orderBy('urutan')->get(),
-        ]);
-    }
+        public function showPublicForm(Event $event)
+        {
+            $pendaftaranAktif = $event->pendaftaran_aktif ?? true;
+            $pendaftaranDibuka = (int) ($event->pendaftaran_dibuka ?? 0) === 1;
 
+            if (!$pendaftaranAktif || !$pendaftaranDibuka) {
+                $alasan = !$pendaftaranAktif
+                    ? 'Pendaftaran peserta tidak diaktifkan untuk event ini.'
+                    : 'Pendaftaran untuk event ini sedang ditutup oleh admin.';
+
+                return redirect()
+                    ->route('detail-event.berlangsung', $event)
+                    ->with('error', $alasan);
+            }
+
+            return view('registration', [
+                'event' => $event,
+                'questions' => $event->pertanyaans()->orderBy('urutan')->get(),
+            ]);
+        }
     /**
      * Preview form pendaftaran (untuk admin)
      * GET /admin/preview/{event}
@@ -35,7 +47,7 @@ class PendaftaranController extends Controller
     public function previewForm(Event $event)
     {
         $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
-        
+
         return view('registration', [
             'event' => $event,
             'questions' => $questions,
@@ -55,9 +67,9 @@ class PendaftaranController extends Controller
 
         // 2. Cek sudah pernah daftar event ini?
         $sudahDaftar = Peserta::where('event_id', $event->id)
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['diterima'])
-            ->exists();
+        ->where('user_id', $user->id)
+        ->whereNotIn('status', ['gugur', 'ditolak'])
+        ->exists();
 
         if ($sudahDaftar) {
             return redirect()
@@ -146,52 +158,50 @@ class PendaftaranController extends Controller
 
         // 5. Simpan peserta + jawaban
 
-                DB::transaction(function () use ($request, $event, $questions, $user, $data, $namaDefault) {
-                 $peserta = Peserta::create([
-                'event_id'          => $event->id,
-                'user_id'           => $user->id,
-                'nama_pendaftaran'  => $request->nama_pendaftaran ?: $namaDefault,
-                'status'            => 'diterima',      // ← AUTO DITERIMA
-                'sudah_audisi'      => false,           // ← Default belum audisi
-                'tampil_di_publik'  => true,            // ← Default tampil (nanti di-override)
-                'status_registrasi' => 'belum',         // ← Default belum bayar registrasi
-            ]);
+        // 5. Cek saklar pendaftaran_aktif
+        if (!$event->pendaftaran_aktif) {
+            return redirect()
+                ->route('public.registration', $event)
+                ->with('error', 'Pendaftaran untuk event ini sudah ditutup.');
+        }
 
-            $answers = $data['answers'] ?? [];
+        // 6. Simpan peserta via PesertaAlurService
+        $peserta = app(\App\Services\PesertaAlurService::class)->daftar($event, [
+            'user_id'          => $user->id,
+            'nama_pendaftaran' => $request->nama_pendaftaran ?: $namaDefault,
+        ]);
 
-            foreach ($questions as $question) {
-                if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
-                    continue;
-                }
+        // 7. Simpan jawaban form
+        $answers = $data['answers'] ?? [];
 
-                $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
-                $answer ??= $answers[$question->id] ?? null;
-
-                if ($answer === null || $answer === '') {
-                    continue;
-                }
-
-                if (is_array($answer)) {
-                    $answer = json_encode($answer, JSON_THROW_ON_ERROR);
-                }
-
-                JawabanPeserta::create([
-                    'peserta_id'    => $peserta->id,
-                    'pertanyaan_id' => $question->id,
-                    'jawaban'       => $answer,
-                ]);
+        foreach ($questions as $question) {
+            if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
+                continue;
             }
-        });
 
-        // 6. Redirect dengan flash message
+            $answer = $request->file("answers.{$question->id}")?->store('peserta', 'public');
+            $answer ??= $answers[$question->id] ?? null;
+
+            if ($answer === null || $answer === '') {
+                continue;
+            }
+
+            if (is_array($answer)) {
+                $answer = json_encode($answer, JSON_THROW_ON_ERROR);
+            }
+
+            JawabanPeserta::create([
+                'peserta_id'    => $peserta->id,
+                'pertanyaan_id' => $question->id,
+                'jawaban'       => $answer,
+            ]);
+        }
+
         return redirect()
-            ->route('public.registration', $event)
-            ->with('success', 'Pendaftaran berhasil! Data kamu sudah kami terima.');
-    }
+            ->route('profil-user')
+            ->with('success', 'Pendaftaran berhasil! Silakan cek status di halaman profil.');
+            }
 
-    // =====================================================================
-    // DARI MAIN: API JSON
-    // =====================================================================
 
     public function store(Request $request, $id)
     {
@@ -258,8 +268,13 @@ class PendaftaranController extends Controller
             'event:id,nama,harga_per_vote,tanggal_mulai,tanggal_selesai,voting_aktif,voting_mulai,voting_selesai,auto_freeze_voting,tampilkan_hasil_voting,format_hasil_voting,status',
             'jawabans.pertanyaan:id,label,tipe_input,tag_tampilan',
         ])
-            ->select('id', 'event_id', 'user_id', 'galeri_foto')
+            ->select('id', 'event_id', 'user_id', 'galeri_foto', 'tampil_di_publik')
             ->findOrFail($id);
+
+        // Cek akses publik: kalau tampil_di_publik = false & bukan admin → 404
+        if (!$peserta->tampil_di_publik && !auth('admin')->check()) {
+            abort(404);
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json($peserta);

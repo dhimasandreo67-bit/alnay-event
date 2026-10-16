@@ -1,2 +1,19 @@
-﻿*
+﻿# Ignore semua dulu
+*
+
+# Whitelist file & folder penting
 !.gitignore
+!app/
+!resources/
+!routes/
+!config/
+!database/migrations/
+!bootstrap/app.php
+!bootstrap/providers/
+!artisan
+!composer.json
+!package.json
+!vite.config.js
+!tailwind.config.js
+!postcss.config.js
+!.env.example
