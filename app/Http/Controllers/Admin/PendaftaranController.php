@@ -521,6 +521,14 @@ class PendaftaranController extends Controller
      */
     public function importCsv(Request $request, Event $event)
     {
+        $request->validate([
+            'tipe_import' => ['nullable', 'in:pendaftaran,kandidat'],
+            'file_csv'    => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ]);
+
+        $tipeImport = $request->input('tipe_import', 'pendaftaran');
+        $isKandidat = $tipeImport === 'kandidat';
+
         $file = $request->file('file_csv');
         $path = $file->getRealPath();
         $handle = fopen($path, 'r');
@@ -541,11 +549,11 @@ class PendaftaranController extends Controller
             return redirect()->back()->with('error', 'File CSV kosong atau format tidak valid.');
         }
 
-        // Bersihkan BOM
+        // Bersihkan BOM dan normalisasi header
         $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
-        $headers    = array_map(fn($h) => strtolower(trim($h)), $headers);
+        $headers = array_map(fn($h) => strtolower(trim($h)), $headers);
 
-        // Petakan pertanyaan
+        // Petakan pertanyaan berdasarkan label lowercase
         $questions = $event->pertanyaans()
             ->whereNotIn('tipe_input', ['heading', 'subheading'])
             ->get()
@@ -553,27 +561,36 @@ class PendaftaranController extends Controller
 
         $importedCount = 0;
 
-        DB::transaction(function () use ($handle, $headers, $questions, $event, &$importedCount, $delimiter) {
+        DB::transaction(function () use ($handle, $headers, $questions, $event, &$importedCount, $delimiter, $isKandidat) {
             while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
-                if (count($row) !== count($headers)) {
+                // Abaikan baris kosong
+                if (count($row) === 1 && empty($row[0])) {
                     continue;
                 }
 
-                $dataRow   = array_combine($headers, $row);
+                // Sesuaikan jika jumlah kolom kurang dari header (isi dengan string kosong)
+                if (count($row) < count($headers)) {
+                    $row = array_pad($row, count($headers), '');
+                }
+
+                $dataRow   = array_combine($headers, array_slice($row, 0, count($headers)));
                 $rowValues = array_values($dataRow);
 
                 $nama  = null;
                 $email = null;
 
+                // Deteksi kolom nama & email secara fleksibel
                 foreach ($dataRow as $key => $val) {
-                    if (in_array($key, ['nama', 'nama lengkap', 'nama peserta'])) {
+                    $cleanKey = str_replace(['_', '-'], ' ', trim($key));
+                    if (in_array($cleanKey, ['nama', 'nama lengkap', 'nama peserta', 'name', 'nama kandidat'])) {
                         $nama = trim($val);
                     }
-                    if (in_array($key, ['email', 'e-mail', 'alamat email'])) {
+                    if (in_array($cleanKey, ['email', 'e mail', 'alamat email'])) {
                         $email = trim($val);
                     }
                 }
 
+                // Fallback ke indeks pertama dan kedua jika header tidak dikenali
                 if (empty($nama) && isset($rowValues[0])) {
                     $nama = trim($rowValues[0]);
                 }
@@ -581,29 +598,44 @@ class PendaftaranController extends Controller
                     $email = trim($rowValues[1]);
                 }
 
-                if (empty($nama) || str_contains(strtolower($nama), 'contoh')) {
-                    $nama = 'Peserta Import';
+                // Validasi / Generate Nama
+                if (empty($nama)) {
+                    $nama = $isKandidat ? ('Kandidat ' . date('His') . '-' . ($importedCount + 1)) : 'Peserta Import';
                 }
-                if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+                // 🛑 SKIP BARIS CONTOH DARI TEMPLATE CSV BAWAAN
+                if (str_contains(strtolower($nama), 'contoh') || str_contains(strtolower($email), 'contoh')) {
                     continue;
                 }
 
-                // Cek user existing
+                // Validasi / Generate Email
+                if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    if (!$isKandidat) {
+                        // Pendaftaran umum wajib punya email valid
+                        continue;
+                    }
+                    // Kandidat voting: buatkan email unik otomatis jika kosong
+                    $slug  = Str::slug($nama, '.');
+                    $email = $slug . '.' . Str::lower(Str::random(5)) . '@kandidat.alnay.id';
+                }
+
+                // Cek duplikasi pendaftaran di event yang sama
                 $existingUser = PenggunaEvent::where('email', $email)->first();
                 if ($existingUser) {
                     $sudahDaftar = Peserta::where('event_id', $event->id)
                         ->where('user_id', $existingUser->id)
+                        ->where('kandidat_voting', $isKandidat)
                         ->exists();
                     if ($sudahDaftar) {
                         continue;
                     }
                 }
 
-                // 1. Buat / Ambil Akun
+                // 1. Buat / Ambil Akun Pengguna
                 $user = PenggunaEvent::firstOrCreate(
                     ['email' => $email],
                     [
-                        'google_id' => 'import-' . Str::uuid(),
+                        'google_id' => ($isKandidat ? 'kandidat-voting-' : 'import-') . Str::uuid(),
                         'nama'      => $nama,
                     ]
                 );
@@ -612,11 +644,13 @@ class PendaftaranController extends Controller
                     $user->update(['nama' => $nama]);
                 }
 
+                // 2. Buat Data Peserta Event
                 $pesertaData = [
                     'user_id'          => $user->id,
                     'nama_pendaftaran' => $nama,
                     'status'           => 'diterima',
-                    'tampil_di_publik' => true,         
+                    'tampil_di_publik' => true,
+                    'kandidat_voting'  => $isKandidat,
                 ];
 
                 if (Schema::hasColumn('peserta_event', 'updated_at')) {
@@ -626,29 +660,43 @@ class PendaftaranController extends Controller
                 $peserta = $event->pesertas()->create($pesertaData);
                 $importedCount++;
 
-                // 3. Buat pembayaran otomatis jika ada biaya
-                if ($event->biaya_pendaftaran > 0) {
-                    $jumlah = (int) $event->biaya_pendaftaran;
+                // 3. Buat Pembayaran Otomatis Berdasarkan Tipe
+                if ((int) $event->biaya_pendaftaran > 0) {
+                    $biaya = (int) $event->biaya_pendaftaran;
 
-                    PembayaranEvent::create([
-                        'peserta_id'        => $peserta->id,
-                        'jumlah'            => $jumlah,
-                        'tarif_dasar'       => $jumlah,
-                        'metode'            => 'transfer_bank',
-                        'midtrans_order_id' => 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT),
-                        'status_midtrans'   => 'pending',
-                        'tanggal_bayar'     => null,
-                    ]);
+                    if ($isKandidat) {
+                        PembayaranEvent::create([
+                            'peserta_id'        => $peserta->id,
+                            'jumlah'            => 0,
+                            'tarif_dasar'       => $biaya,
+                            'metode'            => null,
+                            'midtrans_order_id' => 'KANDIDAT-IMPORT-' . date('YmdHis') . '-' . $peserta->id,
+                            'status_midtrans'   => 'settlement',
+                            'tanggal_bayar'     => now(),
+                        ]);
+                    } else {
+                        PembayaranEvent::create([
+                            'peserta_id'        => $peserta->id,
+                            'jumlah'            => $biaya,
+                            'tarif_dasar'       => $biaya,
+                            'metode'            => 'transfer_bank',
+                            'midtrans_order_id' => 'PPA-' . date('Ymd') . '-' . str_pad($peserta->id, 4, '0', STR_PAD_LEFT),
+                            'status_midtrans'   => 'pending',
+                            'tanggal_bayar'     => null,
+                        ]);
+                    }
                 }
 
-                // 4. Simpan Jawaban
+                // 4. Simpan Jawaban Formulir (Form Builder)
                 foreach ($dataRow as $columnName => $value) {
-                    if (in_array($columnName, ['nama', 'nama lengkap', 'nama peserta', 'email', 'e-mail', 'alamat email'])) {
+                    $cleanColName = strtolower(trim($columnName));
+                    
+                    if (in_array($cleanColName, ['nama', 'nama lengkap', 'nama peserta', 'name', 'nama kandidat', 'email', 'e-mail', 'alamat email'])) {
                         continue;
                     }
 
-                    if (isset($questions[$columnName]) && !empty(trim($value))) {
-                        $question = $questions[$columnName];
+                    if (isset($questions[$cleanColName]) && !empty(trim($value))) {
+                        $question = $questions[$cleanColName];
                         JawabanPeserta::create([
                             'peserta_id'    => $peserta->id,
                             'pertanyaan_id' => $question->id,
@@ -661,7 +709,7 @@ class PendaftaranController extends Controller
 
         fclose($handle);
 
-        return redirect()->back()->with('success', "Berhasil mengimpor {$importedCount} data peserta baru!");
+        return redirect()->back()->with('success', "Berhasil mengimpor {$importedCount} data peserta.");
     }
 
     /**
