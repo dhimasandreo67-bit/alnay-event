@@ -30,15 +30,15 @@ class BerandaController extends Controller
         $pendaftaran = Peserta::where('event_id', $event->id)
             ->where('kandidat_voting', false)
             ->where('status', 'diterima')
-            ->when($hanyaTampilPublik, fn ($q) => $q->where('tampil_di_publik', true))
+            ->when($hanyaTampilPublik, fn($q) => $q->where('tampil_di_publik', true))
             ->with(['user', 'pembayaran'])
             ->get()
-            ->filter(fn (Peserta $p) => $p->layakTampilPublik($event));
+            ->filter(fn(Peserta $p) => $p->layakTampilPublik($event));
 
         $kandidat = Peserta::where('event_id', $event->id)
             ->where('kandidat_voting', true)
             ->where('status', 'diterima')
-            ->when($hanyaTampilPublik, fn ($q) => $q->where('tampil_di_publik', true))
+            ->when($hanyaTampilPublik, fn($q) => $q->where('tampil_di_publik', true))
             ->with(['user', 'pembayaran'])
             ->get();
 
@@ -108,17 +108,17 @@ class BerandaController extends Controller
         $sisaWaktu = null;
 
         if ($eventBerlangsung) {
-            // Pendaftaran: diterima + lunas + lolos audisi (bila perlu).
-            // Kandidat voting: diterima saja, tanpa syarat audisi/bayar.
-            // Keduanya tetap harus sudah di-toggle "Tampil di Publik".
-            $peringkatTerkini = $this->pesertaLayakVoting($eventBerlangsung, true)
-                ->sortByDesc('total_vote')
-                ->take(3)
-                ->values();
-
-            $totalSuara = $eventBerlangsung->stat_total_suara ?? 0;
             $jumlahPeserta = $eventBerlangsung->stat_jumlah_peserta ?? 0;
             $sisaWaktu = $eventBerlangsung->stat_sisa_waktu ?? 0;
+
+            // ✅ CEK APAKAH HASIL BOLEH DITAMPILKAN
+            if ($eventBerlangsung->tampilkan_hasil_voting) {
+                $peringkatTerkini = $this->pesertaLayakVoting($eventBerlangsung, true)
+                    ->sortByDesc('total_vote')
+                    ->take(3)
+                    ->values();
+                $totalSuara = $eventBerlangsung->stat_total_suara ?? 0;
+            }
         }
 
         // ============================================================
@@ -130,14 +130,18 @@ class BerandaController extends Controller
 
         if (! $eventBerlangsung && $eventBaruSelesai) {
             $eventPeringkatAkhir = $eventBaruSelesai;
-            $peringkatAkhir = $this->pesertaLayakVoting($eventBaruSelesai)
-                ->sortByDesc('total_vote')
-                ->take(3)
-                ->values();
 
-            $totalSuaraAkhir = Voting::where('event_id', $eventBaruSelesai->id)
-                ->where('status_midtrans', 'settlement')
-                ->sum('jumlah_vote');
+            // ✅ CEK APAKAH HASIL BOLEH DITAMPILKAN
+            if ($eventBaruSelesai->tampilkan_hasil_voting) {
+                $peringkatAkhir = $this->pesertaLayakVoting($eventBaruSelesai)
+                    ->sortByDesc('total_vote')
+                    ->take(3)
+                    ->values();
+
+                $totalSuaraAkhir = Voting::where('event_id', $eventBaruSelesai->id)
+                    ->where('status_midtrans', 'settlement')
+                    ->sum('jumlah_vote');
+            }
         }
 
         // ============================================================
@@ -149,22 +153,7 @@ class BerandaController extends Controller
             ->take(6)
             ->get();
 
-        // ============================================================
-        // 7. BLACKOUT
-        // ============================================================
-        $blackoutAktif = false;
-        $blackoutEvent = null;
-
-        if ($eventBerlangsung && $eventBerlangsung->blackout_h2_voting) {
-            $blackoutAktif = true;
-            $blackoutEvent = $eventBerlangsung;
-        }
-
-        if (! $blackoutAktif && $eventPeringkatAkhir && $eventPeringkatAkhir->blackout_h2_voting) {
-            $blackoutAktif = true;
-            $blackoutEvent = $eventPeringkatAkhir;
-        }
-
+        // ✅ TAMBAHKAN INI
         return view('beranda', compact(
             'eventBerlangsung',
             'eventBerlangsungList',
@@ -178,9 +167,7 @@ class BerandaController extends Controller
             'sisaWaktu',
             'peringkatAkhir',
             'totalSuaraAkhir',
-            'eventPeringkatAkhir',
-            'blackoutAktif',
-            'blackoutEvent'
+            'eventPeringkatAkhir'
         ));
     }
 }
