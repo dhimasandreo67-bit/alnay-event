@@ -7,8 +7,8 @@
     <title>Pengaturan Event & Voting | ALNAY.ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css'])
-    
-    {{-- ✅ TAMBAHKAN BARIS INI AGAR TOAST & MODAL BERFUNGSI --}}
+
+    {{-- ✅ WAJIB: agar toast & modal berfungsi --}}
     @include('admin.partials.pwa-head')
 </head>
 
@@ -22,7 +22,7 @@
                 Konfigurasi status publikasi, periode voting, format tampilan hasil, dan catatan rekening settlement.
             </p>
 
-            {{-- Flash message ini akan otomatis ditangkap oleh admin-toast.js jika pwa-head sudah di-include --}}
+            {{-- Flash message --}}
             @if (session('success'))
                 <div class="mb-4 rounded-lg bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">
                     {{ session('success') }}
@@ -49,6 +49,7 @@
                                     </p>
                                 </div>
                                 <label class="toggle-switch shrink-0">
+                                    {{-- Hidden input untuk voting_aktif --}}
                                     <input type="hidden" name="voting_aktif" value="0">
                                     <input type="checkbox" id="toggleVotingSwitch" name="voting_aktif" value="1"
                                         {{ $event->voting_aktif ? 'checked' : '' }}>
@@ -102,7 +103,9 @@
                             </div>
 
                             <div class="space-y-3">
+                                {{-- Auto Freeze --}}
                                 <label class="flex items-start gap-2 text-[12px]">
+                                    <input type="hidden" name="auto_freeze_voting" value="0">
                                     <input type="checkbox" name="auto_freeze_voting" value="1" class="mt-0.5 shrink-0" {{ $event->auto_freeze_voting ? 'checked' : '' }}>
                                     <span>
                                         <strong class="block">Kunci Suara Otomatis (Auto Freeze)</strong>
@@ -110,11 +113,13 @@
                                     </span>
                                 </label>
 
+                                {{-- ✅ TAMBAHAN: Tampilkan Hasil Voting ke Publik --}}
                                 <label class="flex items-start gap-2 text-[12px]">
-                                    <input type="checkbox" name="blackout_h2_voting" value="1" class="mt-0.5 shrink-0" {{ $event->blackout_h2_voting ? 'checked' : '' }}>
+                                    <input type="hidden" name="tampilkan_hasil_voting" value="0">
+                                    <input type="checkbox" name="tampilkan_hasil_voting" value="1" class="mt-0.5 shrink-0" {{ $event->tampilkan_hasil_voting ? 'checked' : '' }}>
                                     <span>
-                                        <strong class="block">Sembunyikan Total Suara</strong>
-                                        <span class="text-[#73716c] text-[11px] leading-relaxed">Sembunyikan total suara publik demi unsur kejutan.</span>
+                                        <strong class="block">Tampilkan Hasil Voting ke Publik</strong>
+                                        <span class="text-[#73716c] text-[11px] leading-relaxed">Jika dimatikan, statistik suara disembunyikan dari pengunjung (meskipun voting aktif).</span>
                                     </span>
                                 </label>
                             </div>
@@ -233,7 +238,6 @@
             const form = this.closest('form');
             if (!form) return;
 
-            // Submit form secara native (paling aman, sudah ada @csrf)
             if (typeof form.requestSubmit === 'function') {
                 form.requestSubmit();
             } else {

@@ -299,8 +299,8 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
 
                     // ✅ Cek auto freeze — HANYA untuk order non-admin
                     $freezeAktif = ! $isAdminOrder
-                    && $event->voting_selesai
-                    && now()->gt($event->voting_selesai);
+                        && $event->voting_selesai
+                        && now()->gt($event->voting_selesai);
 
                     if ($freezeAktif) {
                         \Log::warning('Vote settlement setelah freeze — suara TIDAK dihitung', [
@@ -374,27 +374,6 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
             ->orderBy('total_vote', 'desc')
             ->get();
 
-        // ============================================
-        // Cek blackout H-2
-        // ============================================
-        $blackoutAktif = false;
-        $waktuGrandFinal = null;
-        $message = null;
-
-        if ($event->blackout_h2_voting) {
-            $blackoutAktif = true;
-            $waktuGrandFinal = $event->voting_selesai?->translatedFormat('d F Y, H:i');
-            $message = 'Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat ini.';
-        }
-
-        // ============================================
-        // Kalau blackout — sembunyikan total_vote
-        // ============================================
-        if ($blackoutAktif && ! $adminLogin) {
-            $pesertaList->each(function ($p) {
-                $p->total_vote = null; // sembunyikan angka
-            });
-        }
 
         return response()->json([
             'event' => $event->only([
@@ -569,7 +548,6 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
             'voting_mulai' => ['nullable', 'date'],
             'voting_selesai' => ['nullable', 'date', 'after_or_equal:voting_mulai'],
             'auto_freeze_voting' => ['nullable', 'boolean'],
-            'blackout_h2_voting' => ['nullable', 'boolean'],
             'metode_pembayaran' => ['nullable', 'array'],
             'rekening_bank' => ['nullable', 'string', 'max:100'],
             'rekening_nomor' => ['nullable', 'string', 'max:50'],
@@ -578,7 +556,6 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
 
         $data['voting_aktif'] = $request->boolean('voting_aktif');
         $data['auto_freeze_voting'] = $request->boolean('auto_freeze_voting');
-        $data['blackout_h2_voting'] = $request->boolean('blackout_h2_voting');
 
         $event->update($data);
 
