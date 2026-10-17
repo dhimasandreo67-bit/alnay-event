@@ -676,58 +676,53 @@ class PendaftaranController extends Controller
      */
     public function storeKandidat(Request $request, Event $event)
     {
-        $request->validate([
-            'nama'  => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'max:255'],
-        ]);
-
-        $peserta = DB::transaction(function () use ($request, $event) {
-            // 1. Cari atau buat user
-            $user = \App\Models\PenggunaEvent::query()->firstOrCreate(
-                ['email' => $request->email],
-                [
-                    'google_id' => 'kandidat-voting-' . \Illuminate\Support\Str::uuid(),
-                    'nama'      => $request->nama,
-                ]
-            );
-
-            if ($user->nama !== $request->nama) {
-                $user->update(['nama' => $request->nama]);
+        // 1. Kumpulkan semua jawaban dari request (format: jawaban_ID)
+        $answers = [];
+        foreach ($request->all() as $key => $val) {
+            if (str_starts_with($key, 'jawaban_')) {
+                $qid = str_replace('jawaban_', '', $key);
+                $answers[$qid] = $val;
             }
-
-            // 2. Cek duplikasi kandidat voting
-            $sudahDaftar = Peserta::where('event_id', $event->id)
-                ->where('user_id', $user->id)
-                ->where('kandidat_voting', true)
-                ->exists();
-
-            if ($sudahDaftar) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'email' => 'Email ini sudah terdaftar sebagai kandidat voting.',
-                ]);
+        }
+        
+        // 2. Ekstrak Nama Kandidat (ambil jawaban teks pertama yang diisi)
+        $namaKandidat = null;
+        foreach ($answers as $qid => $val) {
+            if (is_string($val) && trim($val) !== '') {
+                $namaKandidat = trim($val);
+                break;
             }
+        }
 
-            $pesertaData = [
-            'user_id'          => $user->id,
-            'nama_pendaftaran' => $request->nama,
-            'status'           => 'diterima',
-            'tampil_di_publik' => true,     
-            'kandidat_voting'  => true,
-        ];
+        if (! $namaKandidat) {
+            $namaKandidat = 'Kandidat ' . date('His');
+        }
 
-            if (\Illuminate\Support\Facades\Schema::hasColumn('peserta_event', 'updated_at')) {
-                $pesertaData['updated_at'] = now();
-            }
+        // 3. Buat Email Hantu
+        $slug = \Illuminate\Support\Str::slug($namaKandidat, '.');
+        $emailDummy = $slug . '.' . \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(5)) . '@kandidat.alnay.id';
 
-            $peserta = $event->pesertas()->create($pesertaData);
+        $peserta = DB::transaction(function () use ($request, $event, $answers, $namaKandidat, $emailDummy) {
+            $user = \App\Models\PenggunaEvent::create([
+                'email'     => $emailDummy,
+                'google_id' => 'kandidat-voting-' . \Illuminate\Support\Str::uuid(),
+                'nama'      => $namaKandidat,
+            ]);
 
-            // 4. Buat pembayaran dengan status PENDING agar admin bisa menginput manual nanti
-            $jumlah = (int) $event->biaya_pendaftaran;
-            if ($jumlah > 0) {
+            $peserta = $event->pesertas()->create([
+                'user_id'          => $user->id,
+                'nama_pendaftaran' => $namaKandidat,
+                'status'           => 'diterima',
+                'tampil_di_publik' => true,
+                'kandidat_voting'  => true,
+            ]);
+
+            $biaya = (int) $event->biaya_pendaftaran;
+            if ($biaya > 0) {
                 \App\Models\PembayaranEvent::create([
                     'peserta_id'        => $peserta->id,
-                    'jumlah'            => 0, // Mulai dari 0, admin yang isi nominal di modal
-                    'tarif_dasar'       => $jumlah,
+                    'jumlah'            => 0,
+                    'tarif_dasar'       => $biaya,
                     'metode'            => null,
                     'midtrans_order_id' => 'KANDIDAT-' . date('YmdHis') . '-' . $peserta->id,
                     'status_midtrans'   => 'settlement',
@@ -735,10 +730,31 @@ class PendaftaranController extends Controller
                 ]);
             }
 
+            // 4. Simpan jawaban ke tabel JawabanPeserta
+            foreach ($answers as $qid => $val) {
+                if (empty($val) && !$request->hasFile("jawaban_{$qid}")) {
+                    continue;
+                }
+
+                $jawabanAkhir = $val;
+
+                if ($request->hasFile("jawaban_{$qid}")) {
+                    $jawabanAkhir = $request->file("jawaban_{$qid}")->store('peserta', 'public');
+                } elseif (is_array($val)) {
+                    $jawabanAkhir = json_encode($val);
+                }
+
+                \App\Models\JawabanPeserta::create([
+                    'peserta_id'    => $peserta->id,
+                    'pertanyaan_id' => $qid,
+                    'jawaban'       => $jawabanAkhir,
+                ]);
+            }
+
             return $peserta;
         });
 
-        return redirect()->back()->with('success', 'Kandidat voting "' . $request->nama . '" berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Kandidat voting "' . $namaKandidat . '" berhasil ditambahkan.');
     }
 
     /**

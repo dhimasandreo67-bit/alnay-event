@@ -240,7 +240,20 @@
                 'id' => $p->id,
                 'nomor' => str_pad($i + 1, 2, '0', STR_PAD_LEFT),
                 'nama' => $p->namaTampil(),
-                'foto' => $p->fotoUtama(),
+                'foto' => (function() use ($p) {
+                $jawabanFoto = $p->jawabans->first(function ($j) {
+                    $tipe = strtolower(trim($j->pertanyaan->tipe_input ?? ''));
+                    return in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar']) && $j->jawaban;
+                });
+                $fotoDariForm = $jawabanFoto 
+                    ? (str_starts_with($jawabanFoto->jawaban, 'http') 
+                        ? $jawabanFoto->jawaban 
+                        : asset('storage/' . $jawabanFoto->jawaban))
+                    : null;
+                $fotoCustom = $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : null;
+                $fotoGoogle = $p->user?->foto_url;
+                return $fotoDariForm ?? $fotoCustom ?? $fotoGoogle;
+            })(),
                 'persen' => $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 2) : 0,
                 'vote' => $p->total_vote,
             ];

@@ -148,6 +148,23 @@ class PendaftaranController extends Controller
             $rules[$field] = $fieldRules;
         }
 
+                // ✅ PRIORITAS FOTO: Ambil foto dari Form Builder (file pertama)
+        $fotoDariForm = null;
+        foreach ($questions as $question) {
+            $tipe = strtolower(trim($question->tipe_input ?? ''));
+            if (in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar'], true)) {
+                if ($request->hasFile("answers.{$question->id}")) {
+                    $fotoDariForm = $request->file("answers.{$question->id}")->store('peserta', 'public');
+                    break; // Ambil yang pertama
+                }
+            }
+        }
+
+        // Update user dengan foto dari form
+        if ($fotoDariForm && $user) {
+            $user->update(['foto_custom' => $fotoDariForm]);
+        }
+
         $data = $request->validate($rules);
 
         \Log::info('=== DEBUG JAWABAN ===', [

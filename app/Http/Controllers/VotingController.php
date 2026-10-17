@@ -440,15 +440,29 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
         $bio = $cariJawaban('bio', '/bio|profil|tentang|deskripsi/i');
         $lokasi = $cariJawaban('lokasi', '/lokasi|domisili|kota|alamat/i');
 
-        $fotoRaw = $cariJawaban('foto', '/foto|gambar|upload/i');
+        // ✅ PRIORITAS 1: Foto dari Form Builder (Upload Gambar)
+        $fotoDariForm = null;
+        $jawabanFoto = $peserta->jawabans->first(function ($j) {
+            $tipe = strtolower(trim($j->pertanyaan->tipe_input ?? ''));
+            return in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar']) && $j->jawaban;
+        });
 
-        if ($fotoRaw) {
-            $foto = str_starts_with($fotoRaw, 'http') ? $fotoRaw : asset('storage/' . $fotoRaw);
-        } elseif ($peserta->user?->foto_custom) {
-            $foto = asset('storage/' . $peserta->user->foto_custom);
-        } else {
-            $foto = $peserta->user?->foto_url;
+        if ($jawabanFoto) {
+            $fotoDariForm = str_starts_with($jawabanFoto->jawaban, 'http') 
+                ? $jawabanFoto->jawaban 
+                : asset('storage/' . $jawabanFoto->jawaban);
         }
+
+        // ✅ PRIORITAS 2: Foto Custom (yang sudah di-upload admin)
+        $fotoCustom = $peserta->user?->foto_custom 
+            ? asset('storage/' . $peserta->user->foto_custom) 
+            : null;
+
+        // ✅ PRIORITAS 3: Foto Google (fallback terakhir)
+        $fotoGoogle = $peserta->user?->foto_url;
+
+        // Urutan prioritas
+        $foto = $fotoDariForm ?? $fotoCustom ?? $fotoGoogle;
 
         return response()->json([
             'id'              => $peserta->id,
