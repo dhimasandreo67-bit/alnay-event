@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\NavigationController;
 use App\Http\Controllers\Admin\PendaftaranController as AdminPendaftaranController;
 use App\Http\Controllers\Admin\PesertaController;
+use App\Http\Controllers\Admin\PesertaTampilController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\WebAuthController;
@@ -288,6 +289,9 @@ Route::post('/peserta-tampil/{event}/toggle-semua', [\App\Http\Controllers\Admin
     ->name('admin.peserta-tampil.toggle-semua');
 Route::post('/peserta-tampil/{event}/store', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'store'])
     ->name('admin.peserta-tampil.store');
+Route::post('/peserta-tampil/{peserta}/foto', [
+    PesertaTampilController::class, 'updateFoto'])
+    ->name('admin.peserta-tampil.foto');
 
 
 Route::get('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'create'])
