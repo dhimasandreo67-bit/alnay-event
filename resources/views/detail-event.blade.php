@@ -628,7 +628,8 @@
         $now = \Carbon\Carbon::now($tz);
         $blackout = (bool) ($blackoutAktif ?? false);
 
-        $sembunyikanVote = !$event->voting_aktif || $blackout;
+        $tampilkanHasil = (bool) $event->tampilkan_hasil_voting;
+        $sembunyikanStatistik = !$tampilkanHasil || $blackout;
 
         $mulai = $event->tanggal_mulai ? \Carbon\Carbon::parse($event->tanggal_mulai, $tz)->locale('id') : null;
         $selesai = $event->tanggal_selesai ? \Carbon\Carbon::parse($event->tanggal_selesai, $tz)->locale('id') : null;
@@ -727,7 +728,7 @@
             })
             ->values();
 
-        if ($sembunyikanVote) {
+        if ($sembunyikanStatistik) {
             $kandidat = $kandidat->sortBy('id')->values();
         }
 
@@ -984,7 +985,7 @@
 
                                 <div
                                     class="reveal-right stagger-5 stat-box rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-center backdrop-blur-sm transition-transform duration-200 hover:scale-105 hover:bg-white/10">
-                                    @if ($sembunyikanVote)
+                                    @if ($sembunyikanStatistik)
                                         <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-5 w-5 text-[#f5d78e]"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -1031,7 +1032,7 @@
             $peringkat46 = $pesertas->slice(3, 3)->values();
         @endphp
 
-        @if ($sembunyikanVote)
+        @if ($sembunyikanStatistik)
             <section class="section-reveal reveal mt-7">
                 <div
                     class="overflow-hidden rounded-[18px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed] shadow-sm">
@@ -1351,7 +1352,7 @@
                                     class="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/25 to-transparent">
                                 </div>
 
-                                @if ($sembunyikanVote)
+                                @if ($sembunyikanStatistik)
                                     <span
                                         class="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 font-display text-[13px] font-bold text-gray-400 shadow-md ring-1 ring-white/60 backdrop-blur"
                                         title="Nomor urut dirahasiakan">
@@ -1370,7 +1371,7 @@
                                     {{ $item['nama'] }}
                                 </h3>
 
-                                @if ($sembunyikanVote)
+                                @if ($sembunyikanStatistik)
                                     <div class="mt-2 flex items-center gap-1.5 text-[10px] italic text-amber-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor">

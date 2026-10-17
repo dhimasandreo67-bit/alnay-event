@@ -333,11 +333,10 @@
                 muatDukunganTerkini(p.event?.id)
             ]);
 
-            // ✅ Voting aktif dari setting admin
             const votingAktif = p.event?.voting_aktif === true;
+            const tampilkanHasil = p.event?.tampilkan_hasil_voting === true;
 
-            // ✅ Sembunyikan SEMUA tampilan vote kalau voting dimatikan ATAU blackout
-            const sembunyikanVote = !votingAktif || (statistik?.blackout ?? false);
+            const sembunyikanStatistik = statistik?.blackout ?? false;
 
             const nama = cariJawaban(p.jawabans, 'nama', /nama/i) ?? p.user?.nama ?? 'Peserta';
             const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota|alamat/i);
@@ -416,7 +415,7 @@
             let blokPersentase = '';
             if (statistik) {
                 if (format === 'angka' || format === 'keduanya') {
-                    if (sembunyikanVote) {
+                    if (sembunyikanStatistik) {
                         blokTotalVote = `
                             <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
                                 <p class="mb-1 text-[9px] font-bold uppercase tracking-[.14em] text-[#6A6259]">Total Vote</p>
@@ -439,7 +438,7 @@
                 }
 
                 if (format === 'persentase' || format === 'keduanya') {
-                    if (sembunyikanVote) {
+                    if (sembunyikanStatistik) {
                         blokPersentase = `
                         <div class="stat-card rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] p-4">
                             <div class="mb-1 flex items-center justify-between">
@@ -473,18 +472,12 @@
             const gridCols = format === 'keduanya' ? 'sm:grid-cols-2' : '';
 
             const blokStatistik = (() => {
-            // ── KASUS 1: Voting DIMATIKAN admin → pesan simpel, tanpa akses statistik
-            if (!votingAktif) {
+            // ── KASUS 1: Admin sengaja sembunyikan hasil voting (tampilkan_hasil_voting = false)
+            if (!tampilkanHasil) {
                 return `
-                    <div class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-5 text-center">
-                        <div class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
-                            <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                            </svg>
-                        </div>
-                        <p class="font-display text-base font-bold text-orange-800">Voting Sedang Ditutup</p>
-                        <p class="mt-1 text-[11px] leading-relaxed text-orange-700">
-                            Statistik suara tidak ditampilkan saat voting ditutup.
+                    <div class="mb-5 rounded-xl border border-[#E3D7C5] bg-[#FAF3E7] px-4 py-4 text-center">
+                        <p class="text-xs font-medium text-[#6A6259]">
+                            Statistik suara akan ditampilkan setelah panitia mempublikasikannya.
                         </p>
                     </div>`;
             }
@@ -622,7 +615,7 @@
         <p class="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-[.16em] text-[#7F5700]">
             <span>${esc(p.event?.nama ?? '')}</span>
             ${
-                sembunyikanVote
+                sembunyikanStatistik
                     ? `<span class="normal-case font-semibold tracking-normal">Ranking disembunyikan</span>`
                     : statistik?.ranking
                         ? `<span class="normal-case font-semibold tracking-normal">&#9734; Ranking: #${statistik.ranking}</span>`
