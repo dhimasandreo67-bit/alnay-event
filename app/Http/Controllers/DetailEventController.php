@@ -35,10 +35,7 @@ class DetailEventController extends Controller
      */
     public function akanDatang(Event $event)
     {
-        $jumlahPeserta = Peserta::where('event_id', $event->id)
-        ->where('status', 'diterima')
-        ->where('tampil_di_publik', true)
-        ->count();
+        $jumlahPeserta = $this->hitungPesertaLayak($event);
 
         $sisaHariPendaftaran = $event->batas_pendaftaran_tanggal
             ? (int) now()->diffInDays($event->batas_pendaftaran_tanggal, false)
@@ -57,12 +54,14 @@ class DetailEventController extends Controller
      */
     public function selesai(Event $event)
     {
-        $pesertas = Peserta::with('user')
+        $pesertas = Peserta::with(['user', 'pembayaran'])
             ->where('event_id', $event->id)
             ->where('status', 'diterima')
             ->where('tampil_di_publik', true)
-            ->orderByDesc('total_vote')
-            ->get();
+            ->get()
+            ->filter(fn (Peserta $p) => $p->layakTampilPublik($event))
+            ->sortByDesc('total_vote')
+            ->values();
 
         $totalSuara = $this->getTotalSuara($event);
         $jumlahPeserta = $pesertas->count(); // ✅ TAMBAHKAN INI agar tidak Undefined variable
@@ -87,19 +86,37 @@ class DetailEventController extends Controller
 
     private function getPesertas(Event $event)
         {
-            $query = Peserta::with(['user', 'jawabans.pertanyaan'])
+            $pesertas = Peserta::with(['user', 'jawabans.pertanyaan', 'pembayaran'])
                 ->where('event_id', $event->id)
                 ->where('status', 'diterima')
-                ->where('tampil_di_publik', true);
+                ->where('tampil_di_publik', true)
+                ->get()
+                ->filter(fn (Peserta $p) => $p->layakTampilPublik($event))
+                ->values();
 
             // Kalau blackout aktif — acak urutan biar gak bocorin peringkat
             if ($this->isBlackoutAktif($event)) {
-                return $query->inRandomOrder()->get();
+                return $pesertas->shuffle()->values();
             }
 
             // Normal — urut vote terbanyak
-            return $query->orderByDesc('total_vote')->get();
+            return $pesertas->sortByDesc('total_vote')->values();
         }
+
+    /**
+     * Hitung jumlah peserta yang memenuhi syarat tampil publik,
+     * dipakai di halaman "akan datang" (cuma butuh angka, bukan daftar kartu).
+     */
+    private function hitungPesertaLayak(Event $event): int
+    {
+        return Peserta::with('pembayaran')
+            ->where('event_id', $event->id)
+            ->where('status', 'diterima')
+            ->where('tampil_di_publik', true)
+            ->get()
+            ->filter(fn (Peserta $p) => $p->layakTampilPublik($event))
+            ->count();
+    }
 
     private function getTotalSuara(Event $event)
     {
