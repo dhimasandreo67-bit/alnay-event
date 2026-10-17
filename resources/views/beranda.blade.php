@@ -658,7 +658,7 @@
 
                     <div id="event-akan-datang-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 transition-all duration-300">
                         @foreach ($eventAkanDatangLainnya as $event)
-                            @php $bukaPendaftaran = (int) ($event->pendaftaran_dibuka ?? 0) === 1; @endphp
+                            @php $bukaPendaftaran = (bool) ($event->pendaftaran_aktif ?? false); @endphp
 
                             <div class="event-card card-shadow rounded-[16px] border border-[#ededed] bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col reveal stagger-{{ min($idx + 1, 8) }}">
                                 <a href="{{ $routeDetail($event) }}" class="event-banner-wrapper relative block h-[200px] w-full shrink-0 bg-[#efe6d3] overflow-hidden group">

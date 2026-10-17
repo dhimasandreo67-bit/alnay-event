@@ -229,6 +229,7 @@ class EventController extends Controller
         $validated['tanggal_audisi'] = $request->filled('tanggal_audisi') ? $request->tanggal_audisi : null;
         // ✅ Lokasi audisi — kosong = NULL (konsisten dgn tanggal)
         $validated['audisi_lokasi'] = $request->filled('audisi_lokasi') ? $request->audisi_lokasi : null;
+        
 
         $event->update($validated);
 
@@ -302,14 +303,16 @@ class EventController extends Controller
         // PATCH /admin/events/{event}/toggle-pendaftaran
     public function togglePendaftaran(Event $event): JsonResponse
     {
-        // Balikkan status pendaftaran_dibuka
-        $event->pendaftaran_dibuka = ! (bool) $event->pendaftaran_dibuka;
+        $newState = ! (bool) $event->pendaftaran_aktif;
+        $event->pendaftaran_aktif = $newState;
+        $event->pendaftaran_dibuka = $newState ? 1 : 0;
         $event->save();
 
         return response()->json([
             'success' => true,
+            'pendaftaran_aktif' => $event->pendaftaran_aktif,
             'pendaftaran_dibuka' => $event->pendaftaran_dibuka,
-            'message' => $event->pendaftaran_dibuka
+            'message' => $event->pendaftaran_aktif
                 ? 'Pendaftaran berhasil dibuka.'
                 : 'Pendaftaran berhasil ditutup.',
         ]);
