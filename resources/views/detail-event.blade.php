@@ -462,10 +462,6 @@
                 max-width: none;
             }
 
-            #gridKandidat .kandidat-card .relative.h-\[175px\] {
-                height: 140px !important;
-            }
-
             #gridKandidat .kandidat-card h3 {
                 font-size: 12px !important;
             }
@@ -1141,7 +1137,6 @@
                                             'initText' => 'text-[#b8860b]',
                                             'initBg'   => 'from-[#fdf8e8] to-[#f3e3b0]',
                                             'bar'      => 'from-[#d4af37] to-[#f5d78e]',
-                                            'height'   => 'h-[230px] sm:h-[270px]',
                                             'label'    => 'Juara 1',
                                         ],
                                         2 => [
@@ -1151,7 +1146,6 @@
                                             'initText' => 'text-[#8f8f8f]',
                                             'initBg'   => 'from-[#f6f6f6] to-[#e2e2e2]',
                                             'bar'      => 'from-[#a8a8a8] to-[#e0e0e0]',
-                                            'height'   => 'h-[220px] sm:h-[240px]',
                                             'label'    => 'Juara 2',
                                         ],
                                         3 => [
@@ -1161,7 +1155,6 @@
                                             'initText' => 'text-[#b06a2b]',
                                             'initBg'   => 'from-[#fbf0e2] to-[#f2dcc0]',
                                             'bar'      => 'from-[#cd7f32] to-[#e6a86d]',
-                                            'height'   => 'h-[210px] sm:h-[210px]',
                                             'label'    => 'Juara 3',
                                         ],
                                     ][$juara];
@@ -1171,13 +1164,20 @@
                                     <div
                                         class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 {{ $palet['border'] }} {{ $palet['glow'] }}">
 
-                                        <div class="relative overflow-hidden {{ $palet['height'] }}">
+                                        <div class="relative aspect-[3/4] w-full overflow-hidden">
                                             @if ($fotoP)
-                                                <img src="{{ $fotoP }}" alt="{{ $namaP }}"
-                                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                                <img src="{{ $fotoP }}" alt="{{ $namaP }}" loading="lazy"
+                                                    width="294" height="392"
+                                                    class="aspect-[3/4] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+                                                <div
+                                                    class="hidden aspect-[3/4] h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
+                                                    <span
+                                                        class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
+                                                </div>
                                             @else
                                                 <div
-                                                    class="w-full h-full bg-gradient-to-br {{ $palet['initBg'] }} flex items-center justify-center">
+                                                    class="flex aspect-[3/4] h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
                                                     <span
                                                         class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
                                                 </div>
@@ -1353,18 +1353,19 @@
                         <div class="kandidat-card {{ $isHidden ? 'hidden' : '' }} reveal-up {{ $delayClass }} group overflow-hidden rounded-xl border border-[#ebe8e1] bg-white"
                             data-nama="{{ mb_strtolower($item['nama']) }}" data-index="{{ $index }}">
 
-                            <div class="relative h-[175px] overflow-hidden bg-[#fbf6e9]">
+                            <div class="relative aspect-[3/4] w-full overflow-hidden bg-[#fbf6e9]">
                                 @if ($item['foto'])
                                     <img src="{{ $item['foto'] }}" alt="{{ $item['nama'] }}" loading="lazy"
-                                        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        width="294" height="392"
+                                        class="aspect-[3/4] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
                                     <div
-                                        class="hidden h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
+                                        class="hidden aspect-[3/4] h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
                                         <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $item['inisial'] }}</span>
                                     </div>
                                 @else
                                     <div
-                                        class="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
+                                        class="flex aspect-[3/4] h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5e9] to-[#f2e7cb]">
                                         <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $item['inisial'] }}</span>
                                     </div>
                                 @endif
