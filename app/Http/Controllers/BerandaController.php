@@ -9,31 +9,67 @@ use Carbon\Carbon;
 
 class BerandaController extends Controller
 {
+    /**
+     * Peserta (pendaftaran + kandidat voting) yang berhak dihitung & tampil
+     * di statistik/peringkat beranda untuk satu event.
+     *
+     * Aturannya disamakan persis dengan Admin\PesertaTampilController (lihat
+     * Peserta::layakTampilPublik()):
+     * 1. Peserta PENDAFTARAN (kandidat_voting = false): status diterima,
+     *    sudah lunas biaya pendaftaran (settlement), dan — kalau event ini
+     *    butuh_audisi — wajib sudah lolos audisi.
+     * 2. Peserta KANDIDAT VOTING (kandidat_voting = true): cukup status
+     *    diterima, tanpa syarat audisi maupun pembayaran sama sekali.
+     *
+     * $hanyaTampilPublik — kalau true, hanya ambil yang sudah di-toggle
+     * "Tampil di Publik" oleh admin (dipakai untuk peringkat yang ditampilkan
+     * ke pengunjung; tidak dipakai untuk statistik jumlah peserta).
+     */
+    private function pesertaLayakVoting(Event $event, bool $hanyaTampilPublik = false)
+    {
+        $pendaftaran = Peserta::where('event_id', $event->id)
+            ->where('kandidat_voting', false)
+            ->where('status', 'diterima')
+            ->when($hanyaTampilPublik, fn ($q) => $q->where('tampil_di_publik', true))
+            ->with(['user', 'pembayaran'])
+            ->get()
+            ->filter(fn (Peserta $p) => $p->layakTampilPublik($event));
+
+        $kandidat = Peserta::where('event_id', $event->id)
+            ->where('kandidat_voting', true)
+            ->where('status', 'diterima')
+            ->when($hanyaTampilPublik, fn ($q) => $q->where('tampil_di_publik', true))
+            ->with(['user', 'pembayaran'])
+            ->get();
+
+        return $pendaftaran->concat($kandidat);
+    }
+
     public function index()
     {
         // ============================================================
         // 1. EVENT BERLANGSUNG — semua (untuk carousel)
         // ============================================================
+
         $eventBerlangsungList = Event::where('tampil_di_beranda', true)
             ->where('status', 'sedang_berlangsung')
             ->latest('id')
             ->get()
             ->map(function ($ev) {
+
                 // Stats per-event — untuk carousel
                 $ev->stat_sisa_waktu = $ev->tanggal_selesai
                     ? max(0, (int) now()->diffInDays($ev->tanggal_selesai, false))
                     : 0;
-                
-                // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
-                $ev->stat_jumlah_peserta = Peserta::where('event_id', $ev->id)
-                    ->where('status', 'diterima')
-                    ->where('tampil_di_publik', true)
-                    ->count();
-                    
+
+                // Peserta pendaftaran dihitung kalau diterima + lunas + lolos audisi
+                // (bila perlu); kandidat voting dihitung langsung selama diterima
+                $ev->stat_jumlah_peserta = $this->pesertaLayakVoting($ev)->count();
+
                 $ev->stat_total_suara = Voting::where('event_id', $ev->id)
                     ->where('status_midtrans', 'settlement')
                     ->sum('jumlah_vote');
-                    
+
                 return $ev;
             });
 
@@ -72,14 +108,13 @@ class BerandaController extends Controller
         $sisaWaktu = null;
 
         if ($eventBerlangsung) {
-            // ✅ DIPERBAIKI: Hapus ->where('tampil_di_publik', true)
-            $peringkatTerkini = Peserta::where('event_id', $eventBerlangsung->id)
-                ->where('status', 'diterima')
-                ->where('tampil_di_publik', true)
-                ->orderByDesc('total_vote')
+            // Pendaftaran: diterima + lunas + lolos audisi (bila perlu).
+            // Kandidat voting: diterima saja, tanpa syarat audisi/bayar.
+            // Keduanya tetap harus sudah di-toggle "Tampil di Publik".
+            $peringkatTerkini = $this->pesertaLayakVoting($eventBerlangsung, true)
+                ->sortByDesc('total_vote')
                 ->take(3)
-                ->with('user')
-                ->get();
+                ->values();
 
             $totalSuara = $eventBerlangsung->stat_total_suara ?? 0;
             $jumlahPeserta = $eventBerlangsung->stat_jumlah_peserta ?? 0;
@@ -95,12 +130,10 @@ class BerandaController extends Controller
 
         if (! $eventBerlangsung && $eventBaruSelesai) {
             $eventPeringkatAkhir = $eventBaruSelesai;
-            $peringkatAkhir = Peserta::where('event_id', $eventBaruSelesai->id)
-                ->where('status', 'diterima')
-                ->orderByDesc('total_vote')
+            $peringkatAkhir = $this->pesertaLayakVoting($eventBaruSelesai)
+                ->sortByDesc('total_vote')
                 ->take(3)
-                ->with('user')
-                ->get();
+                ->values();
 
             $totalSuaraAkhir = Voting::where('event_id', $eventBaruSelesai->id)
                 ->where('status_midtrans', 'settlement')
