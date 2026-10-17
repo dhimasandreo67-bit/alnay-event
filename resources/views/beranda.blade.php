@@ -139,20 +139,20 @@
         }
 
         #event-sebelumnya-container:not(.view-list) {
-    display: grid;
-}
+            display: grid;
+        }
 
         @media (max-width: 640px) {
             #event-sebelumnya-container:not(.view-list) .event-card h3 {
-                font-size: 13px !important;
+                font-size: 14px !important;
             }
 
             #event-sebelumnya-container:not(.view-list) .event-card p {
-                font-size: 11px !important;
+                font-size: 12px !important;
             }
 
             #event-sebelumnya-container:not(.view-list) .event-banner-wrapper {
-                height: 140px !important;
+                height: 180px !important;
             }
         }
 
@@ -222,7 +222,12 @@
                 drop-shadow(0 0 14px rgba(201, 154, 50, 0.45));
         }
         @media (prefers-reduced-motion: reduce) {
-            .hero-gold-border { animation: none; }
+            .reveal-left,
+            .reveal-right {
+                opacity: 1 !important;
+                transform: none !important;
+                transition: none !important;
+            }
         }
 
         /* ============================================
@@ -243,9 +248,9 @@
         /* ==================== ANIMASI SCROLL ==================== */
         .reveal {
             opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(28px);
+            transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
             will-change: opacity, transform;
         }
 
@@ -266,13 +271,19 @@
             transform: translateX(0);
         }
 
+        .reveal-left,
         .reveal-right {
             opacity: 0;
-            transform: translateX(60px);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            transition:
+                opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: opacity, transform;
         }
 
+        .reveal-left  { transform: translateX(-28px); }
+        .reveal-right { transform: translateX(28px); }
+
+        .reveal-left.is-visible,
         .reveal-right.visible {
             opacity: 1;
             transform: translateX(0);
@@ -300,6 +311,10 @@
         .stagger-7 { transition-delay: 0.35s; }
         .stagger-8 { transition-delay: 0.4s; }
 
+        .vote-step-card {
+            transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+        }
+
         /* Smooth scroll untuk seluruh halaman */
         html {
             scroll-behavior: smooth;
@@ -325,11 +340,11 @@
             ['pertanyaan' => 'Kapan pemenang diumumkan?', 'jawaban' => 'Pemenang diumumkan setelah masa voting resmi ditutup sesuai jadwal yang tertera pada masing-masing event.'],
         ];
         $caraVote = [
-    ['no' => '01', 'judul' => 'Pilih Event',    'isi' => 'Buka event yang sedang berlangsung dari beranda.',           'label' => 'Mulai',   'aksi' => 'Pilih Event'],
-    ['no' => '02', 'judul' => 'Pilih Kandidat', 'isi' => 'Lihat daftar kandidat dan buka profil favoritmu.',           'label' => 'Jelajah', 'aksi' => 'Lihat Kandidat'],
-    ['no' => '03', 'judul' => 'Vote & Bayar',   'isi' => 'Masuk dengan akun Google, lalu selesaikan pembayaran vote.', 'label' => 'Utama',   'aksi' => 'Berikan Suara', 'utama' => true],
-    ['no' => '04', 'judul' => 'Suara Tercatat', 'isi' => 'Suaramu langsung masuk ke perolehan kandidat pilihanmu.',    'label' => 'Selesai', 'aksi' => 'Pantau Peringkat'],
-];
+            ['no' => '01', 'judul' => 'Pilih Event',    'isi' => 'Buka event yang sedang berlangsung dari beranda.',           'label' => 'Mulai',   'aksi' => 'Pilih Event'],
+            ['no' => '02', 'judul' => 'Pilih Kandidat', 'isi' => 'Lihat daftar kandidat dan buka profil favoritmu.',           'label' => 'Jelajah', 'aksi' => 'Lihat Kandidat'],
+            ['no' => '03', 'judul' => 'Vote & Bayar',   'isi' => 'Masuk dengan akun Google, lalu selesaikan pembayaran vote.', 'label' => 'Utama',   'aksi' => 'Berikan Suara', 'utama' => true],
+            ['no' => '04', 'judul' => 'Suara Tercatat', 'isi' => 'Suaramu langsung masuk ke perolehan kandidat pilihanmu.',    'label' => 'Selesai', 'aksi' => 'Pantau Peringkat'],
+        ];
 
         $routeDetail = function ($event) {
             if (!$event) return '#';
@@ -367,8 +382,6 @@
                 <p class=" reveal mt-4 max-w-[580px] text-[14px] leading-relaxed text-[#555] sm:text-[15px] md:text-[16px]">
                     Temukan event yang sedang berlangsung, dukung peserta favoritmu, dan ikuti hasil suaranya secara langsung.
                 </p>
-
-                
             </div>
 
             <div class="flex shrink-0 items-center gap-1.5 rounded-2xl bg-[#f5f3ef] p-1.5 border border-[#ebe7df] shadow-inner self-start md:self-end">
@@ -656,7 +669,8 @@
                         </div>
                     </div>
 
-                    <div id="event-akan-datang-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 transition-all duration-300">
+                    {{-- PERBAIKAN: Mengubah grid-cols-2 menjadi grid-cols-1 untuk mode mobile agar responsif & tidak berantakan --}}
+                    <div id="event-akan-datang-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 transition-all duration-300">
                         @foreach ($eventAkanDatangLainnya as $event)
                             @php $bukaPendaftaran = (bool) ($event->pendaftaran_aktif ?? false); @endphp
 
@@ -749,57 +763,57 @@
             @endif
 
             {{-- ==================== CARA VOTE ==================== --}}
-<section class="mt-12 sm:mt-16">
-    <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
-            Cara Vote
-        </span>
-        <h3 class="reveal display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
-            Cara Memberikan Vote
-        </h3>
-        <p class="reveal stagger-2 mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
-            Empat langkah mudah untuk mendukung kandidat favoritmu.
-        </p>
-    </div>
-
-    <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-        <div class="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-200 via-[#c99a32] to-amber-200 z-0 opacity-40"></div>
-
-        @foreach ($caraVote as $langkah)
-            @php $utama = $langkah['utama'] ?? false; @endphp
-
-            <div class="group relative rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl z-10 overflow-hidden {{ $utama ? 'border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] shadow-md hover:border-[#c99a32]' : 'border border-[#ece5d7] bg-white shadow-sm hover:border-[#c99a32]/50' }} reveal-{{ $idx % 2 === 0 ? 'left' : 'right' }} stagger-{{ $idx + 1 }}">
-                <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">{{ $langkah['no'] }}</span>
-
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-5">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 {{ $utama ? 'bg-[#c99a32] text-white' : 'bg-[#0a1526] text-[#c99a32] group-hover:bg-[#c99a32] group-hover:text-white' }}">{{ $langkah['no'] }}</div>
-
-                        @if ($utama)
-                            <span class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-amber-700 uppercase bg-amber-100/80 px-2.5 py-1 rounded-md">
-                                <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
-                                {{ $langkah['label'] }}
-                            </span>
-                        @else
-                            <span class="text-[10px] font-semibold tracking-wider text-[#a09585] uppercase bg-[#fcfaf6] px-2.5 py-1 rounded-md border border-[#eee8dc]">{{ $langkah['label'] }}</span>
-                        @endif
-                    </div>
-
-                    <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">{{ $langkah['judul'] }}</h4>
-                    <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">{{ $langkah['isi'] }}</p>
-
-                    <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] {{ $utama ? 'group-hover:text-[#b88625]' : 'opacity-80 group-hover:opacity-100 transition-opacity' }}">
-                        <span>{{ $langkah['aksi'] }}</span>
-                    </div>
+            <section class="mt-12 sm:mt-16">
+                <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[11px] font-bold uppercase tracking-widest text-[#b88625]">
+                        Cara Vote
+                    </span>
+                    <h3 class="reveal display-font mt-3 text-[24px] sm:text-[30px] font-bold text-[#0a1526] leading-tight">
+                        Cara Memberikan Vote
+                    </h3>
+                    <p class="reveal stagger-2 mt-2 text-[13px] sm:text-[14px] text-[#6b6b6b]">
+                        Empat langkah mudah untuk mendukung kandidat favoritmu.
+                    </p>
                 </div>
-            </div>
-        @endforeach
-    </div>
 
-    <p class="mt-8 text-center text-[12px] sm:text-[13px] text-[#8a8178]">
-        Ingin jadi peserta? Cek event berlabel <span class="font-semibold text-[#b88625]">Daftar Peserta</span> di bagian atas.
-    </p>
-</section>
+                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+                    <div class="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-200 via-[#c99a32] to-amber-200 z-0 opacity-40"></div>
+
+                    @foreach ($caraVote as $idx => $langkah)
+                        @php $utama = $langkah['utama'] ?? false; @endphp
+
+                        <div class="vote-step-card group relative rounded-2xl p-6 hover:-translate-y-2 hover:shadow-xl z-10 overflow-hidden {{ $utama ? 'border border-[#c99a32]/40 bg-gradient-to-b from-white to-[#fcfaf6] shadow-md hover:border-[#c99a32]' : 'border border-[#ece5d7] bg-white shadow-sm hover:border-[#c99a32]/50' }} reveal-{{ $idx % 2 === 0 ? 'left' : 'right' }} stagger-{{ min($idx + 1, 8) }}">
+                            <span class="absolute -right-2 -bottom-4 text-7xl font-black text-gray-100/80 group-hover:text-[#c99a32]/10 group-hover:scale-110 transition-all duration-500 pointer-events-none select-none z-0">{{ $langkah['no'] }}</span>
+
+                            <div class="relative z-10">
+                                <div class="flex items-center justify-between mb-5">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl font-bold text-[18px] shadow-md transition-transform duration-300 group-hover:scale-110 {{ $utama ? 'bg-[#c99a32] text-white' : 'bg-[#0a1526] text-[#c99a32] group-hover:bg-[#c99a32] group-hover:text-white' }}">{{ $langkah['no'] }}</div>
+
+                                    @if ($utama)
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-amber-700 uppercase bg-amber-100/80 px-2.5 py-1 rounded-md">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                                            {{ $langkah['label'] }}
+                                        </span>
+                                    @else
+                                        <span class="text-[10px] font-semibold tracking-wider text-[#a09585] uppercase bg-[#fcfaf6] px-2.5 py-1 rounded-md border border-[#eee8dc]">{{ $langkah['label'] }}</span>
+                                    @endif
+                                </div>
+
+                                <h4 class="text-[16px] font-bold text-[#0a1526] group-hover:text-[#c99a32] transition-colors">{{ $langkah['judul'] }}</h4>
+                                <p class="mt-2 text-[12px] sm:text-[13px] text-[#6b6b6b] leading-relaxed">{{ $langkah['isi'] }}</p>
+
+                                <div class="mt-4 pt-4 border-t border-[#f4f0e8] flex items-center text-[11px] font-semibold text-[#c99a32] {{ $utama ? 'group-hover:text-[#b88625]' : 'opacity-80 group-hover:opacity-100 transition-opacity' }}">
+                                    <span>{{ $langkah['aksi'] }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <p class="mt-8 text-center text-[12px] sm:text-[13px] text-[#8a8178]">
+                    Ingin jadi peserta? Cek event berlabel <span class="font-semibold text-[#b88625]">Daftar Peserta</span> di bagian atas.
+                </p>
+            </section>
 
             {{-- ==================== PERINGKAT ==================== --}}
             @php
@@ -1046,7 +1060,8 @@
                 </div>
 
                 @if ($eventSebelumnya->count() > 0)
-                    <div id="event-sebelumnya-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 transition-all duration-300">
+                    {{-- PERBAIKAN: Mengubah grid-cols-2 menjadi grid-cols-1 untuk mode mobile pada event sebelumnya --}}
+                    <div id="event-sebelumnya-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 transition-all duration-300">
                         @foreach ($eventSebelumnya as $item)
                             <a href="{{ $routeDetail($item) }}"
                                 class="event-card card-shadow overflow-hidden rounded-[16px] border border-[#ededed] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#c99a32]/40 hover:shadow-lg flex flex-col">
@@ -1432,10 +1447,7 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('visible');
-                        // Opsional: stop observing setelah visible (untuk animasi sekali)
-                        // observer.unobserve(entry.target);
                     } else {
-                        // Hapus comment di bawah jika ingin animasi berulang saat scroll naik/turun
                         entry.target.classList.remove('visible');
                     }
                 });
@@ -1443,7 +1455,6 @@
             
             revealElements.forEach(el => revealObserver.observe(el));
             
-            // ==================== PARALLAX RINGAN UNTUK HERO ====================
             const heroSection = document.querySelector('.hero-parallax');
             if (heroSection) {
                 window.addEventListener('scroll', function() {
@@ -1453,31 +1464,29 @@
                     }
                 });
             }
-            
-            // ==================== ANIMASI COUNTER UNTUK STATISTIK ====================
-            const counterElements = document.querySelectorAll('.counter-animate');
-            const counterObserver = new IntersectionObserver(function(entries) {
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom');
+
+            if (!('IntersectionObserver' in window)) {
+                revealElements.forEach(el => el.classList.add('visible'));
+                return;
+            }
+
+            const revealObserver = new IntersectionObserver(function(entries, observer) {
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const el = entry.target;
-                        const target = parseInt(el.dataset.target);
-                        let current = 0;
-                        const increment = target / 50;
-                        const timer = setInterval(() => {
-                            current += increment;
-                            if (current >= target) {
-                                el.textContent = target.toLocaleString('id-ID');
-                                clearInterval(timer);
-                            } else {
-                                el.textContent = Math.floor(current).toLocaleString('id-ID');
-                            }
-                        }, 30);
-                        counterObserver.unobserve(el);
-                    }
+                    if (!entry.isIntersecting) return;
+
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
                 });
-            }, { threshold: 0.5 });
-            
-            counterElements.forEach(el => counterObserver.observe(el));
+            }, {
+                threshold: 0.12,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            revealElements.forEach(el => revealObserver.observe(el));
         });
     </script>
 </body>

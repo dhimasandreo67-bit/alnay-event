@@ -607,7 +607,8 @@
         </section>
 
         {{-- SYARAT & KETENTUAN --}}
-        <section class="section-reveal mt-7 reveal-left">
+        {{-- SYARAT & KETENTUAN --}}
+        <section class="section-reveal mt-7">
             <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <div class="mb-2 flex items-center gap-3">
@@ -632,24 +633,45 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
                 {{-- KIRI: SYARAT LIST --}}
-                <div class="reveal-left stagger-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-800 text-lg mb-1">S&K</h3>
-                    <p class="text-gray-500 text-xs mb-1">Ketentuan Peserta</p>
-                    <p class="text-amber-600 text-[10px] font-semibold mb-4 uppercase tracking-wider">Baca dengan teliti sebelum mendaftar</p>
+                <div
+                    class="group relative bg-white rounded-2xl border border-[#ece5d7] shadow-sm p-6 sm:p-7 transition-all duration-300 hover:border-[#c99a32]/40 hover:shadow-md overflow-hidden">
+                    <span
+                        class="absolute -right-4 -top-6 text-[120px] font-black text-[#c99a32]/5 pointer-events-none select-none leading-none">
+                        S&amp;K
+                    </span>
 
-                    <div class="space-y-2">
-                        @forelse ($syaratList as $i => $syarat)
-                            <div class="reveal stagger-{{ min($i + 3, 8) }} flex items-start gap-3 p-3 hover:bg-amber-50/50 rounded-lg transition-colors">
-                                <span class="shrink-0 flex items-center justify-center w-6 h-6 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
-                                    {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
-                                </span>
-                                <span class="text-gray-700 text-sm leading-relaxed">{{ $syarat }}</span>
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#c99a32] via-[#e0b254] to-[#c99a32] transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f4ede0] text-[#c99a32] transition-all duration-300 group-hover:bg-[#c99a32] group-hover:text-white group-hover:scale-110">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
                             </div>
-                        @empty
-                            <div class="reveal p-4 text-center text-gray-500 text-sm bg-gray-50 rounded-lg">
-                                Syarat & ketentuan belum diisi admin.
+                            <div>
+                                <h3 class="text-[15px] font-bold text-[#0a1526]">Ketentuan Peserta</h3>
+                                <p class="text-[11px] text-[#8a8178]">Baca dengan teliti sebelum mendaftar</p>
                             </div>
-                        @endforelse
+                        </div>
+
+                        <ul class="space-y-3 text-[13px] text-[#4B463F]">
+                            @forelse ($syaratList as $i => $syarat)
+                                <li class="group/item flex items-start gap-3 p-3 rounded-xl bg-[#fdfcf9] border border-[#f4f1e9] hover:border-[#c99a32]/40 hover:bg-[#fdf8ec] transition-all duration-200">
+                                    <span
+                                        class="shrink-0 w-6 h-6 rounded-lg bg-[#f4ede0] text-[#c99a32] text-[11px] font-bold flex items-center justify-center group-hover/item:bg-[#c99a32] group-hover/item:text-white transition-all duration-200">
+                                        {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
+                                    </span>
+                                    <span class="pt-0.5 leading-relaxed">{{ $syarat }}</span>
+                                </li>
+                            @empty
+                                <li class="text-[12px] text-[#8a8178] italic text-center py-6 bg-[#fdfcf9] rounded-xl border border-dashed border-[#e5e1db]">
+                                    Syarat &amp; ketentuan belum diisi admin.
+                                </li>
+                            @endforelse
+                        </ul>
                     </div>
                 </div>
 
@@ -657,10 +679,10 @@
                 <aside class="space-y-4">
                     {{-- CARD: PENDAFTARAN KANDIDAT --}}
                     <div
-                        class="reveal-right relative bg-gradient-to-br from-[#0a1526] to-[#15243b] rounded-2xl border border-[#1a2942] shadow-lg p-5 sm:p-6 overflow-hidden">
+                        class="relative bg-gradient-to-br from-[#0a1526] to-[#15243b] rounded-2xl border border-[#1a2942] shadow-lg p-5 sm:p-6 overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#c99a32]/20 blur-3xl rounded-full pointer-events-none"></div>
 
-                        <div class="reveal stagger-1 relative z-10">
+                        <div class="relative z-10">
                             <div class="flex items-center gap-3 mb-4">
                                 <div
                                     class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c99a32]/20 border border-[#c99a32]/30 text-[#e0b254]">
@@ -675,7 +697,7 @@
                                 </div>
                             </div>
 
-                            <div class="reveal stagger-2 space-y-2.5 text-[12px]">
+                            <div class="space-y-2.5 text-[12px]">
                                 <div class="flex justify-between items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                                     <span class="text-[#c5b388] flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -689,7 +711,7 @@
                                     </span>
                                 </div>
 
-                                <div class="reveal stagger-3 flex justify-between items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="flex justify-between items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                                     <span class="text-[#c5b388] flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -711,13 +733,13 @@
 
                             @if ($bukaPendaftaran)
                                 <a href="{{ route('public.registration', $event) }}"
-                                    class="reveal stagger-4 group/btn mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#c99a32] to-[#b88625] py-3 text-white text-[12px] font-bold shadow-md transition-all duration-300 hover:from-[#b88625] hover:to-[#a3741d] hover:shadow-lg active:scale-[0.98]">
+                                    class="group/btn mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#c99a32] to-[#b88625] py-3 text-white text-[12px] font-bold shadow-md transition-all duration-300 hover:from-[#b88625] hover:to-[#a3741d] hover:shadow-lg active:scale-[0.98]">
                                     <span>Daftar Sebagai Kandidat</span>
                                     <svg class="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                     </svg>
                                 </a>
-                                <p class="reveal stagger-5 mt-2.5 text-[10px] text-[#c5b388] text-center">
+                                <p class="mt-2.5 text-[10px] text-[#c5b388] text-center">
                                     Biaya pendaftaran
                                     <strong class="text-[#e0b254]">
                                         {{ $rp($event->biaya_pendaftaran ?? 0) }}
@@ -725,7 +747,7 @@
                                 </p>
                             @else
                                 <div
-                                    class="reveal stagger-4 mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-white/5 border border-white/10 py-3 text-[12px] font-semibold text-[#c5b388]">
+                                    class="mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-white/5 border border-white/10 py-3 text-[12px] font-semibold text-[#c5b388]">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -737,22 +759,37 @@
                     </div>
 
                     {{-- CARD: JADWAL EVENT --}}
-                    <div class="reveal-right stagger-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-800 text-lg mb-1">Jadwal Event</h3>
-                        <p class="text-gray-500 text-xs mb-4">Timeline kegiatan</p>
+                    <div
+                        class="bg-white rounded-2xl border border-[#ece5d7] shadow-sm p-5 sm:p-6 transition-all duration-300 hover:border-[#c99a32]/40 hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f4ede0] text-[#c99a32]">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display text-[15px] font-bold text-[#0a1526]">Jadwal Event</h3>
+                                <p class="text-[10px] text-[#8a8178] uppercase tracking-wider font-semibold">Timeline kegiatan</p>
+                            </div>
+                        </div>
 
-                        <div class="space-y-3">
+                        <div class="relative space-y-5 text-[12px]">
+                            <div class="absolute left-[7px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-[#c99a32]/40 via-[#c99a32]/20 to-transparent"></div>
+
                             @foreach ($jadwal as $tahap)
-                                @php 
-                                    $staggerJadwal = 'stagger-' . min($loop->index + 3, 8);
-                                @endphp
+                                @php $tgl = explode(' – ', $tahap['tanggal']); @endphp
 
-                                <div class="{{ $staggerJadwal }} reveal flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-colors">
-                                    <div class="shrink-0 w-8 h-8 flex items-center justify-center bg-amber-100 text-amber-700 rounded-full font-bold text-xs">
-                                        {{ $loop->iteration }}
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-800 text-sm">{{ $tahap['nama'] }}</h4>
+                                <div class="timeline-item relative flex items-start gap-3 pl-0">
+                                    <span
+                                        class="shrink-0 relative z-10 w-4 h-4 rounded-full bg-[#c99a32] ring-4 ring-[#fdf8ec] mt-0.5">
+                                        @if ($loop->last)
+                                            <span class="absolute inset-0 rounded-full bg-[#c99a32] opacity-40"></span>
+                                        @endif
+                                    </span>
+                                    <div class="flex-1">
+                                        <p class="font-bold text-[#0a1526]">{{ $tahap['nama'] }}</p>
                                     </div>
                                 </div>
                             @endforeach
