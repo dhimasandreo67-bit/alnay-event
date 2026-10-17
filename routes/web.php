@@ -218,7 +218,27 @@ Route::middleware('pelanggan')->group(function () {
     Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
 
     // Checkout vote
+        // Checkout vote
+        // Checkout vote
     Route::get('/peserta/{id}/checkout', function ($id) {
+        $peserta = \App\Models\Peserta::with('event')->findOrFail($id);
+        $event = $peserta->event;
+
+        // ✅ 1. Cek apakah voting aktif?
+        if (! $event || ! $event->voting_aktif) {
+            abort(403, 'Voting untuk event ini sudah ditutup.');
+        }
+
+        // ✅ 2. Cek jadwal mulai voting (kalau di-set)
+        if ($event->voting_mulai && now()->lt($event->voting_mulai)) {
+            abort(403, 'Voting belum dibuka.');
+        }
+
+        // ✅ 3. Cek jadwal selesai voting (kalau di-set)
+        if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
+            abort(403, 'Voting sudah ditutup.');
+        }
+
         return view('vote-checkout', [
             'pesertaId' => $id,
             'midtransClientKey' => config('services.midtrans.client_key'),

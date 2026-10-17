@@ -315,6 +315,18 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
                         return; // Skip increment
                     }
 
+                                        // ✅ GUARD BARU: Jangan hitung suara kalau voting_aktif dimatikan
+                    //    (Kecuali ini order MANUAL dari admin)
+                    if (! $isAdminOrder && ! $event->voting_aktif) {
+                        \Log::warning('Vote settlement ditolak — voting_aktif = false', [
+                            'voting_id'   => $voting->id,
+                            'peserta_id'  => $peserta->id,
+                            'order_id'    => $voting->midtrans_order_id,
+                            'jumlah_vote' => $voting->jumlah_vote,
+                        ]);
+                        return; // Skip increment
+                    }
+
                     // ✅ Increment — normal atau admin
                     $peserta->increment('total_vote', $voting->jumlah_vote);
 

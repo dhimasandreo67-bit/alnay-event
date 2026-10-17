@@ -774,23 +774,36 @@
                 class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a1526]/40 to-transparent">
             </div>
 
-            <span
-                class="reveal stagger-2 absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px]
-                {{ $event->voting_aktif
-                    ? 'border-emerald-400/30 bg-emerald-950/70 text-emerald-300'
-                    : 'border-orange-400/30 bg-orange-950/70 text-orange-300' }}">
-                @if ($event->voting_aktif)
-                    <span class="relative flex h-2 w-2">
-                        <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    Sedang Berlangsung
-                @else
-                    <span class="h-2 w-2 rounded-full bg-orange-400"></span>
-                    Telah Berakhir
-                @endif
-            </span>
+            @php
+            $badgeStatus = 'akan_datang';
+            $badgeColor = 'border-blue-400/30 bg-blue-950/70 text-blue-300';
+            $badgeDot = 'bg-blue-400';
+            $badgeLabel = 'Akan Datang';
+            
+            if ($event->status === 'telah_berakhir') {
+                $badgeStatus = 'telah_berakhir';
+                $badgeColor = 'border-orange-400/30 bg-orange-950/70 text-orange-300';
+                $badgeDot = 'bg-orange-400';
+                $badgeLabel = 'Telah Berakhir';
+            } elseif ($mulai && $now->gte($mulai) && (!$selesai || $now->lte($selesai))) {
+                $badgeStatus = 'sedang_berlangsung';
+                $badgeColor = 'border-emerald-400/30 bg-emerald-950/70 text-emerald-300';
+                $badgeDot = 'bg-emerald-500';
+                $badgeLabel = 'Sedang Berlangsung';
+            }
+        @endphp
+
+        <span class="reveal stagger-2 absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border backdrop-blur-md px-4 py-1.5 text-[11px] font-semibold shadow-lg sm:text-[12px] {{ $badgeColor }}">
+            @if ($badgeStatus === 'sedang_berlangsung')
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $badgeDot }} opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 {{ $badgeDot }}"></span>
+                </span>
+            @else
+                <span class="h-2 w-2 rounded-full {{ $badgeDot }}"></span>
+            @endif
+            {{ $badgeLabel }}
+        </span>
         </section>
 
         {{-- EVENT INFORMATION --}}

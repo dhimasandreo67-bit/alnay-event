@@ -334,7 +334,7 @@
             ]);
 
             // ✅ Voting aktif dari setting admin
-            const votingAktif = p.event?.voting_aktif ?? true;
+            const votingAktif = p.event?.voting_aktif === true;
 
             // ✅ Sembunyikan SEMUA tampilan vote kalau voting dimatikan ATAU blackout
             const sembunyikanVote = !votingAktif || (statistik?.blackout ?? false);
