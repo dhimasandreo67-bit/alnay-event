@@ -124,6 +124,62 @@ class Peserta extends Model
         return true;
     }
 
+    /**
+     * Syarat peserta berhak TAMPIL di halaman publik (detail event) & bisa divote.
+     *
+     * 1. Kandidat voting manual (kandidat_voting = true): langsung lolos,
+     *    tanpa syarat audisi maupun pembayaran.
+     * 2. Peserta pendaftaran reguler (kandidat_voting = false): wajib SUDAH
+     *    LUNAS biaya pendaftaran (PembayaranEvent settlement). Kalau event
+     *    ini butuh audisi (event->butuh_audisi = true), peserta juga wajib
+     *    sudah hasil_audisi = 'lolos'. Kalau event TIDAK butuh audisi,
+     *    syarat audisi ini dilewati.
+     *
+     * Catatan: pembayaran REGISTRASI (status_registrasi / pembayaranRegistrasi)
+     * sengaja TIDAK dicek di sini — itu bukan penghalang untuk tampil/divote,
+     * dan boleh dilunasi kapan saja sebelum event berakhir.
+     */
+    public function layakTampilPublik(Event $event): bool
+    {
+        if ($this->kandidat_voting) {
+            return true;
+        }
+
+        if (!$this->sudahLunasPendaftaran($event)) {
+            return false;
+        }
+
+        if ($event->butuh_audisi && $this->hasil_audisi !== 'lolos') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Sudah lunas biaya pendaftaran (bukan biaya registrasi)?
+     * Dipakai sebagai syarat tampil peserta pendaftaran reguler.
+     */
+    public function sudahLunasPendaftaran(Event $event): bool
+    {
+        $totalBiaya = (float) ($event->biaya_pendaftaran ?? 0);
+
+        if ($totalBiaya <= 0) {
+            // Event gratis / tidak ada biaya pendaftaran → anggap lunas.
+            return true;
+        }
+
+        $pembayaran = $this->relationLoaded('pembayaran')
+            ? $this->pembayaran
+            : $this->pembayaran()->get();
+
+        $sudahDibayar = $pembayaran
+            ->where('status_midtrans', 'settlement')
+            ->sum('jumlah');
+
+        return $sudahDibayar >= $totalBiaya;
+    }
+
     public function namaTampil(): string
     {
         $jawabanList = $this->relationLoaded('jawaban')

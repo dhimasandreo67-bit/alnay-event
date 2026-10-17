@@ -23,6 +23,9 @@ class PendaftaranController extends Controller
      * POST /admin/registrations/{event}/manual
      * Input manual peserta - status langsung 'diterima'
      */
+    /**
+     * POST /admin/registrations/{event}/manual
+     */
     public function storeManual(Request $request, Event $event): JsonResponse
     {
         $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
@@ -61,7 +64,6 @@ class PendaftaranController extends Controller
         $data = $request->validate($rules);
 
         $peserta = DB::transaction(function () use ($data, $event, $questions, $request): Peserta {
-            // 1. Cari atau buat user
             $user = PenggunaEvent::query()->firstOrCreate(
                 ['email' => $data['email']],
                 [
@@ -74,7 +76,6 @@ class PendaftaranController extends Controller
                 $user->update(['nama' => $data['nama']]);
             }
 
-            // 2. Cek duplikasi
             $sudahDaftar = Peserta::where('event_id', $event->id)
                 ->where('user_id', $user->id)
                 ->exists();
@@ -85,17 +86,12 @@ class PendaftaranController extends Controller
                 ]);
             }
 
-            // 3. ✅ BUAT PESERTA: Status LANGSUNG 'diterima'
-            // 3. ✅ BUAT PESERTA via Service — biar konsisten dengan saklar
             $peserta = app(\App\Services\PesertaAlurService::class)->tambahManual($event, [
                 'user_id'          => $user->id,
                 'nama_pendaftaran' => $data['nama'],
-                'jawabans'         => [], // nanti diisi jawaban di bawah
+                'jawabans'         => [],
             ]);
 
-            // 4. ✅ KONDISIONAL — beda per alur
-            // Kalau pendaftaran publik MATI (Voting Saja) → bypass → langsung Lunas
-            // Kalau pendaftaran publik HIDUP → track → peserta baru "Belum Bayar"
             $bypassPembayaran = !($event->pendaftaran_aktif ?? true);
 
             if ($bypassPembayaran && $event->biaya_pendaftaran > 0) {
@@ -110,9 +106,7 @@ class PendaftaranController extends Controller
                     'tanggal_bayar'     => now(),
                 ]);
             }
-            // Kalau pendaftaran publik HIDUP — nggak buat record — admin track manual
 
-            // 5. Simpan jawaban Form Builder
             foreach ($questions as $question) {
                 if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
                     continue;
@@ -672,9 +666,9 @@ class PendaftaranController extends Controller
 
     /**
      * POST /admin/kandidat/{event}
-     * Simpan kandidat voting langsung
+     * Simpan kandidat voting langsung (Nama & Email Opsional)
      */
-    public function storeKandidat(Request $request, Event $event)
+     public function storeKandidat(Request $request, Event $event)
     {
         // 1. Kumpulkan semua jawaban dari request (format: jawaban_ID)
         $answers = [];
@@ -684,7 +678,7 @@ class PendaftaranController extends Controller
                 $answers[$qid] = $val;
             }
         }
-        
+
         // 2. Ekstrak Nama Kandidat (ambil jawaban teks pertama yang diisi)
         $namaKandidat = null;
         foreach ($answers as $qid => $val) {
@@ -694,35 +688,103 @@ class PendaftaranController extends Controller
             }
         }
 
-        if (! $namaKandidat) {
-            $namaKandidat = 'Kandidat ' . date('His');
+        $questions = $event->pertanyaans()->orderBy('urutan', 'asc')->get();
+
+        $rules = [
+            'nama'  => ['nullable', 'string', 'max:100'],
+            'email' => ['nullable', 'email', 'max:255'],
+        ];
+
+        foreach ($questions as $question) {
+            if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
+                continue;
+            }
+            $field = "jawaban_{$question->id}";
+            $fieldRules = [$question->wajib ? 'required' : 'nullable'];
+
+            if ($question->tipe_input === 'file') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'max:5120';
+            } elseif ($question->tipe_input === 'number') {
+                $fieldRules[] = 'regex:/^\d+$/';
+            } elseif ($question->tipe_input === 'checkbox') {
+                $fieldRules[] = 'array';
+                $rules["{$field}.*"] = ['string', Rule::in($question->pilihan_jawaban ?? [])];
+            } elseif (in_array($question->tipe_input, ['select', 'radio'], true)) {
+                $fieldRules[] = Rule::in($question->pilihan_jawaban ?? []);
+            } elseif ($question->tipe_input === 'email') {
+                $fieldRules[] = 'email';
+            } else {
+                $fieldRules[] = 'string';
+                $fieldRules[] = 'max:5000';
+            }
+            $rules[$field] = $fieldRules;
         }
 
-        // 3. Buat Email Hantu
-        $slug = \Illuminate\Support\Str::slug($namaKandidat, '.');
-        $emailDummy = $slug . '.' . \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(5)) . '@kandidat.alnay.id';
+        $request->validate($rules);
 
-        $peserta = DB::transaction(function () use ($request, $event, $answers, $namaKandidat, $emailDummy) {
-            $user = \App\Models\PenggunaEvent::create([
-                'email'     => $emailDummy,
-                'google_id' => 'kandidat-voting-' . \Illuminate\Support\Str::uuid(),
-                'nama'      => $namaKandidat,
-            ]);
+        $peserta = DB::transaction(function () use ($request, $event, $questions, $answers, $namaKandidat) {
+            $inputNama = $request->input('nama');
+            if (empty($inputNama)) {
+                foreach ($questions as $q) {
+                    if (stripos($q->label, 'nama') !== false && $request->filled("jawaban_{$q->id}")) {
+                        $inputNama = $request->input("jawaban_{$q->id}");
+                        break;
+                    }
+                }
+            }
+            $inputNama = !empty($inputNama) ? $inputNama : ($namaKandidat ?: 'Kandidat ' . date('His'));
 
-            $peserta = $event->pesertas()->create([
+            $inputEmail = $request->input('email');
+            if (empty($inputEmail)) {
+                // Buat email hantu dari slug nama supaya tetap unik per kandidat
+                $slug = Str::slug($inputNama, '.');
+                $inputEmail = $slug . '.' . Str::lower(Str::random(5)) . '@kandidat.alnay.id';
+            }
+
+            $user = PenggunaEvent::query()->firstOrCreate(
+                ['email' => $inputEmail],
+                [
+                    'google_id' => 'kandidat-voting-' . Str::uuid(),
+                    'nama'      => $inputNama,
+                ]
+            );
+
+            if ($user->nama !== $inputNama) {
+                $user->update(['nama' => $inputNama]);
+            }
+
+            $sudahDaftar = Peserta::where('event_id', $event->id)
+                ->where('user_id', $user->id)
+                ->where('kandidat_voting', true)
+                ->exists();
+
+            if ($sudahDaftar) {
+                throw ValidationException::withMessages([
+                    'email' => 'Kandidat dengan email ini sudah terdaftar.',
+                ]);
+            }
+
+            $pesertaData = [
                 'user_id'          => $user->id,
-                'nama_pendaftaran' => $namaKandidat,
+                'nama_pendaftaran' => $inputNama,
                 'status'           => 'diterima',
                 'tampil_di_publik' => true,
                 'kandidat_voting'  => true,
-            ]);
+            ];
 
-            $biaya = (int) $event->biaya_pendaftaran;
-            if ($biaya > 0) {
-                \App\Models\PembayaranEvent::create([
+            if (Schema::hasColumn('peserta_event', 'updated_at')) {
+                $pesertaData['updated_at'] = now();
+            }
+
+            $peserta = $event->pesertas()->create($pesertaData);
+
+            // 3. Buat pembayaran otomatis (settlement) jika event ini berbayar
+            if ((int) $event->biaya_pendaftaran > 0) {
+                PembayaranEvent::create([
                     'peserta_id'        => $peserta->id,
                     'jumlah'            => 0,
-                    'tarif_dasar'       => $biaya,
+                    'tarif_dasar'       => (int) $event->biaya_pendaftaran,
                     'metode'            => null,
                     'midtrans_order_id' => 'KANDIDAT-' . date('YmdHis') . '-' . $peserta->id,
                     'status_midtrans'   => 'settlement',
@@ -730,37 +792,36 @@ class PendaftaranController extends Controller
                 ]);
             }
 
-            // 4. Simpan jawaban ke tabel JawabanPeserta
-            foreach ($answers as $qid => $val) {
-                if (empty($val) && !$request->hasFile("jawaban_{$qid}")) {
+            // 4. Simpan jawaban ke tabel JawabanPeserta (file atau teks biasa)
+            foreach ($questions as $question) {
+                if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
                     continue;
                 }
 
-                $jawabanAkhir = $val;
+                $answer = $request->file("jawaban_{$question->id}")?->store('peserta', 'public');
+                $answer ??= $answers[$question->id] ?? null;
 
-                if ($request->hasFile("jawaban_{$qid}")) {
-                    $jawabanAkhir = $request->file("jawaban_{$qid}")->store('peserta', 'public');
-                } elseif (is_array($val)) {
-                    $jawabanAkhir = json_encode($val);
+                if ($answer === null || $answer === '') {
+                    continue;
                 }
 
-                \App\Models\JawabanPeserta::create([
+                if (is_array($answer)) {
+                    $answer = json_encode($answer, JSON_THROW_ON_ERROR);
+                }
+
+                JawabanPeserta::create([
                     'peserta_id'    => $peserta->id,
-                    'pertanyaan_id' => $qid,
-                    'jawaban'       => $jawabanAkhir,
+                    'pertanyaan_id' => $question->id,
+                    'jawaban'       => $answer,
                 ]);
             }
 
             return $peserta;
         });
 
-        return redirect()->back()->with('success', 'Kandidat voting "' . $namaKandidat . '" berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Kandidat voting "' . $peserta->nama_pendaftaran . '" berhasil ditambahkan.');
     }
-
-    /**
-     * POST /admin/kandidat/pembayaran
-     * Simpan pembayaran manual untuk kandidat voting
-     */
+    
         /**
      * POST /admin/kandidat/pembayaran
      * Simpan pembayaran manual untuk kandidat voting
@@ -779,7 +840,6 @@ class PendaftaranController extends Controller
         $totalBiaya = (int) $request->total_biaya;
         $jumlahBayar = (int) $request->jumlah_bayar;
 
-        // ✅ Normalisasi waktu bayar: pastikan ada jam (bukan 00:00 dari input date saja)
         $rawTanggal = $request->input('tanggal_bayar');
         $tanggalBayar = \Carbon\Carbon::parse($rawTanggal, 'Asia/Jakarta');
         $hanyaTanggal = !preg_match('/[T\s]\d{1,2}:\d{2}/', (string) $rawTanggal);
@@ -795,8 +855,9 @@ class PendaftaranController extends Controller
             $sudahDibayar = $pembayaran?->jumlah ?? 0;
             $totalSekarang = $sudahDibayar + $jumlahBayar;
 
-            $isLunas = $totalSekarang >= $totalBiaya;
-            $status = $isLunas ? 'settlement' : 'pending';
+            // ✅ FIX: Pembayaran manual dari admin dianggap SETTLEMENT (uang sudah diterima)
+            // Status Lunas atau DP murni dihitung dari nominal ($totalSekarang >= $totalBiaya)
+            $status = 'settlement'; 
 
             if ($pembayaran) {
                 $pembayaran->update([

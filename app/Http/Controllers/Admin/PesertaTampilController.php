@@ -17,13 +17,19 @@ class PesertaTampilController extends Controller
     /**
      * GET /admin/peserta-tampil/{event?}
      *
-     * Siapa yang muncul di halaman ini (2 aturan):
+     * Siapa yang muncul di halaman ini (2 aturan — lihat Peserta::layakTampilPublik()):
      * 1. Peserta PENDAFTARAN (mandiri atau manual, kandidat_voting = false):
-     *    harus SUDAH ADA PEMBAYARAN SETTLEMENT dan SUDAH LOLOS AUDISI
-     *    (hasil_audisi = 'lolos').
+     *    harus SUDAH LUNAS biaya pendaftaran (pembayaran settlement), dan
+     *    KALAU event ini butuh_audisi = true, tambahan wajib SUDAH LOLOS
+     *    AUDISI (hasil_audisi = 'lolos'). Kalau event tidak butuh audisi,
+     *    syarat audisi ini dilewati.
      * 2. Peserta KANDIDAT VOTING (kandidat_voting = true): langsung ikut
-     *    tanpa syarat audisi — status pembayarannya ditampilkan apa adanya,
-     *    otomatis "Belum Bayar" kalau belum ada transaksi sama sekali.
+     *    tanpa syarat audisi maupun pembayaran — status pembayarannya
+     *    ditampilkan apa adanya, otomatis "Belum Bayar" kalau belum ada
+     *    transaksi sama sekali.
+     *
+     * Pembayaran REGISTRASI (terpisah dari biaya pendaftaran) TIDAK ikut
+     * disyaratkan di sini — boleh dilunasi kapan saja sebelum event berakhir.
      */
     public function index(?Event $event = null): View
     {
@@ -36,14 +42,13 @@ class PesertaTampilController extends Controller
 
         $pesertas = collect();
         if ($event) {
-            // 1. Peserta pendaftaran: sudah ada pembayaran settlement + lolos audisi
+            // 1. Peserta pendaftaran: lunas pembayaran + (kalau butuh_audisi) lolos audisi
             $pendaftaran = Peserta::where('event_id', $event->id)
                 ->where('kandidat_voting', false)
                 ->where('status', 'diterima')
-                ->where('hasil_audisi', 'lolos')
-                ->whereHas('pembayaran', fn ($q) => $q->where('status_midtrans', 'settlement'))
                 ->with(['user', 'pembayaran'])
-                ->get();
+                ->get()
+                ->filter(fn (Peserta $p) => $p->layakTampilPublik($event));
 
             // 2. Kandidat voting: langsung ikut apapun status bayarnya
             $kandidat = Peserta::where('event_id', $event->id)
@@ -117,20 +122,18 @@ class PesertaTampilController extends Controller
     {
         $show = $request->boolean('tampil');
 
-        Peserta::where('event_id', $event->id)
+        $idsLayak = Peserta::where('event_id', $event->id)
             ->where('status', 'diterima')
-            ->where(function ($q) {
-                $q->where('kandidat_voting', true)
-                  ->orWhere(function ($q2) {
-                      $q2->where('kandidat_voting', false)
-                         ->where('hasil_audisi', 'lolos')
-                         ->whereHas('pembayaran', fn ($q3) => $q3->where('status_midtrans', 'settlement'));
-                  });
-            })
+            ->with('pembayaran')
+            ->get()
+            ->filter(fn (Peserta $p) => $p->layakTampilPublik($event))
+            ->pluck('id');
+
+        Peserta::whereIn('id', $idsLayak)
             ->update(['tampil_di_publik' => $show]);
 
-        return redirect()
-            ->route('admin.peserta-tampil.index', $event->id)
+            return redirect()
+            ->to('/admin/peserta-tampil/' . $event->id)
             ->with('success', $show
                 ? 'Semua peserta berhasil ditampilkan di halaman publik.'
                 : 'Semua peserta berhasil disembunyikan dari halaman publik.');
@@ -144,4 +147,45 @@ class PesertaTampilController extends Controller
     {
         return response()->json(['message' => 'Gunakan form create + storeForm'], 410);
     }
+
+    // app/Http/Controllers/Admin/PesertaTampilController.php
+
+public function updateFoto(Request $request, $peserta)
+{
+    $request->validate([
+        'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+    ], [
+        'foto.required' => 'File gambar wajib dipilih.',
+        'foto.image'    => 'File harus berupa gambar.',
+        'foto.mimes'    => 'Format yang diizinkan: JPG, PNG, WEBP.',
+        'foto.max'      => 'Ukuran maksimal 2 MB.',
+    ]);
+
+    $peserta = \App\Models\Peserta::with('user')->findOrFail($peserta);
+
+    if (!$peserta->user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Akun user peserta tidak ditemukan.',
+        ], 422);
+    }
+
+    if (!empty($peserta->user->foto_custom)
+        && \Illuminate\Support\Facades\Storage::disk('public')->exists($peserta->user->foto_custom)
+    ) {
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($peserta->user->foto_custom);
+    }
+
+    $path = $request->file('foto')->store('peserta/foto', 'public');
+
+    $peserta->user->update([
+        'foto_custom' => $path,
+    ]);
+
+    return response()->json([
+        'success'  => true,
+        'message'  => 'Gambar berhasil disimpan.',
+        'foto_url' => asset('storage/' . $path),
+    ]);
+}
 }
