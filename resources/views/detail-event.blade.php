@@ -714,19 +714,38 @@
         $cdDetik = $detik % 60;
 
         $kandidat = $pesertas
-            ->map(function ($p) use ($inisial) {
-                $nama = $p->namaTampil();
+        ->map(function ($p) use ($inisial) {
+            $nama = $p->namaTampil();
 
-                return [
-                    'id' => $p->id,
-                    'nama' => $nama,
-                    'foto' => $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : $p->user?->foto_url,
-                    'inisial' => $inisial($nama),
-                    'vote_raw' => (int) $p->total_vote,
-                    'vote' => number_format($p->total_vote, 0, ',', '.'),
-                ];
-            })
-            ->values();
+            // ✅ PRIORITAS 1: Foto dari Form Builder
+            $jawabanFoto = $p->jawabans->first(function ($j) {
+                $tipe = strtolower(trim($j->pertanyaan->tipe_input ?? ''));
+                return in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar']) && $j->jawaban;
+            });
+            $fotoDariForm = $jawabanFoto 
+                ? (str_starts_with($jawabanFoto->jawaban, 'http') 
+                    ? $jawabanFoto->jawaban 
+                    : asset('storage/' . $jawabanFoto->jawaban))
+                : null;
+
+            // ✅ PRIORITAS 2: Foto Custom
+            $fotoCustom = $p->user?->foto_custom 
+                ? asset('storage/' . $p->user->foto_custom) 
+                : null;
+
+            // ✅ PRIORITAS 3: Foto Google
+            $fotoGoogle = $p->user?->foto_url;
+
+            return [
+                'id' => $p->id,
+                'nama' => $nama,
+                'foto' => $fotoDariForm ?? $fotoCustom ?? $fotoGoogle,
+                'inisial' => $inisial($nama),
+                'vote_raw' => (int) $p->total_vote,
+                'vote' => number_format($p->total_vote, 0, ',', '.'),
+            ];
+        })
+        ->values();
 
         if ($sembunyikanStatistik) {
             $kandidat = $kandidat->sortBy('id')->values();
@@ -1094,9 +1113,25 @@
                             @foreach ($top3 as $i => $p)
                                 @php
                                     $namaP = $p->namaTampil();
-                                    $fotoP = $p->user?->foto_custom
-                                        ? asset('storage/' . $p->user->foto_custom)
-                                        : $p->user?->foto_url;
+                                    // Prioritas 1: Foto dari Form Builder
+                                    $jawabanFoto = $p->jawabans->first(function ($j) {
+                                        $tipe = strtolower(trim($j->pertanyaan->tipe_input ?? ''));
+                                        return in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar']) && $j->jawaban;
+                                    });
+
+                                    $fotoDariForm = $jawabanFoto 
+                                        ? (str_starts_with($jawabanFoto->jawaban, 'http') 
+                                            ? $jawabanFoto->jawaban 
+                                            : asset('storage/' . $jawabanFoto->jawaban))
+                                        : null;
+
+                                    // Prioritas 2 & 3
+                                    $fotoCustom = $p->user?->foto_custom 
+                                        ? asset('storage/' . $p->user->foto_custom) 
+                                        : null;
+                                    $fotoGoogle = $p->user?->foto_url;
+
+                                    $fotoP = $fotoDariForm ?? $fotoCustom ?? $fotoGoogle;
                                     $inisialP = strtoupper(
                                         implode(
                                             '',

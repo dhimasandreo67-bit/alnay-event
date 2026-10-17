@@ -174,29 +174,29 @@ class Peserta extends Model
      */
     public function fotoUtama(): ?string
     {
-        // 1. Cari jawaban dengan tipe file / label foto
+        // 1. PRIORITAS 1: Foto custom (hasil edit admin, ATAU dari form saat pendaftaran)
+        if ($this->user?->foto_custom) {
+            return asset('storage/' . $this->user->foto_custom);
+        }
+
+        // 2. PRIORITAS 2: Jawaban Form Builder (fallback untuk data lama)
         $jawabanFoto = $this->jawabans
             ->first(function ($j) {
                 $tipe = strtolower($j->pertanyaan?->tipe_input ?? '');
                 $label = strtolower($j->pertanyaan?->label ?? '');
-
                 $isFileTipe = in_array($tipe, ['file', 'upload_gambar', 'upload gambar', 'image', 'gambar'], true);
                 $isLabelGambar = preg_match('/upload gambar|foto|gambar|image/i', $label);
-
                 return ($isFileTipe || $isLabelGambar) && $j->jawaban;
             });
 
         if ($jawabanFoto && $jawabanFoto->jawaban) {
-            $path = is_array($jawabanFoto->jawaban)
-                ? ($jawabanFoto->jawaban[0] ?? null)
-                : $jawabanFoto->jawaban;
-
+            $path = is_array($jawabanFoto->jawaban) ? ($jawabanFoto->jawaban[0] ?? null) : $jawabanFoto->jawaban;
             if ($path) {
                 return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
             }
         }
 
-        // 2. Fallback — galeri_foto
+        // 3. PRIORITAS 3: Galeri foto
         if (!empty($this->galeri_foto) && is_array($this->galeri_foto)) {
             $first = $this->galeri_foto[0] ?? null;
             if ($first) {
@@ -204,12 +204,7 @@ class Peserta extends Model
             }
         }
 
-        // 3. Fallback — foto custom user
-        if ($this->user?->foto_custom) {
-            return asset('storage/' . $this->user->foto_custom);
-        }
-
-        // 4. Fallback — foto Google
+        // 4. PRIORITAS 4: Foto Google
         if ($this->user?->foto_url) {
             return $this->user->foto_url;
         }

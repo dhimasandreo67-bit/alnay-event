@@ -572,19 +572,6 @@
             @if($event)
                 <form action="{{ route('admin.kandidat.store', $event->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    
-                    {{-- Field Dasar Wajib --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap Kandidat <span class="text-red-500">*</span></label>
-                        <input type="text" name="nama" required placeholder="Masukkan nama lengkap"
-                            class="w-full text-xs border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] focus:ring-1 focus:ring-[#C28E27]">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Alamat Email <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" required placeholder="email@domain.com"
-                            class="w-full text-xs border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] focus:ring-1 focus:ring-[#C28E27]">
-                    </div>
 
                     {{-- Field Dinamis Sesuai Form Builder Event --}}
                     @foreach($event->pertanyaans()->whereNotIn('tipe_input', ['heading', 'subheading'])->orderBy('urutan')->get() as $q)
@@ -635,46 +622,46 @@
     {{-- ============================================
     PANEL: KANDIDAT VOTING
 ============================================= --}}
-<div id="panel-kandidat" class="tab-panel hidden bg-white rounded-xl border border-[#e7e2da] overflow-hidden">
-    <div class="p-4 border-b border-[#e7e2da] flex items-center justify-between">
-        <div>
-            <h3 class="text-sm font-semibold text-[#24211d]">Daftar Kandidat Voting Langsung</h3>
-            <p class="text-xs text-[#8c8982] mt-0.5">Peserta yang didaftarkan manual & pembayaran diatur admin.</p>
+    <div id="panel-kandidat" class="tab-panel hidden bg-white rounded-xl border border-[#e7e2da] overflow-hidden">
+        <div class="p-4 border-b border-[#e7e2da] flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-semibold text-[#24211d]">Daftar Kandidat Voting Langsung</h3>
+                <p class="text-xs text-[#8c8982] mt-0.5">Peserta yang didaftarkan manual & pembayaran diatur admin.</p>
+            </div>
+            <button type="button" onclick="openModalTambahKandidat()" class="px-4 py-2 bg-[#C28E27] hover:bg-[#a3721a] text-white text-xs font-bold rounded-lg transition flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Tambah Kandidat
+            </button>
         </div>
-        <button type="button" onclick="openModalTambahKandidat()" class="px-4 py-2 bg-[#C28E27] hover:bg-[#a3721a] text-white text-xs font-bold rounded-lg transition flex items-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Tambah Kandidat
-        </button>
-    </div>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="bg-[#faf8f4] text-xs text-[#8c8982] uppercase tracking-wide">
-                    <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Nama Kandidat</th>
-                    <th class="px-4 py-3 text-left font-semibold">Total Biaya</th>
-                    <th class="px-4 py-3 text-left font-semibold">Sudah Dibayar</th>
-                    <th class="px-4 py-3 text-left font-semibold">Status Pembayaran</th>
-                    <th class="px-4 py-3 text-left font-semibold">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-[#e7e2da]">
-                @forelse($kandidatVoting as $index => $peserta)
-                    @php
-    $totalBiaya = $event->biaya_pendaftaran ?? 0;
-    // ✅ Akumulasikan seluruh pembayaran yang sudah settlement
-    $sudahDibayar = $peserta->pembayaran->where('status_midtrans', 'settlement')->sum('jumlah');
-    $sisa = max(0, $totalBiaya - $sudahDibayar);
-    $isLunas = $sudahDibayar >= $totalBiaya && $totalBiaya > 0;
-@endphp
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[#faf8f4] text-xs text-[#8c8982] uppercase tracking-wide">
+                        <th class="px-4 py-3 text-left font-semibold">No</th>
+                        <th class="px-4 py-3 text-left font-semibold">Nama Kandidat</th>
+                        <th class="px-4 py-3 text-left font-semibold">Total Biaya</th>
+                        <th class="px-4 py-3 text-left font-semibold">Sudah Dibayar</th>
+                        <th class="px-4 py-3 text-left font-semibold">Status Pembayaran</th>
+                        <th class="px-4 py-3 text-left font-semibold">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#e7e2da]">
+                    @forelse($kandidatVoting as $index => $peserta)
+                        @php
+                            $totalBiaya = $event->biaya_pendaftaran ?? 0;
+                            // ✅ Akumulasikan seluruh pembayaran yang sudah settlement
+                            $sudahDibayar = $peserta->pembayaran->where('status_midtrans', 'settlement')->sum('jumlah');
+                            $sisa = max(0, $totalBiaya - $sudahDibayar);
+                            $isLunas = $sudahDibayar >= $totalBiaya && $totalBiaya > 0;
+                        @endphp
                     <tr class="hover:bg-[#faf8f4] transition">
                         <td class="px-4 py-3 text-[#8c8982]">
                             {{ ($kandidatVoting->currentPage() - 1) * $kandidatVoting->perPage() + $index + 1 }}
                         </td>
                         <td class="px-4 py-3 font-medium text-[#24211d]">
                             {{ $peserta->namaTampil() }}
-                            <span class="block text-xs text-[#8c8982] font-normal">{{ $peserta->user->email ?? '-' }}</span>
+                            
                         </td>
                         <td class="px-4 py-3 text-[#8c8982]">
                             Rp {{ number_format($totalBiaya, 0, ',', '.') }}
@@ -1702,24 +1689,21 @@
         window.location.href = url.toString();
     }
 
-    // Modal functions - gunakan ID yang sesuai dengan blade
     function openModalTambahKandidat() {
-        const modal = document.getElementById('modalKandidat');
+        const modal = document.getElementById('modalTambahKandidat');  // ✅ BENAR
         if (modal) {
             modal.classList.remove('hidden');
-            modal.style.display = 'block';
-            document.body.classList.add('overflow-hidden');
+            document.body.style.overflow = 'hidden';
         } else {
-            console.error('Modal dengan ID "modalKandidat" tidak ditemukan!');
+            console.error('Modal dengan ID "modalTambahKandidat" tidak ditemukan!');
         }
     }
 
     function closeModalTambahKandidat() {
-        const modal = document.getElementById('modalKandidat');
+        const modal = document.getElementById('modalTambahKandidat');  // ✅ BENAR
         if (modal) {
             modal.classList.add('hidden');
-            modal.style.display = 'none';
-            document.body.classList.remove('overflow-hidden');
+            document.body.style.overflow = '';
         }
     }
 
