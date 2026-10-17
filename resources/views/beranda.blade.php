@@ -1261,7 +1261,7 @@
             btnListPrev.addEventListener('click', (e) => { e.preventDefault(); applyViewModePrev('list'); });
         });
 
-        /* ============ HERO CAROUSEL ============ */
+        /* ============ HERO CAROUSEL — LOOP MULUS PAKAI CLONE ============ */
         document.addEventListener('DOMContentLoaded', function () {
             const track = document.querySelector('.hero-carousel-track');
             if (!track) return;
@@ -1270,18 +1270,35 @@
             const total = slides.length;
             if (total <= 1) return;
 
-            let current = 0;
+            // ✅ Clone slide pertama — taruh di akhir — biar loop mulus
+            const firstClone = slides[0].cloneNode(true);
+            firstClone.classList.add('hero-slide-clone');
+            track.appendChild(firstClone);
+
+            // ✅ Clone slide terakhir — taruh di awal — biar prev mulus
+            const lastClone = slides[total - 1].cloneNode(true);
+            lastClone.classList.add('hero-slide-clone');
+            track.insertBefore(lastClone, slides[0]);
+
+            // Total sekarang = total + 2 (clone di awal & akhir)
+            const allSlides = track.querySelectorAll('.hero-slide');
+            const totalWithClones = allSlides.length;
+
+            let current = 1;   // ← mulai dari slide 1 asli (index 1 — karena clone di index 0)
             let timer = null;
             const INTERVAL = 5000;
+            const realTotal = total;
 
             const dots    = document.querySelectorAll('.hero-dot');
             const btnPrev = document.getElementById('heroPrev');
             const btnNext = document.getElementById('heroNext');
 
-            function render() {
-                track.style.transform = `translateX(-${current * 100}%)`;
+            // Set posisi awal — ke slide asli pertama (index 1)
+            track.style.transform = `translateX(-${current * 100}%)`;
+
+            function updateDots(idx) {
                 dots.forEach((d, i) => {
-                    if (i === current) {
+                    if (i === idx) {
                         d.classList.add('bg-[#c99a32]', 'ring-4', 'ring-[#c99a32]/20');
                         d.classList.remove('bg-[#d4c4a8]', 'hover:bg-[#c99a32]/60');
                     } else {
@@ -1291,13 +1308,52 @@
                 });
             }
 
-            function goTo(idx) {
-                current = (idx + total) % total;
-                render();
+            function render(animate = true) {
+                if (animate) {
+                    track.style.transition = 'transform 500ms ease-out';
+                } else {
+                    track.style.transition = 'none';
+                }
+                track.style.transform = `translateX(-${current * 100}%)`;
+
+                // Update dots — pakai index asli
+                const realIndex = (current - 1 + realTotal) % realTotal;
+                updateDots(realIndex);
             }
 
-            function next() { goTo(current + 1); }
-            function prev() { goTo(current - 1); }
+            function next() {
+                if (current >= totalWithClones - 1) return;   // safety
+                current++;
+                render(true);
+            }
+
+            function prev() {
+                if (current <= 0) return;   // safety
+                current--;
+                render(true);
+            }
+
+            // ✅ SETELAH ANIMASI SELESAI — cek apakah di clone — pindah instan ke slide asli
+            track.addEventListener('transitionend', function (e) {
+                if (e.propertyName !== 'transform') return;
+
+                // Kalau di clone terakhir (index totalWithClones - 1 = clone-1) — pindah instan ke slide asli [1] (index 1)
+                if (current === totalWithClones - 1) {
+                    track.style.transition = 'none';
+                    current = 1;
+                    track.style.transform = `translateX(-${current * 100}%)`;
+                    void track.offsetHeight;   // paksa reflow
+                    track.style.transition = '';
+                }
+                // Kalau di clone awal (index 0 = clone-3) — pindah instan ke slide asli terakhir (index realTotal)
+                else if (current === 0) {
+                    track.style.transition = 'none';
+                    current = realTotal;
+                    track.style.transform = `translateX(-${current * 100}%)`;
+                    void track.offsetHeight;
+                    track.style.transition = '';
+                }
+            });
 
             function start() {
                 stop();
@@ -1312,7 +1368,9 @@
 
             dots.forEach(d => {
                 d.addEventListener('click', () => {
-                    goTo(parseInt(d.dataset.dot, 10));
+                    const idx = parseInt(d.dataset.dot, 10);
+                    current = idx + 1;   // ← +1 karena clone di awal
+                    render(true);
                     start();
                 });
             });
@@ -1339,7 +1397,7 @@
                 if (e.key === 'ArrowRight') { next(); start(); }
             });
 
-            render();
+            render(false);   // ← init tanpa animasi
             start();
         });
 
