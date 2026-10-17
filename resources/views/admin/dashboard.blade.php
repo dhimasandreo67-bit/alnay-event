@@ -1138,7 +1138,7 @@
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-[#e7e2da]">
         
         {{-- Header Modal --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-[#e7e2da] bg-[#faf8f4] rounded-t-2xl">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#e7e2da] bg-[#faf8f4] rounded-t-2xl shrink-0">
             <div>
                 <h3 class="text-lg font-bold text-[#24211d]">Tambah Kandidat Voting Langsung</h3>
                 <p class="text-xs text-[#8c8982] mt-0.5">Form disesuaikan dengan Form Builder: {{ $event?->nama ?? '-' }}</p>
@@ -1148,16 +1148,15 @@
             </button>
         </div>
 
-        {{-- Body Modal (Scrollable) --}}
-        <div class="flex-1 overflow-y-auto p-6">
-            @if($event && isset($pertanyaans) && $pertanyaans->count() > 0)
-                <form id="formKandidatVoting" action="{{ route('admin.kandidat.store', $event->id) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
-                    @csrf
-            
-
-                    {{-- Field Dinamis dari Form Builder --}}
+        @if($event && isset($pertanyaans) && $pertanyaans->count() > 0)
+            {{-- ✅ FORM MEMBUNGKUS BODY & FOOTER --}}
+            <form id="formKandidatVoting" action="{{ route('admin.kandidat.store', $event->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                @csrf
+                
+                {{-- Body Modal (Scrollable) --}}
+                <div class="flex-1 overflow-y-auto p-6">
                     <div class="space-y-4">
-                        <p class="text-xs font-bold text-[#8c8982] uppercase tracking-wide mb-2">Data Tambahan (Form Builder)</p>
+                        <p class="text-xs font-bold text-[#8c8982] uppercase tracking-wide mb-2">Data Kandidat (Form Builder)</p>
                         
                         @foreach($pertanyaans as $q)
                             <div class="border border-[#e7e2da] rounded-xl p-4 bg-white">
@@ -1180,71 +1179,61 @@
                                     <p class="text-xs text-gray-500 mb-2">{{ $help }}</p>
                                 @endif
 
-                                {{-- Text Input --}}
                                 @if(in_array($q->tipe_input, ['text', 'teks']))
-                                    <input type="text" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif placeholder="{{ $placeholder }}"
-                                        class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
-
-                                {{-- Email Input --}}
+                                    <input type="text" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif placeholder="{{ $placeholder }}" class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
                                 @elseif($q->tipe_input === 'email')
-                                    <input type="email" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif placeholder="{{ $placeholder ?: 'email@domain.com' }}"
-                                        class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
-
-                                {{-- Number Input --}}
+                                    <input type="email" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif placeholder="{{ $placeholder ?: 'email@domain.com' }}" class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
                                 @elseif(in_array($q->tipe_input, ['number', 'angka']))
-                                    <input type="number" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif placeholder="{{ $placeholder }}"
-                                        class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
-
-                                {{-- Textarea --}}
+                                    <input type="number" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif placeholder="{{ $placeholder }}" class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]">
                                 @elseif(in_array($q->tipe_input, ['textarea', 'teks_panjang']))
-                                    <textarea name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif rows="3" placeholder="{{ $placeholder }}"
-                                        class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]"></textarea>
-
-                                {{-- Select / Dropdown --}}
+                                    <textarea name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif rows="3" placeholder="{{ $placeholder }}" class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27]"></textarea>
                                 @elseif(in_array($q->tipe_input, ['select', 'dropdown']))
-                                    <select name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif
-                                        class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] bg-white">
+                                    <select name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif class="w-full text-sm border border-[#e7e2da] rounded-lg p-2.5 outline-none focus:border-[#C28E27] bg-white">
                                         <option value="">-- Pilih {{ $q->label }} --</option>
                                         @foreach($options as $opt)
                                             <option value="{{ $opt }}">{{ $opt }}</option>
                                         @endforeach
                                     </select>
-
-                                {{-- Radio --}}
                                 @elseif($q->tipe_input === 'radio')
                                     <div class="space-y-2">
                                         @foreach($options as $opt)
                                             <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                                <input type="radio" name="jawaban_{{ $q->id }}" value="{{ $opt }}" @if($q->wajib) required @endif
-                                                    class="w-4 h-4 text-[#C28E27] border-gray-300 focus:ring-[#C28E27]">
+                                                <input type="radio" name="jawaban_{{ $q->id }}" value="{{ $opt }}" @if($q->wajib) required @endif class="w-4 h-4 text-[#C28E27] border-gray-300 focus:ring-[#C28E27]">
                                                 <span>{{ $opt }}</span>
                                             </label>
                                         @endforeach
                                     </div>
-
-                                {{-- Checkbox --}}
                                 @elseif($q->tipe_input === 'checkbox')
                                     <div class="space-y-2">
                                         @foreach($options as $opt)
                                             <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                                <input type="checkbox" name="jawaban_{{ $q->id }}[]" value="{{ $opt }}"
-                                                    class="w-4 h-4 text-[#C28E27] border-gray-300 rounded focus:ring-[#C28E27]">
+                                                <input type="checkbox" name="jawaban_{{ $q->id }}[]" value="{{ $opt }}" class="w-4 h-4 text-[#C28E27] border-gray-300 rounded focus:ring-[#C28E27]">
                                                 <span>{{ $opt }}</span>
                                             </label>
                                         @endforeach
                                     </div>
-
-                                {{-- File Upload --}}
                                 @elseif($q->tipe_input === 'file')
-                                    <input type="file" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif
-                                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#C28E27] file:text-white hover:file:bg-[#a3721a] border border-[#e7e2da] rounded-lg p-1.5 bg-gray-50">
+                                    <input type="file" name="jawaban_{{ $q->id }}" @if($q->wajib) required @endif class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#C28E27] file:text-white hover:file:bg-[#a3721a] border border-[#e7e2da] rounded-lg p-1.5 bg-gray-50">
                                     <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG, PDF. Maks 5MB.</p>
                                 @endif
                             </div>
                         @endforeach
                     </div>
-                </form>
-            @else
+                </div>
+
+                {{-- Footer Modal (Sticky) --}}
+                <div class="px-6 py-4 border-t border-[#e7e2da] bg-white rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
+                    <button type="button" onclick="closeModalTambahKandidat()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-[#C28E27] hover:bg-[#a3721a] text-white text-sm font-bold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Simpan & Aktifkan Kandidat
+                    </button>
+                </div>
+            </form>
+        @else
+            <div class="flex-1 overflow-y-auto p-6">
                 <div class="py-12 text-center">
                     <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1254,20 +1243,7 @@
                         Buat Form Pendaftaran →
                     </a>
                 </div>
-            @endif
-        </div>
-
-        {{-- Footer Modal (Sticky) --}}
-        @if($event && isset($pertanyaans) && $pertanyaans->count() > 0)
-        <div class="px-6 py-4 border-t border-[#e7e2da] bg-white rounded-b-2xl flex items-center justify-end gap-3">
-            <button type="button" onclick="closeModalTambahKandidat()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition cursor-pointer">
-                Batal
-            </button>
-            <button type="submit" form="formKandidatVoting" class="px-5 py-2 bg-[#C28E27] hover:bg-[#a3721a] text-white text-sm font-bold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Simpan & Aktifkan Kandidat
-            </button>
-        </div>
+            </div>
         @endif
     </div>
 </div>
@@ -1973,30 +1949,28 @@
     }
 
     // ==========================================
-    // ✅ FUNGSI MODAL PEMBAYARAN REGISTRASI (peserta pendaftaran)
+    // FUNGSI MODAL PEMBAYARAN KANDIDAT & RIWAYAT
     // ==========================================
-    function openModalPembayaranRegistrasi(pesertaId, totalBiaya, sudahDibayar, namaPeserta, listPembayaran = []) {
-        document.getElementById('regbayar_peserta_id').value = pesertaId;
-        document.getElementById('regbayar_nama_peserta').textContent = namaPeserta;
+    function openModalPembayaranKandidat(pesertaId, totalBiaya, sudahDibayar, namaPeserta, listPembayaran = []) {
+        document.getElementById('bayar_peserta_id').value = pesertaId;
+        document.getElementById('bayar_total_biaya').value = totalBiaya;
+        document.getElementById('bayar_nama_peserta').textContent = namaPeserta;
 
         const fmt = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
-        document.getElementById('regbayar_display_total').value = fmt(totalBiaya);
-        document.getElementById('regbayar_display_sudah').value = fmt(sudahDibayar);
+        document.getElementById('bayar_display_total').value = fmt(totalBiaya);
+        document.getElementById('bayar_display_sudah').value = fmt(sudahDibayar);
 
         const sisa = Math.max(0, totalBiaya - sudahDibayar);
-        document.getElementById('regbayar_display_sisa').value = fmt(sisa);
+        document.getElementById('bayar_display_sisa').value = fmt(sisa);
 
-        // Render riwayat pembayaran registrasi (hanya yang sudah settlement)
-        const tbody = document.getElementById('riwayat_pembayaran_registrasi_list');
+        const tbody = document.getElementById('riwayat_pembayaran_list');
         tbody.innerHTML = '';
 
-        const riwayat = (listPembayaran || []).filter(item => item.status_midtrans === 'settlement');
-
-        if (riwayat.length > 0) {
-            riwayat.forEach(item => {
+        if (listPembayaran && listPembayaran.length > 0) {
+            listPembayaran.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-50';
-
+                
                 let tglFormatted = '-';
                 if (item.tanggal_bayar) {
                     const d = new Date(item.tanggal_bayar);
@@ -2005,7 +1979,7 @@
 
                 tr.innerHTML = `
                     <td class="px-3 py-2 text-gray-700">${tglFormatted}</td>
-                    <td class="px-3 py-2 text-gray-700 uppercase font-medium">${item.metode || 'Manual'}</td>
+                    <td class="px-3 py-2 text-gray-700 uppercase font-medium">${item.metode || item.status_midtrans || 'Manual'}</td>
                     <td class="px-3 py-2 text-right font-semibold text-emerald-600">${fmt(item.jumlah || 0)}</td>
                 `;
                 tbody.appendChild(tr);
@@ -2014,27 +1988,17 @@
             tbody.innerHTML = `<tr><td colspan="3" class="px-3 py-3 text-center text-gray-400 italic">Belum ada riwayat pembayaran.</td></tr>`;
         }
 
-        // Set otomatis jumlah bayar dengan sisa tagihan
-        const inputFormatted = document.getElementById('regbayar_jumlah_bayar_formatted');
-        const inputRaw = document.getElementById('regbayar_jumlah_bayar_raw');
-
+        const inputFormatted = document.getElementById('bayar_jumlah_bayar_formatted');
+        const inputRaw = document.getElementById('bayar_jumlah_bayar_raw');
+        
+        // Isi otomatis dengan sisa tagihan
         inputRaw.value = sisa;
         inputFormatted.value = sisa > 0 ? new Intl.NumberFormat('id-ID').format(sisa) : '';
 
-        const modal = document.getElementById('modalPembayaranRegistrasi');
+        const modal = document.getElementById('modalPembayaranKandidat');
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
         document.body.classList.add('overflow-hidden');
-    }
-
-    function closeModalPembayaranRegistrasi() {
-        const modal = document.getElementById('modalPembayaranRegistrasi');
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-        document.body.classList.remove('overflow-hidden');
-
-        const form = document.getElementById('formPembayaranRegistrasi');
-        if (form) form.reset();
     }
 
     // ==========================================
