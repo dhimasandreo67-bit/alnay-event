@@ -537,7 +537,27 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">2. Upload File CSV yang Telah Diisi <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">2. Pilih Tujuan Import <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="import-tujuan-option flex items-center gap-2 rounded-lg border border-[#e7e2da] px-3 py-2.5 cursor-pointer transition hover:bg-[#faf8f4] has-[:checked]:border-[#ba8320] has-[:checked]:bg-[#fbf3e3]">
+                                <input type="radio" name="tipe_import" value="pendaftaran" checked
+                                    class="accent-[#ba8320] shrink-0">
+                                <span class="text-xs font-semibold text-gray-700">Peserta Pendaftaran</span>
+                            </label>
+                            <label class="import-tujuan-option flex items-center gap-2 rounded-lg border border-[#e7e2da] px-3 py-2.5 cursor-pointer transition hover:bg-[#faf8f4] has-[:checked]:border-[#ba8320] has-[:checked]:bg-[#fbf3e3]">
+                                <input type="radio" name="tipe_import" value="kandidat"
+                                    class="accent-[#ba8320] shrink-0">
+                                <span class="text-xs font-semibold text-gray-700">Kandidat Voting</span>
+                            </label>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-1">
+                            "Peserta Pendaftaran" masuk ke tab Pendaftaran (wajib email, menunggu pembayaran Midtrans).
+                            "Kandidat Voting" langsung masuk ke tab Kandidat Voting (email opsional, pembayaran diatur manual oleh admin).
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">3. Upload File CSV yang Telah Diisi <span class="text-red-500">*</span></label>
                         <input type="file" name="file_csv" accept=".csv, .txt" required
                             class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#ba8320] file:text-white hover:file:bg-[#a06f1a] transition border border-[#e7e2da] rounded-lg p-1.5 bg-gray-50 cursor-pointer">
                         <p class="text-[11px] text-gray-500 mt-1">Format file harus .csv dengan ukuran maksimal 5MB.</p>
@@ -1687,6 +1707,14 @@
     function openImportModal() {
         const modal = document.getElementById('importModal');
         if (modal) {
+            // Default tujuan import mengikuti tab yang sedang aktif —
+            // kalau admin lagi di tab Kandidat Voting, radio-nya otomatis
+            // ikut ke situ (tetap bisa diganti manual sebelum submit)
+            const tabAktif = localStorage.getItem('activeTab');
+            const tujuan = tabAktif === 'kandidat' ? 'kandidat' : 'pendaftaran';
+            const radio = modal.querySelector(`input[name="tipe_import"][value="${tujuan}"]`);
+            if (radio) radio.checked = true;
+
             modal.classList.remove('hidden');
         }
     }
