@@ -87,93 +87,62 @@ class PendaftaranController extends Controller
         $request->merge(['nama_pendaftaran' => $namaDefault]);
 
         // 4. Bangun aturan validasi dari pertanyaan dinamis
-        $questions = $event->pertanyaans()->get();
-
-        $rules = [
-            'answers' => ['nullable', 'array'],
-        ];
+         $questions = $event->pertanyaans()->get();
+        $rules = ['answers' => ['nullable', 'array']];
 
         foreach ($questions as $question) {
             $type = strtolower(trim($question->tipe_input ?? 'text'));
+            if (in_array($type, ['heading', 'subheading'], true)) continue;
 
-            if (in_array($type, ['heading', 'subheading'], true)) {
-                continue;
-            }
-
-            // ============================================
-            // FIX: Deteksi field "nama" — paksa jadi string
-            // biar gak divalidasi sebagai email
-            // ============================================
             $labelLower = strtolower(trim($question->label ?? ''));
             $namaKeywords = ['nama', 'nama lengkap', 'nama pendaftaran', 'nama tampilan', 'name'];
-            $isNamaField = in_array($labelLower, $namaKeywords, true);
-
-            if ($isNamaField) {
-                $type = 'text';
-            }
+            if (in_array($labelLower, $namaKeywords, true)) $type = 'text';
 
             $field = "answers.{$question->id}";
             $fieldRules = [$question->wajib ? 'required' : 'nullable'];
 
             $rawOptions = $question->pilihan_jawaban ?? [];
-            if (is_string($rawOptions)) {
-                $rawOptions = json_decode($rawOptions, true) ?? [];
-            }
-
-            $cleanOptions = array_map(function ($opt) {
-                return trim(str_replace(["\r", "\n"], '', (string) $opt));
-            }, (array) $rawOptions);
+            if (is_string($rawOptions)) $rawOptions = json_decode($rawOptions, true) ?? [];
+            $cleanOptions = array_map(fn($opt) => trim(str_replace(["\r", "\n"], '', (string) $opt)), (array) $rawOptions);
 
             if ($type === 'file') {
                 $fieldRules[] = 'file';
+                $fieldRules[] = 'mimes:jpeg,png,jpg,webp,pdf,doc,docx'; // ✅ TAMBAHKAN MIMES!
                 $fieldRules[] = 'max:5120';
             } elseif (in_array($type, ['number', 'angka'], true)) {
                 $fieldRules[] = 'regex:/^\d+$/';
             } elseif ($type === 'checkbox') {
                 $fieldRules[] = 'array';
-                if (! empty($cleanOptions)) {
-                    $rules["{$field}.*"] = ['string', Rule::in($cleanOptions)];
-                }
+                if (! empty($cleanOptions)) $rules["{$field}.*"] = ['string', Rule::in($cleanOptions)];
             } elseif (in_array($type, ['select', 'dropdown', 'radio'], true)) {
-                if (! empty($cleanOptions)) {
-                    $fieldRules[] = Rule::in($cleanOptions);
-                }
+                if (! empty($cleanOptions)) $fieldRules[] = Rule::in($cleanOptions);
             } elseif ($type === 'email') {
                 $fieldRules[] = 'email';
             } else {
                 $fieldRules[] = 'string';
                 $fieldRules[] = 'max:5000';
             }
-
             $rules[$field] = $fieldRules;
         }
 
-                // ✅ PRIORITAS FOTO: Ambil foto dari Form Builder (file pertama)
+        // ✅ 1. VALIDASI DULU (SEBELUM SIMPAN FILE)
+        $data = $request->validate($rules);
+
+        // ✅ 2. BARU SIMPAN FOTO SETELAH VALIDASI LULUS
         $fotoDariForm = null;
         foreach ($questions as $question) {
             $tipe = strtolower(trim($question->tipe_input ?? ''));
             if (in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar'], true)) {
                 if ($request->hasFile("answers.{$question->id}")) {
                     $fotoDariForm = $request->file("answers.{$question->id}")->store('peserta', 'public');
-                    break; // Ambil yang pertama
+                    break;
                 }
             }
         }
 
-        // Update user dengan foto dari form
         if ($fotoDariForm && $user) {
             $user->update(['foto_custom' => $fotoDariForm]);
         }
-
-        $data = $request->validate($rules);
-
-        \Log::info('=== DEBUG JAWABAN ===', [
-            'request_all' => $request->except(['_token']),
-            'data_answers' => $data['answers'] ?? 'NULL',
-            'rules_keys' => array_keys($rules),
-        ]);
-
-        // 5. Simpan peserta + jawaban
 
         // 5. Cek saklar pendaftaran_aktif
         if (!$event->pendaftaran_aktif) {

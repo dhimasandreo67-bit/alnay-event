@@ -238,6 +238,10 @@ class PendaftaranController extends Controller
                             Storage::disk('public')->delete($old);
                         }
 
+                        $request->validate([
+                            $key => 'file|mimes:jpeg,png,jpg,webp,pdf,doc,docx|max:5120'
+                        ]);
+
                         $jawaban->update([
                             'jawaban' => $request->file($key)->store('peserta', 'public'),
                         ]);
@@ -704,6 +708,7 @@ class PendaftaranController extends Controller
 
             if ($question->tipe_input === 'file') {
                 $fieldRules[] = 'file';
+                $fieldRules[] = 'mimes:jpeg,png,jpg,webp,pdf,doc,docx'; // ✅ TAMBAHKAN INI
                 $fieldRules[] = 'max:5120';
             } elseif ($question->tipe_input === 'number') {
                 $fieldRules[] = 'regex:/^\d+$/';
@@ -796,6 +801,12 @@ class PendaftaranController extends Controller
             foreach ($questions as $question) {
                 if (in_array($question->tipe_input, ['heading', 'subheading'], true)) {
                     continue;
+                }
+
+                if ($request->hasFile("jawaban_{$question->id}")) {
+                    $request->validate([
+                        "jawaban_{$question->id}" => 'file|mimes:jpeg,png,jpg,webp,pdf,doc,docx|max:5120'
+                    ]);
                 }
 
                 $answer = $request->file("jawaban_{$question->id}")?->store('peserta', 'public');

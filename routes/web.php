@@ -147,7 +147,8 @@ Route::post('/midtrans/callback', function (\Illuminate\Http\Request $request) {
 Route::get('/daftar/{event}', [PendaftaranController::class, 'showPublicForm'])
     ->name('public.registration');
 Route::post('/daftar/{event}', [PendaftaranController::class, 'storePublic'])
-    ->name('public.registration.store');
+    ->name('public.registration.store')
+    ->middleware('throttle:5,1');
 
 /*
 |--------------------------------------------------------------------------
