@@ -45,13 +45,12 @@ class VotingController extends Controller
         }
 
 
-        //    Kunci HANYA kalau auto_freeze_voting aktif
-        // Cek periode voting — sudah lewat?
-if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
-    return response()->json([
-        'message' => 'Voting sudah ditutup pada ' . $event->voting_selesai->format('d M Y, H:i') . ' WIB',
-    ], 403);
-}
+       // ✅ Kunci HANYA kalau auto_freeze_voting aktif
+        if ($event->auto_freeze_voting && $event->voting_selesai && now()->gt($event->voting_selesai)) {
+            return response()->json([
+                'message' => 'Voting sudah ditutup pada ' . $event->voting_selesai->format('d M Y, H:i') . ' WIB',
+            ], 403);
+        }
 
         // 4. Cek status peserta
         if (!$peserta->isVotable()) {
@@ -290,6 +289,7 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
 
                     // ✅ Cek auto freeze — HANYA untuk order non-admin
                     $freezeAktif = ! $isAdminOrder
+                        && $event->auto_freeze_voting
                         && $event->voting_selesai
                         && now()->gt($event->voting_selesai);
 
