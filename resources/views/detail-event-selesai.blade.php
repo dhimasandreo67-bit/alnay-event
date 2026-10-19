@@ -223,7 +223,6 @@
     @include('partials.back-to-top')
 
     @php
-        $blackoutAktif = false;
         $formatAngka = function ($angka) {
             if ($angka >= 1000000) return round($angka / 1000000, 1) . 'M';
             if ($angka >= 1000) return round($angka / 1000, 1) . 'K';
@@ -241,19 +240,19 @@
                 'nomor' => str_pad($i + 1, 2, '0', STR_PAD_LEFT),
                 'nama' => $p->namaTampil(),
                 'foto' => (function() use ($p) {
-                $jawabanFoto = $p->jawabans->first(function ($j) {
-                    $tipe = strtolower(trim($j->pertanyaan->tipe_input ?? ''));
-                    return in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar']) && $j->jawaban;
-                });
-                $fotoDariForm = $jawabanFoto 
-                    ? (str_starts_with($jawabanFoto->jawaban, 'http') 
-                        ? $jawabanFoto->jawaban 
-                        : asset('storage/' . $jawabanFoto->jawaban))
-                    : null;
-                $fotoCustom = $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : null;
-                $fotoGoogle = $p->user?->foto_url;
-                return $fotoDariForm ?? $fotoCustom ?? $fotoGoogle;
-            })(),
+                    $jawabanFoto = $p->jawabans->first(function ($j) {
+                        $tipe = strtolower(trim($j->pertanyaan->tipe_input ?? ''));
+                        return in_array($tipe, ['file', 'upload_gambar', 'image', 'gambar']) && $j->jawaban;
+                    });
+                    $fotoDariForm = $jawabanFoto 
+                        ? (str_starts_with($jawabanFoto->jawaban, 'http') 
+                            ? $jawabanFoto->jawaban 
+                            : asset('storage/' . $jawabanFoto->jawaban))
+                        : null;
+                    $fotoCustom = $p->user?->foto_custom ? asset('storage/' . $p->user->foto_custom) : null;
+                    $fotoGoogle = $p->user?->foto_url;
+                    return $fotoDariForm ?? $fotoCustom ?? $fotoGoogle;
+                })(),
                 'persen' => $totalSuara > 0 ? round(($p->total_vote / $totalSuara) * 100, 2) : 0,
                 'vote' => $p->total_vote,
             ];
@@ -360,46 +359,7 @@
         </section>
 
         {{-- PERINGKAT --}}
-        @if ($blackoutAktif ?? false)
-            <section class="reveal-up delay-2 mt-10">
-                <div class="overflow-hidden rounded-2xl border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed] shadow-sm">
-                    <div class="relative px-6 pt-12 pb-10 md:px-12 md:pt-16 md:pb-12 text-center">
-                        <div class="flex items-center justify-center gap-2 mb-6">
-                            <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
-                            <svg class="h-4 w-4 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-                            </svg>
-                            <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
-                        </div>
-                        <p class="text-[10px] uppercase tracking-[0.35em] text-[#c99a32] font-bold mb-4">Peringkat Sementara</p>
-                        <h2 class="font-display text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
-                            Siapa yang akan<br class="hidden sm:block"> membawa pulang mahkota?
-                        </h2>
-                        <p class="max-w-xl mx-auto text-[13px] md:text-[15px] leading-[1.8] text-[#5a5750]">
-                            Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat ini. Ikuti terus perjalanan para finalis.
-                        </p>
-                        @if ($event->voting_selesai)
-                            <div class="mt-8 inline-flex flex-col items-center gap-2">
-                                <p class="text-[10px] uppercase tracking-[0.25em] text-[#8a8178] font-bold">Malam Puncak</p>
-                                <p class="font-display text-lg md:text-xl font-bold text-[#0a1526]">
-                                    {{ $event->voting_selesai->translatedFormat('d F Y') }}
-                                </p>
-                                <p class="text-[12px] text-[#8a8178]">Pukul {{ $event->voting_selesai->format('H:i') }} WIB</p>
-                            </div>
-                        @endif
-                    </div>
-                    <div class="border-t border-[#e8dcc0]/60 bg-white/40 px-6 py-4 md:px-12">
-                        <div class="flex items-center justify-center gap-2 text-[11px] text-[#8a8178]">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="italic">Peringkat akan diumumkan secara resmi pada malam puncak.</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        @else
-            <section class="mt-10 overflow-hidden">
+        <section class="mt-10 overflow-hidden">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 px-5">
                 <div>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c99a32]/10 border border-[#c99a32]/30 text-[10px] font-bold uppercase tracking-widest text-[#b88625]">Hasil Akhir</span>
@@ -412,144 +372,134 @@
             </div>
 
             @if (count($pemenangArr) > 0)
-                    @php
-                        // Reorder: 2 - 1 - 3
-                        $pemenangRaw = collect($pemenangArr);
-                        $pemenangSort = collect();
-                        if ($pemenangRaw->count() >= 2) $pemenangSort->push($pemenangRaw[1]);
-                        if ($pemenangRaw->count() >= 1) $pemenangSort->push($pemenangRaw[0]);
-                        if ($pemenangRaw->count() >= 3) $pemenangSort->push($pemenangRaw[2]);
-                    @endphp
+                @php
+                    // Reorder: 2 - 1 - 3
+                    $pemenangRaw = collect($pemenangArr);
+                    $pemenangSort = collect();
+                    if ($pemenangRaw->count() >= 2) $pemenangSort->push($pemenangRaw[1]);
+                    if ($pemenangRaw->count() >= 1) $pemenangSort->push($pemenangRaw[0]);
+                    if ($pemenangRaw->count() >= 3) $pemenangSort->push($pemenangRaw[2]);
+                @endphp
 
-                    <div class="swiper top3Swiper mt-4">
-                        <div class="swiper-wrapper">
+                <div class="swiper top3Swiper mt-4">
+                    <div class="swiper-wrapper">
 
-                        @foreach ($pemenangSort as $p)
-                            @php
-                                $juara = $p['juara'];
-                                $border = $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
-                                $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[210px] sm:h-[210px]';
-                            @endphp
+                    @foreach ($pemenangSort as $p)
+                        @php
+                            $juara = $p['juara'];
+                            $border = $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
+                            $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[210px] sm:h-[210px]';
+                        @endphp
 
-                            <div class="swiper-slide">
-                                <div class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }}">
-                                <div class="relative overflow-hidden {{ $height }}">
-                                    @if ($p['foto'])
-                                        <img src="{{ $p['foto'] }}" alt="{{ $p['nama'] }}"
-                                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
-                                        <div class="hidden w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] items-center justify-center">
-                                            <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
-                                        </div>
-                                    @else
-                                        <div class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
-                                            <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
-                                        </div>
+                        <div class="swiper-slide">
+                            <div class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }}">
+                            <div class="relative overflow-hidden {{ $height }}">
+                                @if ($p['foto'])
+                                    <img src="{{ $p['foto'] }}" alt="{{ $p['nama'] }}"
+                                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+                                    <div class="hidden w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] items-center justify-center">
+                                        <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
+                                    </div>
+                                @else
+                                    <div class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
+                                        <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
+                                    </div>
+                                @endif
+
+                                <span class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
+                                    @if ($juara == 1)
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                                        </svg>
                                     @endif
+                                    Juara {{ $juara }}
+                                </span>
+                            </div>
 
-                                    <span class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
-                                        @if ($juara == 1)
-                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
-                                            </svg>
-                                        @endif
-                                        Juara {{ $juara }}
-                                    </span>
+                            <div class="p-4">
+                                <div class="mb-2">
+                                    <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $p['nama'] }}</h3>
                                 </div>
 
-                                <div class="p-4">
-                                    <div class="mb-2">
-                                        <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $p['nama'] }}</h3>
-                                    </div>
-
-                                    @if ($blackoutAktif ?? false)
-                                        <div class="mt-2 flex items-center gap-1.5 text-[10px] text-amber-600 italic">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                            </svg>
-                                            <span>Jumlah suara dirahasiakan</span>
-                                        </div>
-                                    @else
-                                        <div class="flex items-baseline gap-1.5">
-                                            <p class="text-lg font-bold text-[#0a1526]">{{ $p['persen'] }}%</p>
-                                            <span class="text-[11px] text-[#8a8178]">Vote</span>
-                                        </div>
-                                        <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
-                                            <div class="progress-fill h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full" style="width: {{ $p['persen'] }}%"></div>
-                                        </div>
-                                    @endif
+                                <div class="flex items-baseline gap-1.5">
+                                    <p class="text-lg font-bold text-[#0a1526]">{{ $p['persen'] }}%</p>
+                                    <span class="text-[11px] text-[#8a8178]">Vote</span>
                                 </div>
-                                                        </div>{{-- /card --}}
-                            </div>{{-- /swiper-slide --}}
-                        @endforeach
-
-                        </div>{{-- /swiper-wrapper --}}
-
-                        {{-- Pagination --}}
-                        @if ($pemenangSort->count() > 1)
-                            <div class="top3Pagination"></div>
-                        @endif
-                    </div>{{-- /swiper --}}
-
-                    {{-- ============================================ --}}
-                    {{-- PERINGKAT 4 – 6 (daftar ringkas)              --}}
-                    {{-- ============================================ --}}
-                    @if (count($peringkat46) > 0)
-                        <div class="mt-1 overflow-hidden rounded-2xl border border-[#ece5d7] bg-white shadow-sm">
-                            @foreach ($peringkat46 as $i => $ps)
-                                <div
-                                    class="flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-5 {{ $loop->first ? '' : 'border-t border-[#f3efe4]' }}">
-
-                                    {{-- Nomor peringkat --}}
-                                    <span class="w-6 shrink-0 font-display text-lg text-[#b5ad9c] sm:w-8 sm:text-xl">
-                                        {{ str_pad($i + 4, 2, '0', STR_PAD_LEFT) }}
-                                    </span>
-
-                                    {{-- Foto / inisial --}}
-                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-[#ece5d7] bg-[#fbf6e9]">
-                                        @if ($ps['foto'])
-                                            <img src="{{ $ps['foto'] }}" alt="{{ $ps['nama'] }}" loading="lazy"
-                                                class="h-full w-full object-cover">
-                                        @else
-                                            <div class="flex h-full w-full items-center justify-center text-[11px] font-bold text-[#c99a32]">
-                                                {{ $inisial($ps['nama']) }}
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    {{-- Nama + bar --}}
-                                    <div class="min-w-0 flex-1 sm:flex sm:items-center sm:gap-4">
-                                        <div class="min-w-0 sm:w-56 sm:shrink-0">
-                                            <h3 class="truncate text-[13px] font-semibold text-[#0a1526]">{{ $ps['nama'] }}</h3>
-                                        </div>
-
-                                        <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#f0ece2] sm:mt-0 sm:flex-1">
-                                            <div class="h-full rounded-full bg-gradient-to-r from-[#c99a32] to-[#e0b254]"
-                                                style="width: {{ $ps['persen'] }}%"></div>
-                                        </div>
-                                    </div>
-
-                                    {{-- Nilai --}}
-                                    <div class="shrink-0 text-right sm:w-24">
-                                        <span class="text-sm font-bold text-[#0a1526]">{{ $ps['persen'] }}%</span>
-                                    </div>
+                                <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
+                                    <div class="progress-fill h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full" style="width: {{ $p['persen'] }}%"></div>
                                 </div>
-                            @endforeach
-                        </div>
+                            </div>
+                                                </div>{{-- /card --}}
+                    </div>{{-- /swiper-slide --}}
+                    @endforeach
+
+                    </div>{{-- /swiper-wrapper --}}
+
+                    {{-- Pagination --}}
+                    @if ($pemenangSort->count() > 1)
+                        <div class="top3Pagination"></div>
                     @endif
-                @else
-                    <div class="bg-white rounded-2xl border border-dashed border-[#e5e1db] p-12 text-center mt-4">
-                        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#fdf8ec] flex items-center justify-center">
-                            <svg class="w-6 h-6 text-[#c99a32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <p class="text-sm font-semibold text-[#0a1526]">Belum ada peserta</p>
-                        <p class="mt-1 text-xs text-[#8a8178]">Event ini belum memiliki peserta yang diterima.</p>
+                </div>{{-- /swiper --}}
+
+                {{-- ============================================ --}}
+                {{-- PERINGKAT 4 – 6 (daftar ringkas)              --}}
+                {{-- ============================================ --}}
+                @if (count($peringkat46) > 0)
+                    <div class="mt-1 overflow-hidden rounded-2xl border border-[#ece5d7] bg-white shadow-sm">
+                        @foreach ($peringkat46 as $i => $ps)
+                            <div
+                                class="flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-5 {{ $loop->first ? '' : 'border-t border-[#f3efe4]' }}">
+
+                                {{-- Nomor peringkat --}}
+                                <span class="w-6 shrink-0 font-display text-lg text-[#b5ad9c] sm:w-8 sm:text-xl">
+                                    {{ str_pad($i + 4, 2, '0', STR_PAD_LEFT) }}
+                                </span>
+
+                                {{-- Foto / inisial --}}
+                                <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-[#ece5d7] bg-[#fbf6e9]">
+                                    @if ($ps['foto'])
+                                        <img src="{{ $ps['foto'] }}" alt="{{ $ps['nama'] }}" loading="lazy"
+                                            class="h-full w-full object-cover">
+                                    @else
+                                        <div class="flex h-full w-full items-center justify-center text-[11px] font-bold text-[#c99a32]">
+                                            {{ $inisial($ps['nama']) }}
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Nama + bar --}}
+                                <div class="min-w-0 flex-1 sm:flex sm:items-center sm:gap-4">
+                                    <div class="min-w-0 sm:w-56 sm:shrink-0">
+                                        <h3 class="truncate text-[13px] font-semibold text-[#0a1526]">{{ $ps['nama'] }}</h3>
+                                    </div>
+
+                                    <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#f0ece2] sm:mt-0 sm:flex-1">
+                                        <div class="h-full rounded-full bg-gradient-to-r from-[#c99a32] to-[#e0b254]"
+                                            style="width: {{ $ps['persen'] }}%"></div>
+                                    </div>
+                                </div>
+
+                                {{-- Nilai --}}
+                                <div class="shrink-0 text-right sm:w-24">
+                                    <span class="text-sm font-bold text-[#0a1526]">{{ $ps['persen'] }}%</span>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
-            </section>
-        @endif
+            @else
+                <div class="bg-white rounded-2xl border border-dashed border-[#e5e1db] p-12 text-center mt-4">
+                    <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#fdf8ec] flex items-center justify-center">
+                        <svg class="w-6 h-6 text-[#c99a32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <p class="text-sm font-semibold text-[#0a1526]">Belum ada peserta</p>
+                    <p class="mt-1 text-xs text-[#8a8178]">Event ini belum memiliki peserta yang diterima.</p>
+                </div>
+            @endif
+        </section>
 
         {{-- DAFTAR KANDIDAT --}}
         <section id="daftarKandidat" class="reveal-up delay-5 mt-10 scroll-mt-20">
@@ -597,19 +547,10 @@
                             <div class="p-3.5">
                                 <h3 class="text-[13px] font-bold text-[#0a1526] truncate">{{ $k['nama'] }}</h3>
 
-                                @if ($blackoutAktif ?? false)
-                                    <div class="mt-2 flex items-center gap-1.5 text-[10px] text-amber-600 italic">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                        </svg>
-                                        <span>Jumlah suara dirahasiakan</span>
-                                    </div>
-                                @else
-                                    <div class="flex items-center gap-1.5 mt-2">
-                                        <span class="text-[12px] font-bold text-[#c99a32]">{{ $k['persen'] }}%</span>
-                                        <span class="text-[10px] text-[#8a8178]">Vote</span>
-                                    </div>
-                                @endif
+                                <div class="flex items-center gap-1.5 mt-2">
+                                    <span class="text-[12px] font-bold text-[#c99a32]">{{ $k['persen'] }}%</span>
+                                    <span class="text-[10px] text-[#8a8178]">Vote</span>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -650,7 +591,6 @@
     <script>
     // ============================================
     // DESKRIPSI EVENT — LIHAT SELENGKAPNYA (mobile)
-    // Terpotong 4 baris + efek pudar, buka/tutup dengan animasi
     // ============================================
     (function() {
         var teks = document.getElementById('deskripsiEvent');
@@ -677,9 +617,7 @@
             btn.classList.toggle('inline-flex', tampil);
         }
 
-        // Hitung ulang kondisi (load, resize, ganti orientasi)
         function atur() {
-            // Desktop/tablet: teks tampil penuh
             if (!mq.matches) {
                 teks.style.maxHeight = '';
                 fade.style.opacity = '0';
@@ -712,7 +650,6 @@
             clearTimeout(timer);
 
             if (!terbuka) {
-                // Buka: animasi sampai tinggi penuh, lalu lepas batas tinggi
                 terbuka = true;
                 teks.style.maxHeight = teks.scrollHeight + 'px';
                 fade.style.opacity = '0';
@@ -720,10 +657,9 @@
                     if (terbuka) teks.style.maxHeight = 'none';
                 }, 480);
             } else {
-                // Tutup: mulai dari tinggi penuh supaya animasi tetap mulus
                 terbuka = false;
                 teks.style.maxHeight = teks.scrollHeight + 'px';
-                void teks.offsetHeight; // paksa reflow
+                void teks.offsetHeight;
                 teks.style.maxHeight = tinggiTutup() + 'px';
                 fade.style.opacity = '1';
             }
@@ -743,8 +679,6 @@
 
     // ============================================
     // DAFTAR KANDIDAT — PENCARIAN + PAGINASI
-    // Mobile / tablet (2 kolom) : 6 kartu per halaman (3 baris)
-    // Desktop (4 kolom)         : 8 kartu per halaman (2 baris)
     // ============================================
     (function() {
         var input = document.getElementById('searchKandidat');
@@ -769,7 +703,6 @@
             return Math.max(1, Math.ceil(filtered.length / perPage()));
         }
 
-        // Daftar nomor halaman yang ditampilkan: 1 … (n-1) n (n+1) … last
         function daftarHalaman(tp, cur) {
             if (tp <= 5) {
                 return Array.from({ length: tp }, function(_, i) { return i + 1; });
@@ -874,7 +807,6 @@
             render(false);
         });
 
-        // Jumlah kartu per halaman berubah saat ukuran layar berubah
         if (mqDesktop.addEventListener) mqDesktop.addEventListener('change', function() { render(false); });
         else mqDesktop.addListener(function() { render(false); });
 

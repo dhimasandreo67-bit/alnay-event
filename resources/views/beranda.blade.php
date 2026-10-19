@@ -559,15 +559,9 @@
                                                             <div class="rounded-xl border border-[#ece5d7] bg-[#fcfaf6] p-3 text-center transition-transform hover:-translate-y-0.5 duration-200">
                                                                 <p class="text-[10px] uppercase tracking-wider text-[#8a8178] font-semibold">Total Suara</p>
                                                                 <p class="mt-1 flex items-center justify-center text-[17px] font-bold text-[#c99a32]">
-                                                                    @if ($blackoutAktif ?? false)
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                                                        </svg>
-                                                                    @else
+                                                            
                                                                         {{ $formatAngka($totalSuara) }}
-                                                                    @endif
+                                                                    
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -818,7 +812,6 @@
             {{-- ==================== PERINGKAT ==================== --}}
             @php
                 $tampilPeringkat = false;
-                $blackoutMode = $blackoutAktif ?? false;
                 $judulPeringkat = 'Peringkat Sementara';
                 $subjudulPeringkat = 'Peserta dengan suara terbanyak';
                 $namaEventPeringkat = null;
@@ -827,13 +820,13 @@
                 $totalSuaraPeringkat = 0;
                 $routeAllPeserta = null;
 
-                if (! $blackoutMode && $eventBerlangsung && $peringkatTerkini->count() > 0) {
+                if (! $eventBerlangsung && $peringkatTerkini->count() > 0) {
                     $tampilPeringkat = true;
                     $namaEventPeringkat = $eventBerlangsung->nama;
                     $peringkatData = $peringkatTerkini;
                     $totalSuaraPeringkat = $totalSuara;
                     $routeAllPeserta = $routeDetail($eventBerlangsung);
-                } elseif (! $blackoutMode && ! $eventBerlangsung && $eventPeringkatAkhir && $peringkatAkhir->count() > 0) {
+                } elseif (! $eventBerlangsung && $eventPeringkatAkhir && $peringkatAkhir->count() > 0) {
                     $tampilPeringkat = true;
                     $judulPeringkat = 'Peringkat Sekarang';
                     $subjudulPeringkat = 'Hasil suara peserta sementara';
@@ -845,50 +838,7 @@
                 }
             @endphp
 
-            @if ($blackoutMode)
-                <section class="mt-14">
-                    <div class="card-shadow overflow-hidden rounded-[16px] border border-[#e8dcc0] bg-gradient-to-br from-[#fdfbf6] via-white to-[#faf6ed]">
-                        <div class="relative px-6 pt-10 pb-8 md:px-12 md:pt-14 md:pb-10 text-center">
-                            <div class="flex items-center justify-center gap-2 mb-6">
-                                <span class="h-px w-12 bg-gradient-to-r from-transparent to-[#c99a32]/40"></span>
-                                <svg class="w-3.5 h-3.5 text-[#c99a32]" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-                                </svg>
-                                <span class="h-px w-12 bg-gradient-to-l from-transparent to-[#c99a32]/40"></span>
-                            </div>
-                            <p class="text-[10px] uppercase tracking-[0.35em] text-[#c99a32] font-bold mb-4">Peringkat Sementara</p>
-                            <h2 class="reveal-left isplay-font text-[26px] md:text-[34px] font-bold text-[#0a1526] leading-tight mb-5">
-                                Siapa yang akan<br class="hidden sm:block"> membawa pulang mahkota?
-                            </h2>
-                            <p class="max-w-xl mx-auto text-[13px] md:text-[15px] leading-[1.8] text-[#5a5750]">
-                                Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara saat ini. Ikuti terus perjalanan para finalis, dan saksikan siapa yang akan tampil sebagai yang terbaik.
-                            </p>
-                            <div class="mt-8 mb-6 flex items-center justify-center gap-3">
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#c99a32]/40"></span>
-                                <span class="w-1 h-1 rounded-full bg-[#c99a32]/30"></span>
-                                <span class="w-1 h-1 rounded-full bg-[#c99a32]/20"></span>
-                            </div>
-                            @if (($blackoutEvent ?? null)?->voting_selesai)
-                                <div class="inline-flex flex-col items-center gap-2">
-                                    <p class="text-[10px] uppercase tracking-[0.25em] text-[#8a8178] font-bold">Malam Puncak</p>
-                                    <p class="display-font text-lg md:text-xl font-bold text-[#0a1526]">
-                                        {{ $blackoutEvent->voting_selesai->translatedFormat('d F Y') }}
-                                    </p>
-                                    <p class="text-[12px] text-[#8a8178]">Pukul {{ $blackoutEvent->voting_selesai->format('H:i') }} WIB</p>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="border-t border-[#e8dcc0]/60 bg-white/40 px-6 py-4 md:px-12">
-                            <div class="flex items-center justify-center gap-2 text-[11px] text-[#8a8178]">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span class="italic">Peringkat akan diumumkan secara resmi pada malam puncak.</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            @elseif ($tampilPeringkat)
+            @if ($tampilPeringkat)
                 <section class="mt-14">
                     <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                         <div>

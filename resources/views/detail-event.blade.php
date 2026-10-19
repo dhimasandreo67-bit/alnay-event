@@ -622,9 +622,8 @@
 
         $tz = 'Asia/Jakarta';
         $now = \Carbon\Carbon::now($tz);
-        $blackout = (bool) ($blackoutAktif ?? false);
-
-        $sembunyikanVote = !$event->voting_aktif || $blackout;
+        $tampilkanHasil = (bool) $event->tampilkan_hasil_voting;
+        $sembunyikanVote = !$tampilkanHasil;
 
         $mulai = $event->tanggal_mulai ? \Carbon\Carbon::parse($event->tanggal_mulai, $tz)->locale('id') : null;
         $selesai = $event->tanggal_selesai ? \Carbon\Carbon::parse($event->tanggal_selesai, $tz)->locale('id') : null;
@@ -1054,12 +1053,7 @@
                             Siapa yang akan membawa pulang mahkota?
                         </h2>
                         <p class="mx-auto max-w-xl text-[13px] leading-relaxed text-[#5a5750] md:text-[14px]">
-                            @if ($blackout)
-                                Untuk menjaga ketegangan menjelang malam puncak, kami merahasiakan peringkat sementara
-                                saat ini.
-                            @else
-                                Peringkat sementara akan ditampilkan begitu voting dibuka. Pantau terus halaman ini ya.
-                            @endif
+                            Peringkat sementara akan ditampilkan setelah panitia mempublikasikannya.
                         </p>
                     </div>
                 </div>

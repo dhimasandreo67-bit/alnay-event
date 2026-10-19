@@ -203,19 +203,10 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
 
         $event = $voting->peserta?->event ?? $voting->event;
 
-        $blackoutAktif = false;
-        if ($event && $event->blackout_h2_voting && $event->voting_selesai) {
-            $selisihJam = now()->diffInHours($event->voting_selesai, false);
-            if ($selisihJam <= 48) {
-                $blackoutAktif = true;
-            }
-        }
-
         return view('voting.instruksi', [
             'voting'        => $voting,
             'peserta'       => $voting->peserta,
             'event'         => $event,
-            'blackoutAktif' => $blackoutAktif,
         ]);
     }
 
@@ -382,11 +373,6 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
             ]),
             'peserta' => $pesertaList,
             'hasil_voting' => $pesertaList,
-
-            // ===== BLACKOUT INFO =====
-            'blackout' => $blackoutAktif,
-            'waktu_grand_final' => $waktuGrandFinal,
-            'message' => $message,
         ]);
     }
 
@@ -575,7 +561,6 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
             'voting_mulai' => 'nullable|date',
             'voting_selesai' => 'nullable|date|after_or_equal:voting_mulai',
             'auto_freeze_voting' => 'boolean',
-            'blackout_h2_voting' => 'boolean',
             'format_hasil_voting' => 'required|in:angka,persentase,keduanya',
         ]);
 

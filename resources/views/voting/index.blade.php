@@ -336,7 +336,7 @@
             const votingAktif = p.event?.voting_aktif === true;
             const tampilkanHasil = p.event?.tampilkan_hasil_voting === true;
 
-            const sembunyikanStatistik = statistik?.blackout ?? false;
+            const sembunyikanStatistik = !tampilkanHasil;
 
             const nama = cariJawaban(p.jawabans, 'nama', /nama/i) ?? p.user?.nama ?? 'Peserta';
             const lokasi = cariJawaban(p.jawabans, 'lokasi', /lokasi|domisili|kota|alamat/i);
