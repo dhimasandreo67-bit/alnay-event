@@ -77,27 +77,46 @@ Route::post('/auth/admin/logout', [\App\Http\Controllers\Admin\AuthController::c
 |--------------------------------------------------------------------------
 */
 
-Route::get('/event', [EventController::class, 'index']);
-Route::get('/event/{id}', [EventController::class, 'show']);
-Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
-Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta']);
-Route::get('/peserta/{id}', [PendaftaranController::class, 'show'])->name('peserta.show');
-Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
-Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
-Route::get('/event/{event}/kandidat', [AdminPendaftaranController::class, 'kandidat'])->name('event.peserta');
-Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
-Route::post('/kandidat/{event}/store', [AdminPendaftaranController::class, 'storeKandidat'])
-    ->name('admin.kandidat.store');
-// Pembayaran Manual Khusus Kandidat Voting
-Route::post('/kandidat/pembayaran', [App\Http\Controllers\Admin\PendaftaranController::class, 'storePembayaranManual'])
-    ->name('admin.kandidat.pembayaran');
-// Store Kandidat Voting
-Route::post('/kandidat/{event}', [App\Http\Controllers\Admin\PendaftaranController::class, 'storeKandidat'])
-    ->name('admin.kandidat.store');
+// Route publik murni — ditambahkan throttle agar tidak gampang di-flood (tidak butuh auth, memang untuk umum)
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/event', [EventController::class, 'index']);
+    Route::get('/event/{id}', [EventController::class, 'show']);
+    Route::get('/event/{id}/pertanyaan', [PertanyaanEventController::class, 'index']);
+    Route::get('/event/{id}/peserta', [PendaftaranController::class, 'daftarPeserta']);
+    Route::get('/peserta/{id}', [PendaftaranController::class, 'show'])->name('peserta.show');
+    Route::get('/api/peserta/{peserta}', [VotingController::class, 'showPeserta']);
+    Route::get('/event/{event}/hasil-voting', [VotingController::class, 'hasilVoting']);
+    Route::get('/event/{event}/peserta/{peserta}/dukungan-terkini', [VotingController::class, 'dukunganTerkini']);
+});
+
+// ⚠️ Route di bawah ini SEBELUMNYA tidak punya middleware apa pun walau memanggil controller Admin —
+// sekarang diberi 'admin.session' supaya hanya admin yang login lewat sesi web yang bisa mengaksesnya.
+// URL tidak diubah sama sekali (tidak pakai prefix 'admin') supaya tidak ada pemanggil lama yang patah.
+Route::middleware('admin.session')->group(function () {
+    Route::get('/event/{event}/kandidat', [AdminPendaftaranController::class, 'kandidat'])->name('event.peserta');
+
+    // Nama route sebelumnya dobel ('admin.kandidat.store' dipakai 2x di sini + 1x lagi di blok admin di bawah).
+    // Diberi nama unik supaya route('admin.kandidat.store') di tempat lain tetap konsisten mengarah
+    // ke route yang sudah ada di blok Admin (baris ~337), bukan diam-diam tertimpa oleh salah satu dari dua ini.
+    Route::post('/kandidat/{event}/store', [AdminPendaftaranController::class, 'storeKandidat'])
+        ->name('admin.kandidat.store.form');
+    // Pembayaran Manual Khusus Kandidat Voting
+    Route::post('/kandidat/pembayaran', [App\Http\Controllers\Admin\PendaftaranController::class, 'storePembayaranManual'])
+        ->name('admin.kandidat.pembayaran');
+    // Store Kandidat Voting
+    Route::post('/kandidat/{event}', [App\Http\Controllers\Admin\PendaftaranController::class, 'storeKandidat'])
+        ->name('admin.kandidat.store.direct');
+});
 
 /*
 |--------------------------------------------------------------------------
 | 5. WEBHOOK MIDTRANS (PUBLIC)
+|--------------------------------------------------------------------------
+| CATATAN KEAMANAN: route ini memang wajar tanpa middleware auth (dipanggil
+| oleh server Midtrans, bukan user). Tapi WAJIB pastikan masing-masing method
+| webhook() di VotingController / PembayaranController / RegistrasiController
+| memverifikasi 'signature_key' dari Midtrans sebelum memproses notifikasi,
+| supaya tidak bisa dipalsukan oleh pihak luar.
 |--------------------------------------------------------------------------
 */
 
@@ -178,7 +197,8 @@ Route::middleware('pelanggan')->group(function () {
     Route::get('/pendaftaran/saya', [PendaftaranController::class, 'milikSaya']);
 
     // Pembayaran pendaftaran
-    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar']);
+    Route::post('/peserta/{peserta}/bayar', [PembayaranController::class, 'bayar'])
+        ->middleware('throttle:10,1');
 
     // Halaman pembayaran pendaftaran
     Route::get('/peserta/{peserta}/pembayaran', [PembayaranController::class, 'show'])
@@ -186,7 +206,8 @@ Route::middleware('pelanggan')->group(function () {
 
     // Request charge ke Midtrans
     Route::post('/peserta/{peserta}/charge', [PembayaranController::class, 'charge'])
-        ->name('peserta.pembayaran.charge');
+        ->name('peserta.pembayaran.charge')
+        ->middleware('throttle:10,1');
 
     // Halaman instruksi (QR/VA)
     Route::get('/peserta/{peserta}/pembayaran/instruksi', [PembayaranController::class, 'instruksi'])
@@ -203,10 +224,12 @@ Route::middleware('pelanggan')->group(function () {
         ->name('peserta.registrasi.show');
 
     Route::post('/peserta/{peserta}/registrasi/bayar', [App\Http\Controllers\RegistrasiController::class, 'bayar'])
-        ->name('peserta.registrasi.bayar');
+        ->name('peserta.registrasi.bayar')
+        ->middleware('throttle:10,1');
 
     Route::post('/peserta/{peserta}/registrasi/charge', [App\Http\Controllers\RegistrasiController::class, 'charge'])
-        ->name('peserta.registrasi.charge');
+        ->name('peserta.registrasi.charge')
+        ->middleware('throttle:10,1');
 
     Route::get('/peserta/{peserta}/registrasi/instruksi', [App\Http\Controllers\RegistrasiController::class, 'instruksi'])
         ->name('peserta.registrasi.instruksi');
@@ -215,7 +238,8 @@ Route::middleware('pelanggan')->group(function () {
         ->name('peserta.registrasi.status');
 
     // Voting
-    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote']);
+    Route::post('/peserta/{peserta}/vote', [VotingController::class, 'vote'])
+        ->middleware('throttle:10,1');
     Route::get('/voting/{orderId}/status', [VotingController::class, 'cekStatus']);
     Route::get('/voting/{orderId}/instruksi', [VotingController::class, 'instruksiPembayaran']);
 
@@ -429,13 +453,16 @@ Route::middleware('api')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/test-session', function () {
-    session(['test_key' => 'test_value_' . time()]);
-    return [
-        'session_id' => session()->getId(),
-        'driver'     => config('session.driver'),
-        'test_key'   => session('test_key'),
-        'user_id'    => optional(auth('pelanggan')->user())->id,
-        'user_nama'  => optional(auth('pelanggan')->user())->nama,
-    ];
-});
+// ⚠️ Hanya aktif di environment 'local' — mencegah kebocoran session_id & data user kalau ter-deploy ke production
+if (app()->environment('local')) {
+    Route::get('/test-session', function () {
+        session(['test_key' => 'test_value_' . time()]);
+        return [
+            'session_id' => session()->getId(),
+            'driver'     => config('session.driver'),
+            'test_key'   => session('test_key'),
+            'user_id'    => optional(auth('pelanggan')->user())->id,
+            'user_nama'  => optional(auth('pelanggan')->user())->nama,
+        ];
+    });
+}

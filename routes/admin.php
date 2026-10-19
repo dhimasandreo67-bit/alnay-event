@@ -52,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/peserta/{peserta}/status', [PesertaController::class, 'updateStatus']); // admin/owner
     Route::put('/peserta/{peserta}/hasil', [PesertaController::class, 'updateHasil']);   // admin/owner
     Route::get('/peserta/{peserta}/voter', [PesertaController::class, 'voterList']);     // admin/owner
+    // ⚠️ Nama route ini SEBELUMNYA sama dengan route di web.php (URI-nya juga sama persis),
+    // menyebabkan 'php artisan route:cache' gagal. Diberi nama unik di sini karena route
+    // yang benar-benar dipakai (lewat route() di blade admin) adalah versi di web.php.
+    // Route versi Sanctum ini disiapkan untuk kebutuhan API/mobile ke depan — URI & controller
+    // TIDAK diubah, jadi kalau nanti ada client API yang memanggil endpoint ini, tetap sama.
     Route::get('peserta/jawaban/{jawaban}/file', [PesertaController::class, 'file'])
-    ->name('admin.jawaban.file');
+        ->name('api.peserta.jawaban.file');
 });
