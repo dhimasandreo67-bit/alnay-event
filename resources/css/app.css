@@ -1,15 +1,17 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../views/**/*.blade.php';
 @source '../../resources/views/**/*.blade.php';
 @theme {
-    --font-sans: 'Inter','Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: "Fraunces", serif;
+    --font-sans: "Inter", sans-serif;
 
-    /* === WARNA CUSTOM ALNAY === */
-    --color-gold: #ba8320;
-    --color-cream: #f7f5f0;
-    --color-ink: #22201d;
+    --color-ink: #1C140B;        /* sidebar / dark panel */
+    --color-ink-muted: #837A68;  /* secondary text */
+    --color-cream: #F7F2E7;      /* page background */
+    --color-gold: #C8952E;       /* primary accent / buttons */
+    --color-gold-dark: #9C6F1A;  /* hover / active states */
 }

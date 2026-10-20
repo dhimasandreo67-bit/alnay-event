@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             // Milik han
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'admin.session' => \App\Http\Middleware\EnsureAdminSession::class,
+            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'admin.page'  => \App\Http\Middleware\CheckAdminPageAccess::class,
+            'admin.event' => \App\Http\Middleware\CheckAdminEventAccess::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\PendaftaranController as AdminPendaftaranControll
 use App\Http\Controllers\Admin\PesertaController;
 use App\Http\Controllers\Admin\PesertaTampilController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\StafController;
 use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\WebAuthController;
 use App\Http\Controllers\ProfilUserController;
@@ -303,9 +304,10 @@ Route::middleware('admin')->group(function () {
 Route::get('/admin/login', [WebAuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.login.store');
 
-Route::middleware('admin.session')->prefix('admin')->group(function () {
+Route::middleware(['admin.session', 'admin.event'])->prefix('admin')->group(function () {
 
-// Kelola Peserta Tampil
+// Kelola Peserta Tampil (slug halaman: peserta-tampil)
+Route::middleware('admin.page:peserta-tampil')->group(function () {
 Route::get('/peserta-tampil/{event?}', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'index'])
     ->name('admin.peserta-tampil');
 Route::post('/peserta-tampil/{peserta}/toggle', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'toggle'])
@@ -323,19 +325,20 @@ Route::get('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\Pesert
     ->name('admin.peserta-tampil.create');
 Route::post('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\PesertaTampilController::class, 'storeForm'])
     ->name('admin.peserta-tampil.store-form');
+}); // akhir grup slug: peserta-tampil
 
     // A. Dashboard
 
-    // B. Profile & Logout (di atas route dinamis)
+    // B. Profile & Logout (di atas route dinamis) — selalu bisa diakses, semua admin boleh urus profil sendiri
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
     Route::post('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password');
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('admin.logout.web');
 
-    // C. Event Management
+    // C. Event Management + D. Event Actions (slug halaman: events-index)
+    Route::middleware('admin.page:events-index')->group(function () {
     Route::resource('events', AdminEventController::class)->names('admin.events');
 
-    // D. Event Actions
     Route::patch('/events/{event}/voting', [AdminEventController::class, 'toggleVoting'])
         ->name('admin.events.toggle-voting');
     Route::patch('/events/{event}/tampilkan-hasil', [AdminEventController::class, 'toggleTampilkanHasil'])
@@ -360,14 +363,18 @@ Route::post('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\Peser
         ->name('admin.peserta.import');
     Route::post('/events/{event}/peserta/kandidat-langsung', [AdminPendaftaranController::class, 'storeKandidat'])
     ->name('admin.kandidat.store');
+    }); // akhir grup slug: events-index
 
-    // E. Form Builder
+    // E. Form Builder (slug halaman: form-builder)
+    Route::middleware('admin.page:form-builder')->group(function () {
     Route::get('/form-builder/{event?}', [FormBuilderController::class, 'edit'])
         ->name('admin.form-builder');
     Route::post('/form-builder/{event}/save', [FormBuilderController::class, 'save'])
         ->name('admin.form-builder.save');
+    });
 
-    // F. Registrasi & Peserta
+    // F. Registrasi & Peserta — bagian dari halaman "Verifikasi Pendaftaran Peserta" (slug: dashboard)
+    Route::middleware('admin.page:dashboard')->group(function () {
     Route::get('/registrations/{event?}', [NavigationController::class, 'page'])
         ->defaults('page', 'registrations')
         ->name('admin.registrations');
@@ -391,8 +398,13 @@ Route::post('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\Peser
         ->name('admin.jawaban.file');
     Route::post('/peserta/{id}/hasil-audisi', [AdminPendaftaranController::class, 'updateHasilAudisi'])
     ->name('admin.peserta.hasil-audisi');
+    // ✅ Pembayaran registrasi manual (dipanggil dari tab "Registrasi" di Dashboard)
+    Route::post('/registrasi/pembayaran', [AktivasiController::class, 'simpanPembayaranRegistrasi'])
+        ->name('admin.registrasi.pembayaran');
+    }); // akhir grup slug: dashboard
 
-    // G. Aktivasi & Voting
+    // G. Aktivasi (slug halaman: activation)
+    Route::middleware('admin.page:activation')->group(function () {
     Route::get('/activation/{event?}', [AktivasiController::class, 'index'])
         ->name('admin.activation');
     Route::post('/activation/{peserta}/verifikasi', [AktivasiController::class, 'verifikasi'])
@@ -403,24 +415,48 @@ Route::post('/peserta-tampil/{event}/tambah', [\App\Http\Controllers\Admin\Peser
         ->name('admin.activation.toggle-tampil-semua');
     Route::post('/activation/{peserta}/toggle-tampil', [AktivasiController::class, 'toggleTampil'])
         ->name('admin.activation.toggle-tampil');
-    // ✅ Pembayaran registrasi manual (dipanggil dari tab "Registrasi" di Dashboard)
-    Route::post('/registrasi/pembayaran', [AktivasiController::class, 'simpanPembayaranRegistrasi'])
-        ->name('admin.registrasi.pembayaran');
+    });
+
+    // Voting (slug halaman: voting-settings)
+    Route::middleware('admin.page:voting-settings')->group(function () {
     Route::get('/voting/settings/{event?}', [VotingController::class, 'edit'])
         ->name('admin.voting.settings');
     Route::post('/voting/settings/{event}', [VotingController::class, 'update'])
         ->name('admin.voting.settings.update');
+    });
+
+    // Daftar Voter (slug halaman: voters)
+    Route::middleware('admin.page:voters')->group(function () {
     Route::delete('/voters/{id}', [VotingController::class, 'destroy'])
         ->name('admin.voters.destroy');
-
     Route::get('/voters/{event?}', [VotingController::class, 'voters'])
         ->name('admin.voters');
     Route::post('/voters/manual-vote', [VotingController::class, 'manualVote'])
         ->name('admin.voters.manual-vote');
+    });
+
+    // Leaderboard (slug halaman: leaderboard)
+    Route::middleware('admin.page:leaderboard')->group(function () {
     Route::get('/leaderboard/{event?}', [VotingController::class, 'leaderboard'])
         ->name('admin.leaderboard');
+    });
 
+    // H. Kelola Admin — khusus Super Admin
+    Route::middleware('super_admin')->prefix('staf')->group(function () {
+        Route::get('/', [StafController::class, 'index'])->name('admin.staf.index');
+        Route::get('/tambah', [StafController::class, 'create'])->name('admin.staf.create');
+        Route::post('/', [StafController::class, 'store'])->name('admin.staf.store');
+        Route::get('/{staf}/edit', [StafController::class, 'edit'])->name('admin.staf.edit');
+        Route::put('/{staf}', [StafController::class, 'update'])->name('admin.staf.update');
+        Route::post('/{staf}/password', [StafController::class, 'resetPassword'])->name('admin.staf.password');
+        Route::delete('/{staf}', [StafController::class, 'destroy'])->name('admin.staf.destroy');
+    });
+
+    // ⚠️ HARUS TETAP JADI ROUTE TERAKHIR di grup ini — {eventId?} adalah wildcard satu-segmen,
+    // kalau dipindah ke atas dia akan "menelan" request ke /admin/staf, /admin/profile, dsb.
+    Route::middleware('admin.page:dashboard')->group(function () {
         Route::get('/{eventId?}', [DashboardController::class, 'index'])->name('admin.dashboard');
+    });
 });
 
 /*
