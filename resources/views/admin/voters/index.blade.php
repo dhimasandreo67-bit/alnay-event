@@ -65,6 +65,21 @@
                 </div>
             </div>
 
+            @if ($event)
+    <div class="flex items-center justify-between mb-5 gap-3 flex-wrap">
+        <p class="text-[#73716c] text-[12px]">
+            {{ $event->nama ?? 'Belum ada event' }}
+        </p>
+        <button type="button" onclick="openManualVoteModal()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#C28E27] hover:bg-[#a3721f] text-white text-[12px] font-bold rounded-lg transition shadow-sm cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            + Vote Manual
+        </button>
+    </div>
+@endif
+
             {{-- Filter --}}
             <div class="flex items-center gap-3 mb-4">
                 <select id="filterPeserta" class="border border-[#e3ded6] rounded-lg px-3 py-2.5 text-[12px] bg-white">
@@ -339,6 +354,163 @@
 
     filterPeserta?.addEventListener('change', applyFilters);
     searchVoter?.addEventListener('input', applyFilters);
+
+    function openManualVoteModal() {
+    const modal = document.getElementById('modalManualVote');
+    const form = document.getElementById('formManualVote');
+    const errorEl = document.getElementById('manualVoteError');
+
+    if (form) form.reset();
+    if (errorEl) errorEl.classList.add('hidden');
+
+    const eventInput = form?.querySelector('input[name="event_id"]');
+    if (eventInput) {
+        eventInput.value = @json($event->id ?? null);
+    }
+
+    modal?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeManualVoteModal() {
+    document.getElementById('modalManualVote')?.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+document.getElementById('modalManualVote')?.addEventListener('click', function (e) {
+    if (e.target === this) closeManualVoteModal();
+});
+
+async function submitManualVote(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const btn = document.getElementById('btnSubmitManualVote');
+    const errorEl = document.getElementById('manualVoteError');
+    const original = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+    errorEl.classList.add('hidden');
+
+    try {
+        const res = await fetch(@json(route('admin.voters.manual-vote')), {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            },
+            body: new FormData(form),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Gagal menambah vote.');
+        }
+
+        if (typeof window.showToast === 'function') {
+            window.showToast(data.message, 'success');
+        } else {
+            alert(data.message);
+        }
+
+        closeManualVoteModal();
+        setTimeout(() => location.reload(), 800);
+    } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+    }
+}
 </script>
+
+{{-- MODAL VOTE MANUAL --}}
+<div id="modalManualVote" class="hidden fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#e3ded6]">
+        <div class="flex items-center justify-between pb-4 border-b border-[#e3ded6] mb-4">
+            <div>
+                <h3 class="text-base font-bold text-[#22201d]">Vote Manual</h3>
+                <p class="text-[11px] text-[#73716c] mt-0.5">Tambah suara langsung (status lunas)</p>
+            </div>
+            <button type="button" onclick="closeManualVoteModal()"
+                class="text-gray-400 hover:text-gray-600 p-1 rounded-lg cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form id="formManualVote" onsubmit="submitManualVote(event)">
+            @csrf
+            <input type="hidden" name="event_id" value="{{ $event->id ?? '' }}">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-[#73716c] mb-1.5">
+                        Peserta <span class="text-red-500">*</span>
+                    </label>
+                    <select name="peserta_id" required
+                        class="w-full border border-[#e3ded6] rounded-lg px-3 py-2.5 text-[12px] bg-white focus:outline-none focus:border-[#C28E27]">
+                        <option value="">— Pilih peserta —</option>
+                        @foreach ($pesertaList ?? [] as $p)
+                            <option value="{{ $p->id }}">
+                                {{ $p->user->nama ?? (method_exists($p, 'namaTampil') ? $p->namaTampil() : 'Peserta #'.$p->id) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-[#73716c] mb-1.5">
+                        Jumlah Suara <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="jumlah_vote" min="1" max="10000" value="1" required
+                        class="w-full border border-[#e3ded6] rounded-lg px-3 py-2.5 text-[12px] focus:outline-none focus:border-[#C28E27]">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-[#73716c] mb-1.5">
+                        Nama Voter <span class="text-[#98958f] font-normal">(opsional)</span>
+                    </label>
+                    <input type="text" name="nama_voter" maxlength="255" placeholder="Admin Manual"
+                        class="w-full border border-[#e3ded6] rounded-lg px-3 py-2.5 text-[12px] focus:outline-none focus:border-[#C28E27]">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-[#73716c] mb-1.5">
+                        Email Voter <span class="text-[#98958f] font-normal">(opsional)</span>
+                    </label>
+                    <input type="email" name="email_voter" maxlength="255" placeholder="admin@manual.local"
+                        class="w-full border border-[#e3ded6] rounded-lg px-3 py-2.5 text-[12px] focus:outline-none focus:border-[#C28E27]">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-[#73716c] mb-1.5">
+                        Catatan <span class="text-[#98958f] font-normal">(opsional)</span>
+                    </label>
+                    <textarea name="catatan" rows="2" maxlength="500" placeholder="Alasan / keterangan"
+                        class="w-full border border-[#e3ded6] rounded-lg px-3 py-2.5 text-[12px] focus:outline-none focus:border-[#C28E27]"></textarea>
+                </div>
+            </div>
+
+            <div id="manualVoteError" class="hidden mt-3 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700"></div>
+
+            <div class="flex gap-2 mt-5">
+                <button type="button" onclick="closeManualVoteModal()"
+                    class="flex-1 px-4 py-2.5 border border-[#e3ded6] bg-white rounded-lg text-[#22201d] font-bold text-[12px] hover:bg-gray-50 transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit" id="btnSubmitManualVote"
+                    class="flex-1 px-4 py-2.5 bg-[#C28E27] hover:bg-[#a3721f] text-white font-bold text-[12px] rounded-lg transition cursor-pointer">
+                    Tambah Suara
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>
