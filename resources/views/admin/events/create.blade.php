@@ -232,10 +232,26 @@
                     <div id="field-registrasi" class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
                         <div class="mb-4 pb-3 border-b border-[#e5e1db]">
                             <h2 class="font-bold text-slate-800">Registrasi</h2>
-                            <p class="text-xs text-slate-500 mt-0.5">Biaya registrasi setelah peserta lolos audisi</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Biaya registrasi peserta (bisa lunas atau cicil)</p>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {{-- Toggle Registrasi Aktif --}}
+                        <input type="hidden" name="registrasi_aktif" value="0">
+                        <div class="mb-4 flex items-center justify-between rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-4 py-3">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-700">Registrasi Aktif</p>
+                                <p class="mt-0.5 text-[11px] text-[#8c8982]">Matikan jika event ini tidak memerlukan pembayaran registrasi.</p>
+                            </div>
+                            <label class="relative inline-flex cursor-pointer items-center">
+                                <input type="checkbox" name="registrasi_aktif" value="1" class="peer sr-only"
+                                       @checked(old('registrasi_aktif', true))
+                                       onchange="document.getElementById('areaHargaRegistrasi').classList.toggle('hidden', !this.checked)">
+                                <div class="h-6 w-11 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#C28E27] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:ring-4 peer-focus:ring-[#C28E27]/20"></div>
+                            </label>
+                        </div>
+
+                        <div id="areaHargaRegistrasi"
+                             class="grid grid-cols-1 md:grid-cols-2 gap-4 {{ old('registrasi_aktif', true) ? '' : 'hidden' }}">
                             <div>
                                 <label class="block font-bold mb-1.5">Harga Registrasi (Lunas)</label>
                                 <div class="relative">

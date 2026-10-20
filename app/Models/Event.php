@@ -52,6 +52,7 @@ class Event extends Model
     'tanggal_audisi',
     'audisi_aktif',
     'audisi_lokasi',
+    'registrasi_aktif',
 ];
 
         protected $casts = [
@@ -79,6 +80,7 @@ class Event extends Model
         'pendaftaran_aktif' => 'boolean',
         'butuh_audisi' => 'boolean',     
         'butuh_registrasi' => 'boolean', 
+        'registrasi_aktif' => 'boolean',
     ];
 
     // protected $appends = ['status', 'status_label'];
@@ -106,5 +108,21 @@ class Event extends Model
             'telah_berakhir' => 'Telah Berakhir',
             default => 'Tidak Diketahui',
         };
+    }
+        /** Urutan tahap alur event, mengikuti saklar Audisi & Registrasi */
+    public function alurTahap(): array
+    {
+        return array_values(array_filter([
+            'formulir',
+            'pembayaran',
+            $this->audisi_aktif ? 'audisi' : null,
+            'voting',
+            $this->registrasi_aktif ? 'registrasi' : null,
+        ]));
+    }
+
+    public function punyaTahap(string $tahap): bool
+    {
+        return in_array($tahap, $this->alurTahap(), true);
     }
 }

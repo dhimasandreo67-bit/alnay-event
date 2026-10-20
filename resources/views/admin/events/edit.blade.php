@@ -338,7 +338,76 @@
                             </div>
                         </div>
                     </div>
+                                {{-- CARD: TAHAP REGISTRASI --}}
+                    <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">
+                        <div class="mb-4 pb-3 border-b border-[#e5e1db]">
+                            <h2 class="font-bold text-slate-800">Tahap Registrasi</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Matikan jika event ini tidak memerlukan pembayaran registrasi setelah pendaftaran.</p>
+                        </div>
 
+                        <input type="hidden" name="registrasi_aktif" value="0">
+                        <div class="flex items-center justify-between rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-4 py-3">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-700">Registrasi Aktif</p>
+                                <p class="mt-0.5 text-[11px] text-[#8c8982]">Aktifkan jika peserta perlu membayar registrasi (lunas / cicil).</p>
+                            </div>
+                            <label class="relative inline-flex cursor-pointer items-center">
+                                <input type="checkbox" name="registrasi_aktif" value="1" class="peer sr-only"
+                                       @checked(old('registrasi_aktif', $event->registrasi_aktif ?? true))>
+                                <div class="h-6 w-11 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#C28E27] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:ring-4 peer-focus:ring-[#C28E27]/20"></div>
+                            </label>
+                        </div>
+                    </div>
+                    {{-- ============================================
+    CARD: PENGATURAN AUDISI
+============================================= --}}
+<div class="bg-white rounded-xl border border-[#e7e2da] p-6 shadow-sm">
+    {{-- Header Card --}}
+    <div class="mb-5 flex items-start gap-3 border-b border-[#e7e2da] pb-4">
+        <div>
+            <h3 class="text-sm font-bold text-[#24211d]">Pengaturan Audisi</h3>
+            <p class="mt-0.5 text-xs text-[#8c8982]">Atur status, tanggal, dan lokasi audisi peserta. Bersifat opsional.</p>
+        </div>
+    </div>
+
+    {{-- Isi Card --}}
+    <div class="grid gap-5 lg:grid-cols-2">
+        {{-- Tanggal Audisi (Opsional) --}}
+        <div>
+            <label class="mb-1 block text-xs font-semibold text-gray-700">
+                Tanggal Audisi <span class="font-normal text-[#8c8982]">(Opsional)</span>
+            </label>
+            <input type="date" name="tanggal_audisi"
+                   value="{{ old('tanggal_audisi', $event->tanggal_audisi?->format('Y-m-d')) }}"
+                   class="w-full rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-3 py-2.5 text-sm outline-none focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20">
+            <p class="mt-1 text-[11px] text-[#8c8982]">Biarkan kosong jika tanggal belum ditentukan.</p>
+        </div>
+
+        {{-- Lokasi Audisi (Opsional) --}}
+        <div>
+            <label class="mb-1 block text-xs font-semibold text-gray-700">
+                Lokasi Audisi <span class="font-normal text-[#8c8982]">(Opsional)</span>
+            </label>
+            <input type="text" name="audisi_lokasi"
+                   value="{{ old('audisi_lokasi', $event->audisi_lokasi) }}" placeholder="Contoh: Gedung Serbaguna Lt. 2"
+                   class="w-full rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-3 py-2.5 text-sm outline-none focus:border-[#C28E27] focus:ring-2 focus:ring-[#C28E27]/20">
+            <p class="mt-1 text-[11px] text-[#8c8982]">Biarkan kosong jika lokasi belum ditentukan.</p>
+        </div>
+
+        {{-- Toggle Audisi Aktif --}}
+        <div class="flex items-center justify-between rounded-lg border border-[#e7e2da] bg-[#faf8f4] px-4 py-3 lg:col-span-2">
+            <div>
+                <p class="text-xs font-semibold text-gray-700">Audisi Aktif</p>
+                <p class="mt-0.5 text-[11px] text-[#8c8982]">Aktifkan jika event ini memerlukan proses audisi peserta.</p>
+            </div>
+            <label class="relative inline-flex cursor-pointer items-center">
+                <input type="checkbox" name="audisi_aktif" value="1" class="peer sr-only"
+                       @checked(old('audisi_aktif', $event->audisi_aktif))>
+                <div class="h-6 w-11 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#C28E27] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:ring-4 peer-focus:ring-[#C28E27]/20"></div>
+            </label>
+        </div>
+    </div>
+</div>
 
                     {{-- ===== SECTION 4: JADWAL & LOKASI ===== --}}
                     <div class="bg-white border border-[#e3ded6] rounded-xl p-6 shadow-sm">

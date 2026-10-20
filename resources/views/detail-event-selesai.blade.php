@@ -111,11 +111,11 @@
         }
 
         /* ============================================ */
-        /* TOP 3 SWIPER — COVERFLOW (Mobile) / STATIS    */
+        /* TOP 3 SWIPER — COVERFLOW (Mobile) / PODIUM    */
         /* ============================================ */
         .top3Swiper {
             overflow: hidden !important;
-            padding: 20px 0 50px 0;
+            padding: 44px 0 50px 0;          /* ruang atas untuk mahkota juara 1 */
             margin: 0 -12px;
             width: calc(100% + 24px);
         }
@@ -127,7 +127,7 @@
         /* ---- MOBILE: coverflow blur ---- */
         @media (max-width: 767px) {
             .top3Swiper .swiper-slide {
-                width: 80%;
+                width: 64%;
                 max-width: none;
                 transition: all .45s cubic-bezier(.22, 1, .36, 1);
                 opacity: 0.35;
@@ -180,28 +180,36 @@
             }
         }
 
-        /* ---- DESKTOP/TABLET: 3 kartu statis di tengah, tanpa geser ---- */
+        /* ---- DESKTOP/TABLET: podium statis di tengah, tanpa geser ---- */
         @media (min-width: 768px) {
             .top3Swiper {
-                padding: 20px 0 30px 0;
+                padding: 44px 0 48px 0;
             }
 
             .top3Swiper .swiper-wrapper {
                 display: flex;
                 justify-content: center;
-                gap: 20px;
+                align-items: flex-end;       /* alas sejajar di bawah, juara 1 "menjulang" seperti podium */
+                gap: 18px;
                 transform: none !important;
             }
 
+            /* Juara 2 & 3: lebih kecil */
             .top3Swiper .swiper-slide {
                 width: auto;
-                flex: 1 1 0;
+                flex: 0 1 205px;
                 min-width: 0;
-                max-width: 300px;
+                max-width: 205px;
                 margin-right: 0 !important;
                 opacity: 1;
                 filter: none;
                 transform: none;
+            }
+
+            /* Juara 1: paling besar */
+            .top3Swiper .swiper-slide.slide-juara-1 {
+                flex-basis: 240px;
+                max-width: 240px;
             }
 
             .top3Swiper .swiper-slide-active,
@@ -214,6 +222,13 @@
 
             .top3Swiper .top3Pagination {
                 display: none !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .top3Swiper .swiper-slide {
+                width: 66%;
+                max-width: none;
             }
         }
     </style>
@@ -387,51 +402,114 @@
                     @foreach ($pemenangSort as $p)
                         @php
                             $juara = $p['juara'];
-                            $border = $juara == 1 ? 'border-2 border-[#c99a32] shadow-md' : 'border border-[#ece5d7] shadow-sm hover:border-[#c99a32]/40';
-                            $height = $juara == 1 ? 'h-[230px] sm:h-[270px]' : 'h-[210px] sm:h-[210px]';
+
+                            $palet = [
+                                1 => [
+                                    'border'      => 'border-[3px] border-[#d4af37]',
+                                    'glow'        => 'shadow-[0_26px_55px_-14px_rgba(212,175,55,0.8),0_0_0_5px_rgba(212,175,55,0.14)]',
+                                    'badge'       => 'bg-gradient-to-r from-[#f8e6a0] via-[#d4af37] to-[#a67c1a] text-[#3a2c08] ring-1 ring-white/50',
+                                    'initText'    => 'text-[#b8860b]',
+                                    'initBg'      => 'from-[#fdf8e8] to-[#f3e3b0]',
+                                    'bar'         => 'from-[#d4af37] to-[#f5d78e]',
+                                    'label'       => 'Juara 1',
+                                    // ukuran: juara 1 paling besar
+                                    'rasio'       => 'aspect-[3/4]',
+                                    'pad'         => 'p-4',
+                                    'nama'        => 'text-[15px]',
+                                    'angka'       => 'text-2xl',
+                                    'badgeUkuran' => 'text-[11px] px-3 py-1.5',
+                                ],
+                                2 => [
+                                    'border'      => 'border-2 border-[#c0c0c0]',
+                                    'glow'        => 'shadow-[0_14px_30px_-12px_rgba(150,150,150,0.5)]',
+                                    'badge'       => 'bg-gradient-to-r from-[#f2f2f2] via-[#c0c0c0] to-[#8a8a8a] text-[#2a2a2a] ring-1 ring-white/60',
+                                    'initText'    => 'text-[#8f8f8f]',
+                                    'initBg'      => 'from-[#f6f6f6] to-[#e2e2e2]',
+                                    'bar'         => 'from-[#a8a8a8] to-[#e0e0e0]',
+                                    'label'       => 'Juara 2',
+                                    'rasio'       => 'aspect-[4/5]',
+                                    'pad'         => 'p-3',
+                                    'nama'        => 'text-[13px]',
+                                    'angka'       => 'text-lg',
+                                    'badgeUkuran' => 'text-[9px] px-2 py-1',
+                                ],
+                                3 => [
+                                    'border'      => 'border-2 border-[#cd7f32]',
+                                    'glow'        => 'shadow-[0_14px_30px_-12px_rgba(205,127,50,0.5)]',
+                                    'badge'       => 'bg-gradient-to-r from-[#e9b47b] via-[#cd7f32] to-[#8b5a2b] text-white ring-1 ring-white/40',
+                                    'initText'    => 'text-[#b06a2b]',
+                                    'initBg'      => 'from-[#fbf0e2] to-[#f2dcc0]',
+                                    'bar'         => 'from-[#cd7f32] to-[#e6a86d]',
+                                    'label'       => 'Juara 3',
+                                    'rasio'       => 'aspect-[4/5]',
+                                    'pad'         => 'p-3',
+                                    'nama'        => 'text-[13px]',
+                                    'angka'       => 'text-lg',
+                                    'badgeUkuran' => 'text-[9px] px-2 py-1',
+                                ],
+                            ][$juara];
                         @endphp
 
-                        <div class="swiper-slide">
-                            <div class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $border }}">
-                            <div class="relative overflow-hidden {{ $height }}">
-                                @if ($p['foto'])
-                                    <img src="{{ $p['foto'] }}" alt="{{ $p['nama'] }}"
-                                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
-                                    <div class="hidden w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] items-center justify-center">
-                                        <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
-                                    </div>
-                                @else
-                                    <div class="w-full h-full bg-gradient-to-br from-[#fbf6e9] to-[#f4ede0] flex items-center justify-center">
-                                        <span class="font-display text-4xl font-bold text-[#c99a32]">{{ $inisial($p['nama']) }}</span>
-                                    </div>
-                                @endif
+                        <div class="swiper-slide slide-juara-{{ $juara }}">
+                            <div class="group relative transition-transform duration-300 hover:-translate-y-1">
 
-                                <span class="absolute top-3 right-3 inline-flex items-center gap-1 bg-gradient-to-r from-[#c99a32] to-[#b88625] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md">
-                                    @if ($juara == 1)
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                {{-- Mahkota melayang — hanya juara 1 --}}
+                                @if ($juara === 1)
+                                    <span aria-hidden="true"
+                                        class="pointer-events-none absolute -top-5 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-br from-[#f8e6a0] via-[#d4af37] to-[#a67c1a] text-[#3a2c08] shadow-[0_8px_18px_-6px_rgba(212,175,55,0.9)] ring-4 ring-white">
+                                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                                         </svg>
-                                    @endif
-                                    Juara {{ $juara }}
-                                </span>
-                            </div>
+                                    </span>
+                                @endif
 
-                            <div class="p-4">
-                                <div class="mb-2">
-                                    <h3 class="font-bold text-[14px] text-[#0a1526] truncate">{{ $p['nama'] }}</h3>
-                                </div>
+                                <div class="overflow-hidden rounded-2xl bg-white {{ $palet['border'] }} {{ $palet['glow'] }}">
 
-                                <div class="flex items-baseline gap-1.5">
-                                    <p class="text-lg font-bold text-[#0a1526]">{{ $p['persen'] }}%</p>
-                                    <span class="text-[11px] text-[#8a8178]">Vote</span>
-                                </div>
-                                <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
-                                    <div class="progress-fill h-full bg-gradient-to-r from-[#c99a32] to-[#e0b254] rounded-full" style="width: {{ $p['persen'] }}%"></div>
+                                    <div class="relative {{ $palet['rasio'] }} w-full overflow-hidden">
+                                        @if ($p['foto'])
+                                            <img src="{{ $p['foto'] }}" alt="{{ $p['nama'] }}" loading="lazy"
+                                                class="{{ $palet['rasio'] }} h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+                                            <div class="hidden {{ $palet['rasio'] }} h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
+                                                <span class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisial($p['nama']) }}</span>
+                                            </div>
+                                        @else
+                                            <div class="flex {{ $palet['rasio'] }} h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
+                                                <span class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisial($p['nama']) }}</span>
+                                            </div>
+                                        @endif
+
+                                        <span class="absolute top-2.5 right-2.5 inline-flex items-center gap-1 {{ $palet['badge'] }} {{ $palet['badgeUkuran'] }} font-bold rounded-lg uppercase tracking-wider shadow-md backdrop-blur-sm">
+                                            @if ($juara == 1)
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                                                </svg>
+                                            @else
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path d="M12 2.5l2.7 5.6 6.2.9-4.5 4.3 1 6.1L12 16.5 6.6 19.4l1-6.1L3.1 9l6.2-.9z" />
+                                                </svg>
+                                            @endif
+                                            {{ $palet['label'] }}
+                                        </span>
+                                    </div>
+
+                                    <div class="{{ $palet['pad'] }}">
+                                        <div class="mb-1.5">
+                                            <h3 class="font-bold {{ $palet['nama'] }} text-[#0a1526] truncate">{{ $p['nama'] }}</h3>
+                                        </div>
+
+                                        <div class="flex items-baseline gap-1.5">
+                                            <p class="{{ $palet['angka'] }} font-bold text-[#0a1526]">{{ $p['persen'] }}%</p>
+                                            <span class="text-[11px] text-[#8a8178]">Vote</span>
+                                        </div>
+                                        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#f0ece2]">
+                                            <div class="progress-fill h-full rounded-full bg-gradient-to-r {{ $palet['bar'] }}" style="width: {{ $p['persen'] }}%"></div>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
-                                                </div>{{-- /card --}}
-                    </div>{{-- /swiper-slide --}}
+                        </div>{{-- /swiper-slide --}}
                     @endforeach
 
                     </div>{{-- /swiper-wrapper --}}

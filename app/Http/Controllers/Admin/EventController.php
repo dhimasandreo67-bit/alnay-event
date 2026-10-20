@@ -125,7 +125,7 @@ class EventController extends Controller
 
                 if ($data !== false) {
                     $filename = 'banners/' . uniqid() . '.' . $ext;
-                    \Storage::disk('public')->put($filename, $data);
+                    Storage::disk('public')->put($filename, $data);
                     $validated['banner'] = $filename;
                 }
             }
@@ -218,7 +218,7 @@ class EventController extends Controller
                         Storage::disk('public')->delete($event->banner);
                     }
                     $filename = 'banners/' . uniqid() . '.' . $ext;
-                    \Storage::disk('public')->put($filename, $data);
+                    Storage::disk('public')->put($filename, $data);
                     $validated['banner'] = $filename;
                 }
             }

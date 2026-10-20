@@ -357,11 +357,11 @@
         }
 
         /* ============================================ */
-        /* TOP 3 SWIPER — COVERFLOW (Mobile) / SLIDE     */
+        /* TOP 3 SWIPER — COVERFLOW (Mobile) / PODIUM    */
         /* ============================================ */
         .top3Swiper {
             overflow: hidden !important;
-            padding: 20px 0 50px 0;
+            padding: 44px 0 50px 0;          /* ruang atas untuk mahkota juara 1 */
             margin: 0 -12px;
             width: calc(100% + 24px);
         }
@@ -372,7 +372,7 @@
 
         @media (max-width: 767px) {
             .top3Swiper .swiper-slide {
-                width: 80%;
+                width: 64%;
                 max-width: none;
                 transition: all .45s cubic-bezier(.22, 1, .36, 1);
                 opacity: 0.35;
@@ -422,25 +422,33 @@
 
         @media (min-width: 768px) {
             .top3Swiper {
-                padding: 20px 0 30px 0;
+                padding: 44px 0 48px 0;
             }
 
             .top3Swiper .swiper-wrapper {
                 display: flex;
                 justify-content: center;
-                gap: 20px;
+                align-items: flex-end;       /* alas sejajar di bawah, juara 1 "menjulang" seperti podium */
+                gap: 18px;
                 transform: none !important;
             }
 
+            /* Juara 2 & 3: lebih kecil (sebelumnya 300px) */
             .top3Swiper .swiper-slide {
                 width: auto;
-                flex: 1 1 0;
+                flex: 0 1 205px;
                 min-width: 0;
-                max-width: 300px;
+                max-width: 205px;
                 margin-right: 0 !important;
                 opacity: 1;
                 filter: none;
                 transform: none;
+            }
+
+            /* Juara 1: paling besar */
+            .top3Swiper .swiper-slide.slide-juara-1 {
+                flex-basis: 240px;
+                max-width: 240px;
             }
 
             .top3Swiper .swiper-slide-active,
@@ -458,7 +466,7 @@
 
         @media (max-width: 640px) {
             .top3Swiper .swiper-slide {
-                width: 82%;
+                width: 66%;
                 max-width: none;
             }
 
@@ -654,8 +662,8 @@
             ? \Carbon\Carbon::parse($event->batas_pendaftaran_tanggal, $tz)->locale('id')
             : null;
 
-        $audisiTgl = !empty($event->audisi_tanggal)
-            ? \Carbon\Carbon::parse($event->audisi_tanggal, $tz)->locale('id')
+        $audisiTgl = !empty($event->tanggal_audisi)
+            ? \Carbon\Carbon::parse($event->tanggal_audisi, $tz)->locale('id')
             : null;
 
         $jadwal = [];
@@ -674,19 +682,22 @@
             ];
         }
 
-        if ($event->ada_audisi ?? true) {
+        // Audisi hanya tampil kalau event ini memang memakai audisi
+        if ($event->audisi_aktif) {
             $jadwal[] = [
                 'nama' => 'Audisi',
                 'tanggal' => $audisiTgl ? $audisiTgl->translatedFormat('j F Y') : 'Jadwal diumumkan admin',
             ];
         }
 
-        $jadwal[] = [
-            'nama' => 'Registrasi Peserta',
-            'tanggal' => $selesai
-                ? 'Sebelum voting berakhir (' . $selesai->translatedFormat('j F Y') . ')'
-                : 'Sebelum voting berakhir',
-        ];
+        if ($event->registrasi_aktif ?? true) {
+            $jadwal[] = [
+                'nama' => 'Registrasi Peserta',
+                'tanggal' => $selesai
+                    ? 'Sebelum voting berakhir (' . $selesai->translatedFormat('j F Y') . ')'
+                    : 'Sebelum voting berakhir',
+            ];
+        }
 
         $jadwal[] = [
             'nama' => 'Voting Publik',
@@ -1125,108 +1136,135 @@
 
                                     $palet = [
                                         1 => [
-                                            'border'   => 'border-2 border-[#d4af37]',
-                                            'glow'     => 'shadow-[0_18px_40px_-12px_rgba(212,175,55,0.55)]',
-                                            'badge'    => 'bg-gradient-to-r from-[#f8e6a0] via-[#d4af37] to-[#a67c1a] text-[#3a2c08] ring-1 ring-white/50',
-                                            'initText' => 'text-[#b8860b]',
-                                            'initBg'   => 'from-[#fdf8e8] to-[#f3e3b0]',
-                                            'bar'      => 'from-[#d4af37] to-[#f5d78e]',
-                                            'label'    => 'Juara 1',
+                                            'border'      => 'border-[3px] border-[#d4af37]',
+                                            'glow'        => 'shadow-[0_26px_55px_-14px_rgba(212,175,55,0.8),0_0_0_5px_rgba(212,175,55,0.14)]',
+                                            'badge'       => 'bg-gradient-to-r from-[#f8e6a0] via-[#d4af37] to-[#a67c1a] text-[#3a2c08] ring-1 ring-white/50',
+                                            'initText'    => 'text-[#b8860b]',
+                                            'initBg'      => 'from-[#fdf8e8] to-[#f3e3b0]',
+                                            'bar'         => 'from-[#d4af37] to-[#f5d78e]',
+                                            'label'       => 'Juara 1',
+                                            // ukuran: juara 1 paling besar
+                                            'rasio'       => 'aspect-[3/4]',
+                                            'pad'         => 'p-4',
+                                            'nama'        => 'text-[15px]',
+                                            'angka'       => 'text-2xl',
+                                            'badgeUkuran' => 'text-[11px] px-3 py-1.5',
                                         ],
                                         2 => [
-                                            'border'   => 'border-2 border-[#c0c0c0]',
-                                            'glow'     => 'shadow-[0_18px_40px_-12px_rgba(150,150,150,0.5)]',
-                                            'badge'    => 'bg-gradient-to-r from-[#f2f2f2] via-[#c0c0c0] to-[#8a8a8a] text-[#2a2a2a] ring-1 ring-white/60',
-                                            'initText' => 'text-[#8f8f8f]',
-                                            'initBg'   => 'from-[#f6f6f6] to-[#e2e2e2]',
-                                            'bar'      => 'from-[#a8a8a8] to-[#e0e0e0]',
-                                            'label'    => 'Juara 2',
+                                            'border'      => 'border-2 border-[#c0c0c0]',
+                                            'glow'        => 'shadow-[0_14px_30px_-12px_rgba(150,150,150,0.5)]',
+                                            'badge'       => 'bg-gradient-to-r from-[#f2f2f2] via-[#c0c0c0] to-[#8a8a8a] text-[#2a2a2a] ring-1 ring-white/60',
+                                            'initText'    => 'text-[#8f8f8f]',
+                                            'initBg'      => 'from-[#f6f6f6] to-[#e2e2e2]',
+                                            'bar'         => 'from-[#a8a8a8] to-[#e0e0e0]',
+                                            'label'       => 'Juara 2',
+                                            'rasio'       => 'aspect-[4/5]',
+                                            'pad'         => 'p-3',
+                                            'nama'        => 'text-[13px]',
+                                            'angka'       => 'text-lg',
+                                            'badgeUkuran' => 'text-[9px] px-2 py-1',
                                         ],
                                         3 => [
-                                            'border'   => 'border-2 border-[#cd7f32]',
-                                            'glow'     => 'shadow-[0_18px_40px_-12px_rgba(205,127,50,0.5)]',
-                                            'badge'    => 'bg-gradient-to-r from-[#e9b47b] via-[#cd7f32] to-[#8b5a2b] text-white ring-1 ring-white/40',
-                                            'initText' => 'text-[#b06a2b]',
-                                            'initBg'   => 'from-[#fbf0e2] to-[#f2dcc0]',
-                                            'bar'      => 'from-[#cd7f32] to-[#e6a86d]',
-                                            'label'    => 'Juara 3',
+                                            'border'      => 'border-2 border-[#cd7f32]',
+                                            'glow'        => 'shadow-[0_14px_30px_-12px_rgba(205,127,50,0.5)]',
+                                            'badge'       => 'bg-gradient-to-r from-[#e9b47b] via-[#cd7f32] to-[#8b5a2b] text-white ring-1 ring-white/40',
+                                            'initText'    => 'text-[#b06a2b]',
+                                            'initBg'      => 'from-[#fbf0e2] to-[#f2dcc0]',
+                                            'bar'         => 'from-[#cd7f32] to-[#e6a86d]',
+                                            'label'       => 'Juara 3',
+                                            'rasio'       => 'aspect-[4/5]',
+                                            'pad'         => 'p-3',
+                                            'nama'        => 'text-[13px]',
+                                            'angka'       => 'text-lg',
+                                            'badgeUkuran' => 'text-[9px] px-2 py-1',
                                         ],
                                     ][$juara];
                                 @endphp
 
-                                <div class="swiper-slide">
-                                    <div
-                                        class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 {{ $palet['border'] }} {{ $palet['glow'] }}">
+                                <div class="swiper-slide slide-juara-{{ $juara }}">
+                                    <div class="group relative transition-transform duration-300 hover:-translate-y-1">
 
-                                        <div class="relative aspect-[3/4] w-full overflow-hidden">
-                                            @if ($fotoP)
-                                                <img src="{{ $fotoP }}" alt="{{ $namaP }}" loading="lazy"
-                                                    width="294" height="392"
-                                                    class="aspect-[3/4] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                    onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
-                                                <div
-                                                    class="hidden aspect-[3/4] h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
-                                                    <span
-                                                        class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
-                                                </div>
-                                            @else
-                                                <div
-                                                    class="flex aspect-[3/4] h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
-                                                    <span
-                                                        class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
-                                                </div>
-                                            @endif
-
-                                            <span
-                                                class="absolute top-3 right-3 inline-flex items-center gap-1 {{ $palet['badge'] }} text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-md backdrop-blur-sm">
-                                                @if ($juara == 1)
-                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path
-                                                            d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path
-                                                            d="M12 2.5l2.7 5.6 6.2.9-4.5 4.3 1 6.1L12 16.5 6.6 19.4l1-6.1L3.1 9l6.2-.9z" />
-                                                    </svg>
-                                                @endif
-                                                {{ $palet['label'] }}
+                                        {{-- Mahkota melayang — hanya juara 1 --}}
+                                        @if ($juara === 1)
+                                            <span aria-hidden="true"
+                                                class="pointer-events-none absolute -top-5 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-br from-[#f8e6a0] via-[#d4af37] to-[#a67c1a] text-[#3a2c08] shadow-[0_8px_18px_-6px_rgba(212,175,55,0.9)] ring-4 ring-white">
+                                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                                                </svg>
                                             </span>
-                                        </div>
+                                        @endif
 
-                                        <div class="p-4">
-                                            <div class="mb-2">
-                                                <h3 class="font-bold text-[14px] text-[#0a1526] truncate">
-                                                    {{ $namaP }}</h3>
-                                            </div>
+                                        <div class="overflow-hidden rounded-2xl bg-white {{ $palet['border'] }} {{ $palet['glow'] }}">
 
-                                            <div class="flex items-baseline gap-1.5">
-                                                @php
-                                                    $formatHasil = $event->format_hasil_voting ?? 'keduanya';
-                                                    $voteP = number_format($p->total_vote, 0, ',', '.');
-                                                @endphp
-                                                @if ($formatHasil === 'angka')
-                                                    <p class="text-lg font-bold text-[#0a1526]">{{ $voteP }}
-                                                    </p>
-                                                    <span class="text-[11px] text-[#8a8178]">Suara</span>
-                                                @elseif ($formatHasil === 'persentase')
-                                                    <p class="text-lg font-bold text-[#0a1526]">{{ $persenP }}%
-                                                    </p>
-                                                    <span class="text-[11px] text-[#8a8178]">Vote</span>
-                                                @else
-                                                    <p class="text-lg font-bold text-[#0a1526]">{{ $voteP }}
+                                            <div class="relative {{ $palet['rasio'] }} w-full overflow-hidden">
+                                                @if ($fotoP)
+                                                    <img src="{{ $fotoP }}" alt="{{ $namaP }}" loading="lazy"
+                                                        class="{{ $palet['rasio'] }} h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+                                                    <div
+                                                        class="hidden {{ $palet['rasio'] }} h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
                                                         <span
-                                                            class="text-sm font-normal text-[#8a8178]">({{ $persenP }}%)</span>
-                                                    </p>
+                                                            class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
+                                                    </div>
+                                                @else
+                                                    <div
+                                                        class="flex {{ $palet['rasio'] }} h-full w-full items-center justify-center bg-gradient-to-br {{ $palet['initBg'] }}">
+                                                        <span
+                                                            class="font-display text-4xl font-bold {{ $palet['initText'] }}">{{ $inisialP }}</span>
+                                                    </div>
                                                 @endif
+
+                                                <span
+                                                    class="absolute top-2.5 right-2.5 inline-flex items-center gap-1 {{ $palet['badge'] }} {{ $palet['badgeUkuran'] }} font-bold rounded-lg uppercase tracking-wider shadow-md backdrop-blur-sm">
+                                                    @if ($juara == 1)
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path
+                                                                d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                                                        </svg>
+                                                    @else
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path
+                                                                d="M12 2.5l2.7 5.6 6.2.9-4.5 4.3 1 6.1L12 16.5 6.6 19.4l1-6.1L3.1 9l6.2-.9z" />
+                                                        </svg>
+                                                    @endif
+                                                    {{ $palet['label'] }}
+                                                </span>
                                             </div>
 
-                                            <div class="w-full h-1.5 bg-[#f0ece2] rounded-full mt-2.5 overflow-hidden">
-                                                <div class="h-full bg-gradient-to-r {{ $palet['bar'] }} rounded-full transition-all duration-700"
-                                                    style="width: {{ $persenP }}%"></div>
+                                            <div class="{{ $palet['pad'] }}">
+                                                <div class="mb-1.5">
+                                                    <h3 class="font-bold {{ $palet['nama'] }} text-[#0a1526] truncate">
+                                                        {{ $namaP }}</h3>
+                                                </div>
+
+                                                <div class="flex items-baseline gap-1.5">
+                                                    @php
+                                                        $formatHasil = $event->format_hasil_voting ?? 'keduanya';
+                                                        $voteP = number_format($p->total_vote, 0, ',', '.');
+                                                    @endphp
+                                                    @if ($formatHasil === 'angka')
+                                                        <p class="{{ $palet['angka'] }} font-bold text-[#0a1526]">{{ $voteP }}
+                                                        </p>
+                                                        <span class="text-[11px] text-[#8a8178]">Suara</span>
+                                                    @elseif ($formatHasil === 'persentase')
+                                                        <p class="{{ $palet['angka'] }} font-bold text-[#0a1526]">{{ $persenP }}%
+                                                        </p>
+                                                        <span class="text-[11px] text-[#8a8178]">Vote</span>
+                                                    @else
+                                                        <p class="{{ $palet['angka'] }} font-bold text-[#0a1526]">{{ $voteP }}
+                                                            <span
+                                                                class="text-sm font-normal text-[#8a8178]">({{ $persenP }}%)</span>
+                                                        </p>
+                                                    @endif
+                                                </div>
+
+                                                <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#f0ece2]">
+                                                    <div class="h-full rounded-full bg-gradient-to-r {{ $palet['bar'] }} transition-all duration-700"
+                                                        style="width: {{ $persenP }}%"></div>
+                                                </div>
                                             </div>
+
                                         </div>
-
                                     </div>
                                 </div>
                             @endforeach
