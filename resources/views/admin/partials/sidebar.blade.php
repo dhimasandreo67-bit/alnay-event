@@ -19,18 +19,43 @@
     z-index: 40;
     font-family: 'Inter', system-ui, sans-serif;
     border-right: 1px solid rgba(255, 255, 255, 0.06);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Scrollbar tipis, menyatu dengan tema gelap sidebar */
+.admin-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(194, 142, 39, 0.35) transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(194, 142, 39, 0.35);
+    border-radius: 9999px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(194, 142, 39, 0.55);
 }
 
 /* ---- Brand ---- */
 .admin-sidebar__brand {
-    padding: 1.35rem 1.25rem 1.1rem;
-    font-size: 1.15rem;
+    padding: 1.05rem 1.1rem 0.85rem;
+    font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     color: #fafaf9;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     animation: sidebarFadeIn 0.45s ease both;
+    flex-shrink: 0;
 }
 
 .admin-sidebar__brand span {
@@ -39,10 +64,10 @@
 
 /* ---- Section label ---- */
 .admin-sidebar__section {
-    margin: 1.1rem 1.25rem 0.45rem;
-    font-size: 0.65rem;
+    margin: 0.85rem 1.1rem 0.35rem;
+    font-size: 0.6rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: #78716c;
     animation: sidebarFadeIn 0.4s ease both;
@@ -53,18 +78,19 @@
 .admin-sidebar__nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 0 0.65rem;
+    gap: 1px;
+    padding: 0 0.55rem;
+    flex-shrink: 0;
 }
 
 .admin-sidebar__link {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 0.55rem;
-    font-size: 0.8125rem;
+    gap: 0.6rem;
+    padding: 0.44rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.76rem;
     font-weight: 500;
     color: #a8a29e;
     text-decoration: none;
@@ -112,55 +138,23 @@
     transform: translateY(-50%) scaleY(1);
 }
 
-.admin-sidebar__link.is-active .admin-sidebar__step {
-    background: #C28E27;
-    color: #1c1917;
-    box-shadow: 0 0 0 3px rgba(194, 142, 39, 0.25);
-}
-
-/* ---- Step number ---- */
-.admin-sidebar__step {
-    flex-shrink: 0;
-    width: 1.45rem;
-    height: 1.45rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.08);
-    color: #a8a29e;
-    transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        box-shadow 0.2s ease,
-        transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.admin-sidebar__link:hover .admin-sidebar__step {
-    background: rgba(194, 142, 39, 0.25);
-    color: #C28E27;
-    transform: scale(1.08);
-}
-
 .admin-sidebar__label {
     flex: 1;
-    line-height: 1.3;
+    line-height: 1.25;
     min-width: 0;
 }
 
 /* ---- Badge notifikasi ---- */
 .admin-sidebar__badge {
     flex-shrink: 0;
-    min-width: 1.25rem;
-    height: 1.25rem;
-    padding: 0 0.35rem;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.32rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
     background: #C28E27;
     color: #1c1917;
@@ -170,16 +164,17 @@
 /* ---- Spacer ---- */
 .admin-sidebar__spacer {
     flex: 1;
+    min-height: 0.5rem;
 }
 
 /* ---- User card ---- */
 .admin-sidebar__user {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin: 0.75rem;
-    padding: 0.75rem;
-    border-radius: 0.75rem;
+    gap: 0.65rem;
+    margin: 0.6rem;
+    padding: 0.6rem;
+    border-radius: 0.65rem;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     text-decoration: none;
@@ -190,6 +185,7 @@
         transform 0.2s ease;
     animation: sidebarFadeIn 0.5s ease both;
     animation-delay: 0.35s;
+    flex-shrink: 0;
 }
 
 .admin-sidebar__user:hover {
@@ -205,15 +201,15 @@
 
 .admin-sidebar__avatar {
     flex-shrink: 0;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2rem;
+    height: 2rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
     background: linear-gradient(135deg, #C28E27, #a06f1a);
     color: #1c1917;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.02em;
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -230,7 +226,7 @@
 }
 
 .admin-sidebar__user-info strong {
-    font-size: 0.8125rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: #fafaf9;
     white-space: nowrap;
@@ -239,7 +235,7 @@
 }
 
 .admin-sidebar__user-info small {
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     color: #78716c;
     margin-top: 1px;
 }
@@ -285,6 +281,39 @@
 <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
 
 <aside class="admin-sidebar hidden lg:flex lg:flex-col lg:w-64 flex-shrink-0">
+    @php
+        $currentStaf = \App\Models\AkunStaf::find(session('admin_id'));
+        $isSuperAdmin = (bool) $currentStaf?->isSuperAdmin();
+
+        // 1. Cek jika controller mengirim $event, pastikan admin ini PUNYA akses ke event tersebut
+        if (isset($event) && $event !== null) {
+            if (!$currentStaf->hasEventAccess($event->id)) {
+                $event = null; // Jika tidak punya akses, batalkan $event tersebut
+            }
+        } else {
+            // Pastikan $event selalu terdefinisi walau controller tidak mengirimkannya
+            $event = null;
+        }
+
+        // 2. Jika $event kosong atau tidak valid, cari event yang benar-benar diizinkan
+        if (!$event) {
+            if (session()->has('active_event_id') && $currentStaf?->hasEventAccess(session('active_event_id'))) {
+                $event = \App\Models\Event::find(session('active_event_id'));
+            } elseif ($currentStaf?->last_active_event_id && $currentStaf->hasEventAccess($currentStaf->last_active_event_id)) {
+                $event = $currentStaf->lastActiveEvent;
+            } elseif (!$isSuperAdmin) {
+                $event = $currentStaf?->allowedEvents()->first();
+            } else {
+                $event = \App\Models\Event::first();
+            }
+
+            // Simpan ke session agar konsisten
+            if ($event) {
+                session(['active_event_id' => $event->id]);
+            }
+        }
+    @endphp
+
     {{-- Brand --}}
     <div class="admin-sidebar__brand">
         ALNAY<span>.ID</span>
@@ -292,91 +321,106 @@
 
     {{-- Nav: Event & Peserta --}}
     <nav class="admin-sidebar__nav" aria-label="Event dan peserta">
-                <p class="admin-sidebar__section">Event & Peserta</p>
+        <p class="admin-sidebar__section">Event & Peserta</p>
 
-        {{-- 1. Verifikasi Pendaftaran Peserta — SELALU tampil --}}
-    <a class="admin-sidebar__link {{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}"
-    href="{{ route('admin.dashboard', $event?->id) }}"
-    style="--i: 0">
-        <span class="admin-sidebar__step">1</span>
-        <span class="admin-sidebar__label">Verifikasi Pendaftaran Peserta</span>
+        {{-- Verifikasi Pendaftaran Peserta --}}
+        @if ($currentStaf?->hasPageAccess('dashboard'))
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'dashboard' ? 'is-active' : '' }}"
+           href="{{ isset($event) ? route('admin.dashboard', $event->id) : route('admin.events.index') }}"
+           style="--i: 0">
+            <span class="admin-sidebar__label">Verifikasi Pendaftaran Peserta</span>
 
-        @if(!empty($menungguReview) && $menungguReview > 0)
-            <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
+            @if(!empty($menungguReview) && $menungguReview > 0)
+                <b class="admin-sidebar__badge">{{ $menungguReview }}</b>
+            @endif
+        </a>
         @endif
-    </a>
 
-    {{-- 2. Form Pendaftaran Event — SELALU tampil --}}
-    <a class="admin-sidebar__link {{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}"
-    href="{{ isset($event) ? route('admin.form-builder', $event->id) : route('admin.form-builder') }}"
-    style="--i: 1">
-        <span class="admin-sidebar__step">2</span>
-        <span class="admin-sidebar__label">Form Pendaftaran Event</span>
-    </a>
+        {{-- Form Pendaftaran Event --}}
+        @if ($currentStaf?->hasPageAccess('form-builder'))
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'form-builder' ? 'is-active' : '' }}"
+           href="{{ isset($event) ? route('admin.form-builder', $event->id) : route('admin.form-builder') }}"
+           style="--i: 1">
+            <span class="admin-sidebar__label">Form Pendaftaran Event</span>
+        </a>
+        @endif
 
-    {{-- 3. Kelola Event — SELALU tampil --}}
-    <a class="admin-sidebar__link {{ in_array($active ?? '', ['events-create', 'events-index']) ? 'is-active' : '' }}"
-    href="{{ route('admin.events.index') }}"
-    style="--i: 2">
-        <span class="admin-sidebar__step">3</span>
-        <span class="admin-sidebar__label">Kelola Event</span>
-    </a>
+        {{-- Kelola Event --}}
+        @if ($currentStaf?->hasPageAccess('events-index'))
+        <a class="admin-sidebar__link {{ in_array($active ?? '', ['events-create', 'events-index']) ? 'is-active' : '' }}"
+           href="{{ route('admin.events.index') }}"
+           style="--i: 2">
+            <span class="admin-sidebar__label">Kelola Event</span>
+        </a>
+        @endif
 
-    {{-- 4. Aktivasi Akun Peserta — SELALU tampil --}}
-    <a class="admin-sidebar__link {{ ($active ?? '') === 'activation' ? 'is-active' : '' }}"
-    href="{{ isset($event) ? route('admin.activation', $event->id) : '#' }}"
-    style="--i: 3">
-        <span class="admin-sidebar__step">4</span>
-        <span class="admin-sidebar__label">Aktivasi Akun Peserta</span>
-    </a>
+        {{-- Aktivasi Akun Peserta --}}
+        @if ($currentStaf?->hasPageAccess('activation'))
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'activation' ? 'is-active' : '' }}"
+           href="{{ isset($event) ? route('admin.activation', $event->id) : route('admin.events.index') }}"
+           style="--i: 3">
+            <span class="admin-sidebar__label">Aktivasi Akun Peserta</span>
+        </a>
+        @endif
 
-    {{-- 5. Kelola Peserta Tampil — SELALU tampil --}}
-    <a class="admin-sidebar__link {{ ($active ?? '') === 'peserta-tampil' ? 'is-active' : '' }}"
-    href="{{ isset($event) ? route('admin.peserta-tampil', $event->id) : '#' }}"
-    style="--i: 4">
-                <span class="admin-sidebar__step">5</span>
-        <span class="admin-sidebar__label">Kelola Peserta Tampil</span>
-    </a>
+        {{-- Kelola Peserta Tampil --}}
+        @if ($currentStaf?->hasPageAccess('peserta-tampil'))
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'peserta-tampil' ? 'is-active' : '' }}"
+           href="{{ isset($event) ? route('admin.peserta-tampil', $event->id) : route('admin.events.index') }}"
+           style="--i: 4">
+            <span class="admin-sidebar__label">Kelola Peserta Tampil</span>
+        </a>
+        @endif
     </nav>
 
     {{-- Nav: Voting --}}
     <nav class="admin-sidebar__nav" aria-label="Voting">
         <p class="admin-sidebar__section">Voting</p>
 
-        {{-- 6. Pengaturan Event & Voting --}}
+        {{-- Pengaturan Event & Voting --}}
+        @if ($currentStaf?->hasPageAccess('voting-settings'))
         <a class="admin-sidebar__link {{ ($active ?? '') === 'voting-settings' ? 'is-active' : '' }}"
-           href="{{ isset($event) ? route('admin.voting.settings', $event->id) : '#' }}"
+           href="{{ isset($event) ? route('admin.voting.settings', $event->id) : route('admin.events.index') }}"
            style="--i: 5">
-            <span class="admin-sidebar__step">6</span>
             <span class="admin-sidebar__label">Pengaturan Event &amp; Voting</span>
         </a>
+        @endif
 
-        {{-- 7. Daftar Voter --}}
+        {{-- Daftar Voter --}}
+        @if ($currentStaf?->hasPageAccess('voters'))
         <a class="admin-sidebar__link {{ ($active ?? '') === 'voters' ? 'is-active' : '' }}"
-           href="{{ isset($event) ? route('admin.voters', $event->id) : '#' }}"
+           href="{{ isset($event) ? route('admin.voters', $event->id) : route('admin.events.index') }}"
            style="--i: 6">
-            <span class="admin-sidebar__step">7</span>
             <span class="admin-sidebar__label">Daftar Voter</span>
         </a>
+        @endif
 
-        {{-- 8. Leaderboard Suara Voting --}}
+        {{-- Leaderboard Suara Voting --}}
+        @if ($currentStaf?->hasPageAccess('leaderboard'))
         <a class="admin-sidebar__link {{ ($active ?? '') === 'leaderboard' ? 'is-active' : '' }}"
-           href="{{ isset($event) ? route('admin.leaderboard', $event->id) : '#' }}"
+           href="{{ isset($event) ? route('admin.leaderboard', $event->id) : route('admin.events.index') }}"
            style="--i: 7">
-            <span class="admin-sidebar__step">8</span>
             <span class="admin-sidebar__label">Leaderboard Suara Voting</span>
         </a>
+        @endif
 
-        {{-- 9. Profile --}}
-        <a class="admin-sidebar__link {{ ($active ?? '') === 'profile' ? 'is-active' : '' }}"
-           href="{{ route('admin.profile') }}"
-           style="--i: 8">
-            <span class="admin-sidebar__step">9</span>
-            <span class="admin-sidebar__label">Profile</span>
-        </a>
+        {{-- Profile — selalu tampil, semua admin boleh urus profil sendiri --}}
     </nav>
 
-    {{-- Spacer supaya user card nempel di bawah --}}
+    {{-- Nav: Administrasi — khusus Super Admin --}}
+    @if ($isSuperAdmin)
+    <nav class="admin-sidebar__nav" aria-label="Administrasi">
+        <p class="admin-sidebar__section">Administrasi</p>
+
+        <a class="admin-sidebar__link {{ ($active ?? '') === 'staf' ? 'is-active' : '' }}"
+           href="{{ route('admin.staf.index') }}"
+           style="--i: 9">
+            <span class="admin-sidebar__label">Kelola Admin</span>
+        </a>
+    </nav>
+    @endif
+
+    {{-- Spacer supaya user card nempel di bawah selama kontennya belum penuh --}}
     <div class="admin-sidebar__spacer"></div>
     {{-- User Card --}}
     @php
@@ -391,7 +435,7 @@
         <span class="admin-sidebar__avatar">{{ $initials }}</span>
         <div class="admin-sidebar__user-info">
             <strong>{{ $adminName }}</strong>
-            <small>Admin Event</small>
+            <small>{{ $isSuperAdmin ? 'Super Admin' : 'Admin Event' }}</small>
         </div>
     </a>
 </aside>

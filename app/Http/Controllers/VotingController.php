@@ -506,12 +506,19 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
     /**
      * GET /admin/voting/settings/{event?}
      */
-    public function edit(?Event $event = null): View
+    public function edit(Request $request, ?Event $event = null): View
     {
-        // Logika active event: URL > Session > Terbaru
+        $admin = \App\Models\AkunStaf::find($request->session()->get('admin_id'));
+
         if (! $event) {
-            $eventId = session('active_event_id');
-            $event = $eventId ? Event::find($eventId) : Event::query()->latest('id')->first();
+            // LOGIKA BARU: Cari event yang diizinkan
+            if (session()->has('active_event_id') && $admin->hasEventAccess(session('active_event_id'))) {
+                $event = Event::find(session('active_event_id'));
+            } elseif (!$admin->isSuperAdmin()) {
+                $event = $admin->allowedEvents()->first();
+            } else {
+                $event = Event::query()->latest('id')->first();
+            }
         } else {
             session(['active_event_id' => $event->id]);
         }
@@ -573,19 +580,36 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
      * GET /admin/voters/{event?}
      * Halaman Daftar Voter (admin)
      */
-    public function voters(?Event $event = null): View
+        public function voters(Request $request, ?Event $event = null): View
     {
-        $event ??= Event::query()->latest('id')->first();
+        $admin = \App\Models\AkunStaf::find($request->session()->get('admin_id'));
+
+        // LOGIKA BARU: Cari event yang valid & diizinkan
+        if (!$event) {
+            if (session()->has('active_event_id') && $admin->hasEventAccess(session('active_event_id'))) {
+                $event = Event::find(session('active_event_id'));
+            } elseif (!$admin->isSuperAdmin()) {
+                $event = $admin->allowedEvents()->first();
+            } else {
+                $event = Event::query()->latest('id')->first();
+            }
+        }
+
+        // Simpan event aktif ke session agar konsisten
+        if ($event) {
+            session(['active_event_id' => $event->id]);
+        }
         
-        // Query voting yang sudah settlement
-        $votingQuery = Voting::where('event_id', $event?->id ?? 0)
+        $eventId = $event?->id ?? 0;
+        
+        $votingQuery = Voting::where('event_id', $eventId)
             ->where('status_midtrans', 'settlement')
             ->with(['peserta.user', 'voter']);
 
         $totalSuaraMasuk = (clone $votingQuery)->sum('jumlah_vote');
         $voterUnik = (clone $votingQuery)->distinct('user_id')->count('user_id');
 
-        $pesertaTerpopuler = Peserta::where('event_id', $event?->id ?? 0)
+        $pesertaTerpopuler = Peserta::where('event_id', $eventId)
             ->withSum(['voting as total_vote' => function ($q) {
                 $q->where('status_midtrans', 'settlement');
             }], 'jumlah_vote')
@@ -599,7 +623,7 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
             ->latest('id')
             ->get();
 
-        $pesertaList = Peserta::where('event_id', $event?->id ?? 0)
+        $pesertaList = Peserta::where('event_id', $eventId)
             ->where('status', 'diterima')
             ->whereHas('pembayaran', function ($q) {
                 $q->where('status_midtrans', 'settlement');
@@ -623,16 +647,23 @@ if ($event->voting_selesai && now()->gt($event->voting_selesai)) {
     /**
      * GET /admin/leaderboard/{event?}
      */
-    public function leaderboard($event = null)
+    public function leaderboard(Request $request, $event = null)
     {
-        // 1. Ambil data Event berdasarkan ID
+        $admin = \App\Models\AkunStaf::find($request->session()->get('admin_id'));
+        
         if ($event) {
             $eventData = \App\Models\Event::findOrFail($event);
         } else {
-            $eventData = \App\Models\Event::latest('id')->first();
+            // LOGIKA BARU: Cari event yang diizinkan
+            if (session()->has('active_event_id') && $admin->hasEventAccess(session('active_event_id'))) {
+                $eventData = \App\Models\Event::find(session('active_event_id'));
+            } elseif (!$admin->isSuperAdmin()) {
+                $eventData = $admin->allowedEvents()->first();
+            } else {
+                $eventData = \App\Models\Event::latest('id')->first();
+            }
         }
 
-        // Kalau gak ada event — return view kosong
         if (! $eventData) {
             return view('admin.leaderboard.index', [
                 'event'            => null,
