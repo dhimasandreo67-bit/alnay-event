@@ -145,8 +145,22 @@
                             </button>
                         </div>
 
-                        {{-- Search Bar (Real-time Frontend Filter) --}}
-                        <div class="flex-1 max-w-md">
+                        {{-- ✅ Filter Status (Dinamis per Tab) --}}
+                        <div id="filter-container" class="flex items-center gap-2 shrink-0">
+                            {{-- Filter akan di-render oleh JavaScript --}}
+                        </div>
+
+                        {{-- Per Page Dropdown --}}
+                        <div class="flex items-center gap-2 shrink-0">
+                            <select onchange="updatePerPage(this.value)" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
+                                @foreach([10, 25, 50, 100] as $opt)
+                                    <option value="{{ $opt }}" @selected(request('per_page', 10) == $opt)>{{ $opt }} Baris</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    {{-- Search Bar (Real-time Frontend Filter) --}}
+                        <div class="flex-1 pt-4 w-full">
                             <div class="relative">
                                 <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
                                     placeholder="Cari nama, email, atau status peserta..."
@@ -163,21 +177,6 @@
                                 </button>
                             </div>
                         </div>
-
-                        {{-- ✅ Filter Status (Dinamis per Tab) --}}
-                        <div id="filter-container" class="flex items-center gap-2 shrink-0">
-                            {{-- Filter akan di-render oleh JavaScript --}}
-                        </div>
-
-                        {{-- Per Page Dropdown --}}
-                        <div class="flex items-center gap-2 shrink-0">
-                            <select onchange="updatePerPage(this.value)" class="border border-[#e7e2da] rounded-lg px-3 py-2 text-sm bg-white focus:border-[#C28E27] outline-none">
-                                @foreach([10, 25, 50, 100] as $opt)
-                                    <option value="{{ $opt }}" @selected(request('per_page', 10) == $opt)>{{ $opt }} Baris</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
                 </div>
 
                 {{-- ============================================
